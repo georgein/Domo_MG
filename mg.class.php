@@ -1673,7 +1673,7 @@ function getPingIP($IP, $user='', $nbTentatives=2, $delay=200) {
 							// Filtrage selon niveau d'affichage des logs
 							// self::$__debug == 0 pas de log, 1 (INFO), 2 (INFO + ERROR), 3 (INFO + WARNING + ERROR), 4 (TOUT, par defaut)
 							$OK = 0;
-							if     (self::$__debug >=1 && strstr($contenuLog, self::$__log_INFO)) { $OK++; }
+							if	   (self::$__debug >=1 && strstr($contenuLog, self::$__log_INFO)) { $OK++; }
 							elseif (self::$__debug >=2 && strstr($contenuLog, self::$__log_ERROR)) { $OK++; }
 							elseif (self::$__debug >=3 && strstr($contenuLog, self::$__log_WARNING)) { $OK++; }
 							elseif (self::$__debug >=4 && strstr($contenuLog, self::$__log_SP)) { $OK++; }
@@ -2019,7 +2019,7 @@ function FONCTIONS_SCENARIOS(){}
 
 			$return = self::__action('scenario', array("scenario_id" => $actionScenario->getId(), "action" => $action, "tags" => $tags));
 			if ($startAction) {
-				$this->_log("Valeur de retour", self::_format($return), $_log, $_logStyle);
+				self::message('', self::$__log_ERROR . __FUNCTION__ . " : $return");
 				return $return;
 			}
 			else {
@@ -2489,10 +2489,10 @@ function ConfigEquiLogic($typeName, $equipement, $name, $newValue='') {
 *	Paramètres :																										*
 *		$cmd : Nom de la commande ou de l'équipement seulement															*
 *		$complement : Nom de l'action de la commande si param1 = Equipement, rien si Param1 est la commande complète	*
-* 		$value : La valeur à affecter à la commande (uniquement pour les commandes de sous-type *slider*, *color*, 		*
+*		$value : La valeur à affecter à la commande (uniquement pour les commandes de sous-type *slider*, *color*,		*
 *		*message*  ou *select*)																							*
 *		Il est possible de passer une chaine au format *expression jeedom* qui sera calculée.							*
-* 		Pour les commandes de sous-type *select* la valeur peut être le texte associé à la valeur ou bien directement 	*
+*		Pour les commandes de sous-type *select* la valeur peut être le texte associé à la valeur ou bien directement	*
 *		la valeur elle même (non sensible à la casse).																	*
 * Retour : *true* si l'opération réussie ou *false* si une erreur survient												*
 * Exemple : mg::setCmd('#[MEDIA][FREE SMS][Mon Tel]#', 'Mon message', 'Mon titre');										*
@@ -2522,16 +2522,16 @@ function ConfigEquiLogic($typeName, $equipement, $name, $newValue='') {
 				if (!is_numeric($options['slider'])) {
 				  self::message('', self::$__log_SP . __FUNCTION__ . " : La valeur ".$options['slider']." n'est pas un nombre valide !");
 				}
-				$logOptions = '  | options: ( [slider] => ' . $options['slider'] . ' )';
+				$logOptions = '	 | options: ( [slider] => ' . $options['slider'] . ' )';
 
 			} elseif ($type == 'message') {
 				$options['title'] = self::toHuman(self::getExp($title));
 				$options['message'] = self::toHuman(self::getExp($value));
-				$logOptions = '  | options: ( [title] => '.$options['title'].', [message] => '.$options['message'] . ' )';
+				$logOptions = '	 | options: ( [title] => '.$options['title'].', [message] => '.$options['message'] . ' )';
 
 			} elseif ($type == 'color') {
 				$options['color'] = self::getExp($value, false);
-				$logOptions = '  | options: ( [color] => ' . $options['color'] . ' )';
+				$logOptions = '	 | options: ( [color] => ' . $options['color'] . ' )';
 
 			} elseif ($type == 'select') {
 				$selectValue = self::getExp($value, false);
@@ -2540,7 +2540,7 @@ function ConfigEquiLogic($typeName, $equipement, $name, $newValue='') {
 					self::message('', self::$__log_ERROR . __FUNCTION__ . " : Texte ou valeur introuvable dans la liste: $selectValue");
 					return false;
 				}
-				$logOptions = '  | options: ( [select] => ' . $options['select'] . ' )';
+				$logOptions = '	 | options: ( [select] => ' . $options['select'] . ' )';
 
 			} elseif ($type != 'other') {
 				self::message('', self::$__log_ERROR . __FUNCTION__ . " : Sous-type de commande inconnu: " . $type);
@@ -2746,22 +2746,22 @@ function isActive($eqLogic, $_log = true, $_logStyle = null) {
 *************************************************************************************************************************
 * Trouve des commandes à l'aide de différents filtres																	*
 * |%#e01005% Note: %| *Cette fonction ignore les équipements désactivés.												*
-* Paramètres optionels : 																								*
-* 	1) $objectFilter : Filtrage par nom d'objet (format regexp non sensible à la casse)									*
+* Paramètres optionels :																								*
+*	1) $objectFilter : Filtrage par nom d'objet (format regexp non sensible à la casse)									*
 *		Ex: 'salon|cuisine' => tous les objets dont le nom contient *salon* ou *cuisine*								*
-* 	2) $category : Filtrage par catégorie																				*
-* 		Ex: 'light' (Catégories disponibles: 'heating', 'security', 'energy', 'light', 'opening', 'automatism', 'multimedia', 'default)
-* 	3) $eqFilter : Filtrage par nom d'équipement (format regexp non sensible à la casse)								*
+*	2) $category : Filtrage par catégorie																				*
+*		Ex: 'light' (Catégories disponibles: 'heating', 'security', 'energy', 'light', 'opening', 'automatism', 'multimedia', 'default)
+*	3) $eqFilter : Filtrage par nom d'équipement (format regexp non sensible à la casse)								*
 *		Ex:* 'détecteur' => tous les équipements dont le nom contient *détecteur										*
-* 	4) $type : Filtrage par **type** de commande (*action* ou *info*)													*
-* 	5) $subTypeFilter : Filtrage par sous-type de commande *(format regexp non sensible à la casse)						*
-* 		Sous-types disponibles pour les commandes de type **info**: ('numeric', 'binary', 'string')						*
-* 		Sous-types disponibles pour les commandes de type action: ('other', 'slider', 'message', 'color', 'select')		*
+*	4) $type : Filtrage par **type** de commande (*action* ou *info*)													*
+*	5) $subTypeFilter : Filtrage par sous-type de commande *(format regexp non sensible à la casse)						*
+*		Sous-types disponibles pour les commandes de type **info**: ('numeric', 'binary', 'string')						*
+*		Sous-types disponibles pour les commandes de type action: ('other', 'slider', 'message', 'color', 'select')		*
 *		Ex: 'numeric|binary' => tous les sous-type *numériques* et *binaires*											*
-* 	6) $cmdNameFilter : Filtrage par nom de la commande (format regexp non sensible à la casse)							*
-* 		Ex: 'on' => toutes les commandes dont le nom contient *on* (On, On 1, On 2...)									*
-* 	7) $genericTypeFilter : Filtrage par type générique de la commande (format regexp non sensible à la casse)			*
-* 		Types génériques disponibles: 'LIGHT_ON', 'LIGHT_OFF', 'LIGHT_STATE', 'ENERGY_ON', 'ENERGY_OFF', ...			*
+*	6) $cmdNameFilter : Filtrage par nom de la commande (format regexp non sensible à la casse)							*
+*		Ex: 'on' => toutes les commandes dont le nom contient *on* (On, On 1, On 2...)									*
+*	7) $genericTypeFilter : Filtrage par type générique de la commande (format regexp non sensible à la casse)			*
+*		Types génériques disponibles: 'LIGHT_ON', 'LIGHT_OFF', 'LIGHT_STATE', 'ENERGY_ON', 'ENERGY_OFF', ...			*
 *																														*
 * Retourne la liste des commandes au format *#tag#* sous forme de tableau												*
 *																														*
@@ -2846,7 +2846,7 @@ function isActive($eqLogic, $_log = true, $_logStyle = null) {
 						&& (!$objectFilter || (is_object($eqLogic->getObject()) && preg_match('/' . $objectFilter . '/i', $eqLogic->getObject()->getName())))
 						&& (!$eqFilter || preg_match('/' . $eqFilter . '/i', $eqLogic->getName()))
 					) {
-					$returnList = self::_cmdsFilter($returnList, $eqLogic->getCmdByGenericType($type), $cmdNameFilter, $subTypeFilter, $genericTypeFilter, $eqLogic);   
+					$returnList = self::_cmdsFilter($returnList, $eqLogic->getCmdByGenericType($type), $cmdNameFilter, $subTypeFilter, $genericTypeFilter, $eqLogic);	
 					}
 				}
 			}
@@ -2979,9 +2979,9 @@ function FONCTIONS_VARIABLES(){}
 * Génère et Affiche dans le log et retourne un message avec le nom et la valeur de chaque variables en BdD demandées.	*
 *	Paramètres :																										*
 *		$tabVar		Nom des variables demandées (séparé par une virgule)												*
-*		exemple		Aff_Var('NuitSalon, NuitExt, SnapDureePurge, SnapExtension');										*
+*		exemple		AffVar('NuitSalon, NuitExt, _designActif, _VoletGeneral');											*
 ************************************************************************************************************************/
-	function aff_Var($tabVar) {
+	function affVar($tabVar) {
 		 $message = '';
 		 $listVar = explode(',', $tabVar);
 		for ($i = 0; $i < count($listVar); $i++) {
@@ -3196,12 +3196,12 @@ function ZwaveBusy($timer = 0, $echo = '') {
 		  $tag = self::_humanReadableToCmd($tag);
 		  $return = trim(trim(scenarioExpression::setTags($tag, $scenario), '"'), "'");
 		}
-    if ($return == $tag) {
-      self::message('', self::$__log_SP . __FUNCTION__ . " : L'évaluation du tag a échoué ( " . self::_cmdToHumanReadable($tag) . " => '$return' )");
-    }
-    else {
+	if ($return == $tag) {
+	  self::message('', self::$__log_SP . __FUNCTION__ . " : L'évaluation du tag a échoué ( " . self::_cmdToHumanReadable($tag) . " => '$return' )");
+	}
+	else {
 		self::message('', self::$__log_SP . __FUNCTION__ . " : " . self::_cmdToHumanReadable($tag) . " == '$return'");
-    }
+	}
 		return $return;
 	}
 
@@ -3252,7 +3252,7 @@ function ZwaveBusy($timer = 0, $echo = '') {
 	function popupJeedom($message) {
 		$message = trim($message);
 		if (!$message) {
-		  $this->_error("Le message ne peut pas être vide", $_log, "popup");
+		  self::message('', self::$__log_ERROR . __FUNCTION__ . " : Le message ne peut pas être vide");
 		  return;
 		}
 		event::add('jeedom::alertPopup', $message);
@@ -3416,6 +3416,22 @@ function ZwaveBusy($timer = 0, $echo = '') {
 		}, $exp);
 		return str_replace("#trigger#", '"' . self::__trigger() . '"', $exp);
 	}
+
+	  protected static function _findSelectValue($cmd_obj, $selectValue) {
+		$cmdConfig = $cmd_obj->getConfiguration();
+		if (is_array($cmdConfig) && $cmdConfig['listValue']) {
+		  foreach (explode(';', $cmdConfig['listValue']) as $list) {
+			$selectData = explode('|', $list);
+			if ($selectData && (
+			  strtolower($selectData[0]) == strtolower($selectValue) ||
+			  (count($selectData) > 1 && strtolower($selectData[1]) == strtolower($selectValue))
+			)) {
+			  return $selectData[0];
+			}
+		  }
+		}
+		return null;
+	  }
 
 	// FIN Fonctions de travail
 
