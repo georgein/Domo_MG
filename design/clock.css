@@ -1,0 +1,60 @@
+
+html{height:100%}
+body{background-color:#FFF;color:#626262;font-family:"Segoe UI","Helvetica eue",Helvetica,Arial,sans-serif;font-size:40px;font-weight:300;height:100%;letter-spacing:.01em;line-height:1.428;margin:0;padding:0}
+
+/*! CLOCK */
+#clock {
+	left:50%;	
+	position:relative;
+	top:50%;
+	width:100%;
+	transform:translate(-50%,-50%);
+	-webkit-transform:translate(-50%,-50%);	
+}
+
+/* Gestion du format de l'heure */
+#time {
+color: #fff; 					/* Couleur caractère fff blanc, 333 gris foncé */ 
+font-size: 25px; 				/* Fonte de la police 3em normal, 5em petite */
+	
+}
+#time span {
+	display: inline-block;
+	position: relative;
+
+	background: #000; 			/* Fond de police  000 Noir, fff Blance */
+	text-align: center; 		/* centrage des digits */
+	width: 40px; 				/* Largeur des digits */
+	margin:3px; 				/* espace entre les digits */
+	border-radius: 5px; 		/* Rayon d'arrondis des digits */
+
+	padding: 1px 4px 3px 4px;
+}
+
+/* Gestion du format du séparateur */
+#time span {
+}
+#time span:before {
+	position: absolute;
+	content:":"; 				/* caractère séparateur */
+	font-size: 25px; 			/* Fonte de la police 3em normal, 5em petite */
+	font-weight: 700; 			/* facteur de graisse de la police */
+	color: #000; 				/* couleur du séparateur  ddd xxx, 000 noir */
+	left: -6px; 				/* Position du séparateur */
+}
+/* #time span:first-child:before {
+	content:"";
+}*/
+
+/* Gestion du format de la date */
+#date {
+	color: #F44;
+	font-size: 15px;
+	font-weight: 700; 			/* facteur de graisse de la police */
+	text-align: center; 		/* Alignement sur la page */
+	margin-left: 5px;
+	border-radius: 5px;
+	padding: 1px 4px 3px 4px;
+}
+
+/* END OF LINE */

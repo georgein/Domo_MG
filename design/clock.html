@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>jWidget horloge pour design Jeedom</title>
+	<link rel="stylesheet" type="text/css" href="mg/design/clock.css" />  
+<!-- -->	<script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script> 
+	<script type="text/javascript" src="mg/design/clock.js"></script> 
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$('#clock').clock();
+		});
+	</script> 
+	
+</head>    
+<body>
+	<div id="clock">
+		<div id="time">
+		<span class="hour"></span>
+		<span class="minute"></span>
+		<span class="second"></span>
+	</div>
+		<div id="date"></div>
+	</div>
+</body>
+</html>

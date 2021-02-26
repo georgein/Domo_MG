@@ -1,0 +1,151 @@
+/*
+***************************************** Menu JPI *****************************************
+<link rel="stylesheet" href="mg/css/menu.css">
+<div style="transform: scale(0.45);">
+<div class="menuMG-container">
+  <div class="menuMG">
+    <ul id="nav">
+      <li><a href="http://192.168.2.51:8080/?action=goToDesign&id=75&fullscreen=1"  target="_blank"><i title="Général"; class="maison-house112"> </i> </a></li>
+	  <li><a href="http://192.168.2.51:8080/?action=goToDesign&id=24&fullscreen=1"  target="_blank"><i title="Caméras"; class="fa fa-camera"> </i> </a></li>
+	  <li><a href="http://192.168.2.51:8080/?action=goToDesign&id=69&fullscreen=1"  target="_blank"><i title="Geofence+"; class="icon fas fa-road"> </i> </a></li> </i> </a></li>
+    </ul>
+  </div>
+</div>
+
+***************************************** Menu Caméra *****************************************
+<link rel="stylesheet" href="/mg/css/menu.css">
+<div style="transform: scale(0.30);">
+<div class="menuMG-container">
+  <div class="menuMG">
+    <ul id="nav">
+  <li><a href="https://my.netatmo.com/app/security" target="_blank" > <i title="WebApp NETATMO"; class="icon fa fa-video"> </i> </a></li>
+  <li><a href="https://dev.netatmo.com/apps/5da5f77436935931264708c1#form" target="_blank"> <i title="WebHooks NETATMO"; class="icon loisir-two28"> </i> </a></li>
+  <li><a href="http://192.168.2.2/bha-api/view.html" target="_blank"> <i title="WebApp DOORBIRD"; class="icon fa fa-camera"> </i> </a></li>
+    </ul>
+  </div>
+</div>
+
+***************************************** Menu Météo France *****************************************
+<link rel="stylesheet" href="/mg/css/menuMG.css">
+<div style="transform: scale(0.45);">
+<div class="menuMG-container">
+  <div class="recorder">
+    <ul id="nav">
+      <li><a href="https://meteofrance.com/previsions-meteo-france/ensues-la-redonne/13820"  target="_blank"><i title="Météo France"; class="jeedomapp-meteo icon_orange"> </i> </a></li>
+	  <li><a href="https://www.meteoblue.com/fr/meteo/current/ensu%c3%a8s-la-redonne_france_3020149"  target="_blank"><i title="MétéoBlue"; class="meteo-vent icon_orange"> </i> </a></li>
+	  <li><a href="https://www.meteoblue.com/fr/meteo/webmap/beta/ensu%c3%a8s-la-redonne_france_3020149#coords=10.13/43.492/5.1981&map=precipitation~hourly-hourly~auto~sfc~windAnimationOverlay"  target="_blank"><i title="MétéoBlue2"; class="icon meteo-orage icon_orange"> </i> </a></li> </i> </a></li>
+    </ul>
+  </div>
+</div>
+
+******************************************** Menu Outils ********************************************
+<link rel="stylesheet" href="/mg/css/menuMG.css">
+<div style="transform: scale(0.70);">
+<div class="menu-container">
+  <div class="recorder">
+<ul id="nav">
+  <li><a href="http://192.168.2.196/plugins/outilsdev/3rparty/elfinder/elfinder.html" target="_blank"> <i title="elFinder"; class="icon fa fa-folder-open icon_orange"> </i> </a></li>
+  <li><a href="http://192.168.2.196/mg/adminer" target="_blank"> <i title="Admin MySQL"; class="icon fa divers-numbers icon_orange"> </i> </a></li>
+  <li><a href="http://192.168.2.196/mg/phpsysinfo" target="_blank"> <i title="SysInfo"; class="icon fa jeedomapp-preset icon_orange"></i> </a></li>
+  <li><a href="https://fr.piliapp.com/php-syntax-check/" target="_blank"> <i title="Vérif Syntax"; class="icon fa jeedomapp-plugin icon_orange"> </i> </a></li>
+  <li><a href="https://www.phpliveregex.com/" target="_blank"> <i title="Simulateur REGEX"; class="icon fa fa-random icon_orange"> </i> </a></li>
+  <li><a href="https://regex101.com/" target="_blank"> <i title="Simulateur REGEX2"; class="icon fa fa-cut icon_orange"> </i> </a></li>
+  <li><a href="http://192.168.2.196:8484/pwa/settings-gateway2.html?_v=6683c360fca0884412320c2573ce62c0c2f73ac7,6,6,11&gwid=00212EFFFF0407FF" target="_blank"> <i title="WebApp DECONZ"; class="icon fa fa-sitemap icon_orange"> </i> </a></li>
+  <li><a href="http://192.168.2.196/mg/tabulator/tabulator.html" target="_blank"> <i title="TABULATOR"; class="icon fas fa-list icon_orange"> </i> </a></li>
+</ul>
+  </div>
+</div>
+
+**************************************** Menu Documentations ****************************************
+<link rel="stylesheet" href="/mg/css/menuMG.css">
+<div style="transform: scale(0.70);">
+<div class="menu-container">
+  <div class="recorder">
+    <ul id="nav">
+  <li><a href="http://php.net/manual/fr/funcref.php" target="_blank"> <i title="Docs PHP"; class="icon fa fa-briefcase icon_orange"></i> </a></li>
+  <li><a href="https://jeedom.github.io/documentation/" target="_blank"> <i title="Docs Jeedom"; class="icon fa fa-book icon_orange"></i> </a></li>
+  <li><a href="https://jeedom.github.io/documentation/phpdoc/index.html" target="_blank"> <i title="Dev Jeedom"; class="icon fa fa-save icon_orange"></i> </a></li>
+  <li><a href="https://github.com/jeedom/core" target="_blank"> <i title="GitHub Jeedom"; class="icon fa fa-laptop icon_orange"></i> </a></li>
+  <li><a href="http://tabulator.info/" target="_blank"> <i title="Doc Tabulator"; class="icon fa fa-list icon_orange"></i> </a></li>
+    </ul>
+  </div>
+</div>
+*/
+
+/* *** css pour Menu pour Design Jeedom *** */
+
+:root {
+  --recorder-hover-color: red; /*-- Couleur de l'illumination du bouton */
+  --recorder-bg-color: transparent; /* linear-gradient(#3D4246, #24282B); /* Couleur de fond du widget */
+  --recorder-button-bg-color: darkred; /*beige;*/ /*transparent;*/ linear-gradient(#44494F, #2F3237); Couleur de fond du bouton */
+  --recorder-active-color:#6c6d77;
+  --recorder-active-bg-color:#2A2D31;
+  --recorder-icon-color: dark; /*#404040; #D9D9D9; Couleur de l'icone */
+}
+
+.menuMG-container {
+  display:flex;
+}
+
+.recorder {
+  display: inline-flex;
+ /* width: auto;*/
+  background:lightdark; /* fon du menu */
+  border-radius: 25px;
+/*  height: 90px;*/
+}
+
+/* Cadre widget */
+.recorder ul {
+/*  width: 100%;
+  height: 100%;*/
+  border: 5px solid orange!important; /* #0F1014; */
+  border-radius: 25px;
+/*  background: var(--recorder-bg-color);*/
+  display: inline-flex;
+}
+
+/* Boutons */
+.recorder ul li {
+  font-size: 48px; /*  */
+/*  float: left;*/
+  border-radius: 5px;
+  width: 80px;
+  height: 100%;
+  text-shadow: 1px 5px 2px gray; /* ombré */
+/*  text-shadow: 1px 2px 1px white; /* gravé */
+  display: table;
+/*  background: var(--recorder-button-bg-color);*/
+  border-radius: 50%; /* contour bouton circle */
+  cursor: pointer;
+}
+
+/* Icone */
+.recorder ul li i {
+  margin-top: 16px;
+  font-size: 40px;
+}
+
+.recorder ul li a, .recorder ul li a:hover {
+  color: var(--recorder-icon-color) !important;
+}
+
+.recorder ul li:active a, .recorder ul li.active a {
+  color: var(--recorder-active-color) !important;
+}
+
+.recorder ul li:active, .recorder ul li.active {
+  color: var(--recorder-active-color);
+  background: var(--recorder-active-bg-color);
+  box-shadow:
+    inset 0 0 5px 2px rgba(15, 16, 20, 0.5);
+  border: 0px solid #0F1014; 
+}
+
+.recorder ul li:not(.active):hover {
+  text-shadow: 0px 0px 10px var(--recorder-hover-color);
+}
+
+.recorder ul li:active {
+  text-shadow: none !important;
+}

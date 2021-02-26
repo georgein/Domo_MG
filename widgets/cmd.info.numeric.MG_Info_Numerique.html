@@ -1,0 +1,341 @@
+<!-- DEBUT INFO NUMERIQUE - #name_display# (#id#) -->
+<div class="tete_widget#uid# cmd-widget cmd" data-widgettype="infoNumeric" data-type="info" data-subtype="numeric" data-cmd_id="#id#" data-cmd_uid="#uid#" data-version="#version#">
+
+	<center>
+		<div class="cmdStats #hide_history#"></div>
+		<div class="titre#uid# titre_MG"></div>
+		<div class="widget#uid# widget_MG">
+
+			<div class="HighChart#uid#" id="HighChart_id#uid#"></div>
+			<img class="IMG#uid#" id="IMG#uid#">
+
+			<div class="aiguille#uid# aiguille_MG" id="aiguille#uid#"></div>
+
+			<div class="state#uid# state_MG">#state#</div>
+			<div class="partInt#uid#"></div>
+			<div class="partDec#uid#"></div>
+<!--			<div class="unite#uid# unite_MG">#unite#</div> -->
+
+			<div class = "graduations#uid#" style="position:absolute">
+				<span class="gradMin#uid# graduation_MG"></span>
+				<span class="grad1#uid# graduation_MG"></span>
+				<span class="grad2#uid# graduation_MG"></span>
+				<span class="gradMid#uid# graduation_MG"></span>
+				<span class="grad4#uid# graduation_MG"></span>
+				<span class="grad5#uid# graduation_MG"></span>
+				<span class="gradMax#uid# graduation_MG"></span>
+			</div>
+		</div>
+		<div class="timer#uid# timer_MG"></div>
+	</center>
+
+	<template>
+		<div>............({{Couleurs au format HTML standard (red, lime, …, #F00, …, #000000, …, rgb(255,0,0), …, rgba(255,0,0,0.5) transparence avec dernier paramètre entre 0 et 1}})</div>
+		<div>............({{..................................................................................}})</div>
+		<div>............({{Type 'type Voyant : 4 états : KO -2 (img:0), Inhibé)}})</div>
+		<div>............({{..................................................................................}})</div>
+		<div>............({{type BoutonRond : (0) Rouge foncé, (1) Rouge, (2) Bleu clair, (3) Jaune, (4) Orange, (5) Bleu foncé,(6) Violet, (7) Vert, (8) Noir, (9) Blanc, (10) Transparent}})</div>
+		<div>............({{..................................................................................}})</div>
+
+		<div>path: '/mg/' ({{Path général de la domotique, par defaut '/mg'}})</div>
+		<div>type: TYPE_DU_WIDGET ({{compteurs/boutons/lumieres/temperatures/humidites/fermetures/presences/voyants/highchart/jauges : boussoles/barometres/jauges/vents}})</div>
+		<div>taille: 1 ({{Taille du widget}})</div>
+		<div>ratio: 1 ({{Proportion hauteur/largeur demandée pour l'image}})</div>
+		<div>imgWidth: 120({{Largeur de l'image en pixel}})</div>
+		<div>............({{..................................................................................}})</div>
+		<div>titre: TITRE_WIDGET ({{Titre du widget}})</div>
+		<div>titreSize: true/false ({Affichage du titre}})</div>
+		<div>titreBlink: true/false ({{Fait clignoter le titre}})</div>
+		<div>titreGrise: true/false ({{Met le titre en N&B si Etat <= 0}})</div>
+		<div>imgName: NOM_IMAGE ({{Nom de l'image du répertoire 'type' (sans le '_ON' ou '_OFF')}})</div>
+		<div>imgGrise: 0/1 ({{Passage en N&B de l'image si Etat <= 0}})</div>
+		<div>............({{..................................................................................}})</div>
+
+		<div>stateRound: 1 ({{Nb de chiffre après la virgule de la valeur}})</div>
+		<div>stateSize: 13 ({{size-font de la valeur, 0 : pas de 'State' affiché}})</div>
+		<div>stateColor: black ({{Couleur de 'state'}})</div>
+		<div>stateTop: 25 ({{Position en hauteur de 'state' en %}})</div>
+		<div>stateLeft: 50 ({{Position depuis la gauche de 'state' en %}})</div>
+		<div>unite:  Kw/h ({{Unité du la commande W/A/... (Par defaut repris de la commande)}})</div>
+		<div>uniteColor: red ({{Couleur de l'unité}})</div>
+		<div>............({{................................................................................-}})</div>
+
+		<div>formCircle: true/false ({{Demande à mettre l'img dans un cercle rouge ou vert selon l'état de la commande}})</div>
+		<div>appelScenario: 99 ({{N° du scénario appelé par un clic sur l'image d'une commande de type 'info'}})</div>
+		<div>cmdMaj: 99 ({{N° d'une commande à lancer au chargement du widget pour le mettre à jour}})</div>
+		<div>timerType: duree/heure/val/dateVal ({{Type affichage du timer (si vide pas d'affichage du timer)}})</div>
+		<div>timerTop: 20 ({{Position en hauteur du 'timer' en %}})</div>
+
+		<div>............({{............................SPECIFIQUES AUX NUMERIQUES ..........................-}})</div>
+		<div>sousType: center ({{Sous-type du widget : center, right, jauge}})</div>
+		<div>etatMin: white ({{Valeur de l'état minimum}})</div>
+		<div>etatMax: lemonchiffon ({{Valeur de l'état maximum}})</div>
+		<div>nbImg: 1 ({{Nombre d'images utilisés dans le widget (pour les variateurs)}})</div>
+		<div>minValue:	0 ({{Min de la jauge (Par defaut Min de Jeedom ou MinHistory)}})</div>
+		<div>maxValue:	99 ({{Max de la jauge (Par defaut Max de Jeedom ou MaxHistory)}})</div>
+
+		<div>............({{..............................SPECIFIQUES AUX JAUGES ............................-}})</div>
+		<div>aiguilleTaille: red ({{Taille de l'aiguille en % du rayon)}})</div>
+		<div>aiguilleColor: red ({{Couleur de l'aiguille)}})</div>
+		<div>angleMort: 30 ({{Valeur de l'angle mort de la jauge)}})</div>
+		<div>sizeGrad:	1 ({{Font size des graduations, 0 : pas de graduation)}})</div>
+		<div>colorBackground: lemonchiffon ({{Couleur colorBackground de base}})</div>
+		<div>fondColor2: white ({{Couleur de fond_2}})</div>
+		<div>fondColor3: lemonchiffon ({{Couleur de fond_3}})</div>
+		<div>fondColorCadre: red ({{Couleur du cadre}})</div>
+		<div>fondEpaisCadre: red ({{Epaisseur du cadre en px (Par defaut 1 x taille)}})</div>
+		<div>jaugeType: linear/logarithmic ({{TRype de jauge (Par defaut linear)}})</div>
+		<div>alerteMin: 10 ({{Valeur de l'alerte min (Par defaut 10 % de maxValue)}})</div>
+		<div>alerteMax: 70 ({{Valeur de l'alerte max (Par defaut minValue)}})</div>
+		<div>alerteColor: red ({{Couleur de l'alerte}})</div>
+		<div>............({{..................................................................................}})</div>
+	</template>
+
+	<link href='mg/widgets/widgets.css' rel='stylesheet'>
+	<script type='text/javascript' src='/mg/widgets/widgets.js'></script>
+	<script type="text/javascript" src='/mg/widgets/tabWidgets.json'></script>
+
+<!-- FIN VU-METRE - #name_display# -->
+<script>
+	var tabParams = JSON.parse(tabWidgets);
+	var f#uid# = {
+		'data_cmd_id': 'cmd[data-cmd_id=#id#]', // Pour slider
+		'classData_cmd_id': $('.cmd[data-cmd_id=#id#]'),
+		'HighChart_id': 'HighChart_id#uid#',
+		'IMG_id': 'IMG#uid#',
+
+		'classIMG': $('.IMG#uid#'),
+		'classTitre': $('.titre#uid#'),
+		'classTimer': $('.timer#uid#'),
+		'classTete_Widget': $('.tete_widget#uid#'),
+		'classWidget' : $('.widget#uid#'),
+		'classAiguille': $('.aiguille#uid#'),
+		'classState': $('.state#uid#'),
+		'classPartInt': $('.partInt#uid#'),
+		'classPartDec': $('.partDec#uid#'),
+		'classUnite': $('.unite#uid#'),
+		'classSlider': $('.slider#uid#'),
+		'classGraduations': $('.graduations#uid#'),
+		'classHighChart' : $('.cmd[data-cmd_uid=#uid#] .HighChart#uid#'),
+	}
+	/* ************************************ LECTURE/MEMO DES PARAMETRES GENERAUX *********************************** */
+	f#uid#.path			= valDefaut('#path#', '/mg');						// Path général de DomoMG
+	f#uid#.cmdType		= $('[data-cmd_uid=#uid#]') .data("type");			// type du widget info - action
+	f#uid#.cmdSubtype	= $('[data-cmd_uid=#uid#]') .data("subtype");		// subtype du widget binaire - numerique
+	f#uid#.state		= (f#uid#.state == 'string' ? '#state#' : parseFloat('#state#'));// Init de state
+	f#uid#.type 		= valDefaut('#type#', $('[data-cmd_uid=#uid#]') .data("widgettype")).toLowerCase();
+	f#uid#.name			= '#name#';
+	f#uid#.titre			 = valDefaut('#titre#', (f#uid#.cmdType == 'action') ? '#valueName#' : '#name_display#');
+	f#uid#.name_displayId = valDefaut('#name_displayId#', (f#uid#.cmdType == 'action') ? '#name_displayId#' : '#id#');
+	f#uid#.minHistoryValue = parseFloat(valDefaut('#minHistoryValue#', 0));
+	f#uid#.averageHistoryValue = parseFloat(valDefaut('#averageHistoryValue#', 499));
+	f#uid#.maxHistoryValue = parseFloat(valDefaut('#maxHistoryValue#', 9999));
+
+/* ************************************** PARAMETRAGES PAR DEFAUT SELON TYPE *************************************** */
+	key1#uid# = f#uid#.type.toLowerCase(); 				// type		= #type#
+	try {
+		test = Object.keys(tabParams[key1#uid#]['#imgName#']['taille']);
+		key2#uid# = '#imgName#';
+	} catch (err){
+		key2#uid# = Object.keys(tabParams[key1#uid#])[0];
+		//console.log('** ERROR '+f#uid#.titre+' *** '+f#uid#.type+' / '+f#uid#.imgName+' #imgName# introuvable on prend le defaut :'+key2#uid#);
+	}
+
+/* **************************** RECUPERATION ET CALCUL DES PARAMETRES GENERAUX DU WIDGET *************************** */
+	f#uid#.imgName = valDefaut('#imgName#', key2#uid#);
+	f#uid#.taille		= parseFloat(valDefaut('#taille#', (tabParams[key1#uid#][key2#uid#]['taille'])));
+	f#uid#.ratio		= parseFloat(valDefaut('#ratio#', tabParams[key1#uid#][key2#uid#]['ratio']));
+	f#uid#.imgWidth		= parseFloat(valDefaut('#imgWidth#', tabParams[key1#uid#][key2#uid#]['imgWidth']));
+
+	f#uid#.titreSize	= valDefaut('#titreSize#', tabParams[key1#uid#][key2#uid#]['titreSize']);
+	f#uid#.titreBlink	= valDefaut('#titreBlink#', tabParams[key1#uid#][key2#uid#]['titreBlink']);
+	f#uid#.titreGrise	= valDefaut('#titreGrise#', tabParams[key1#uid#][key2#uid#]['titreGrise']);
+	f#uid#.imgGrise		= valDefaut('#imgGrise#', tabParams[key1#uid#][key2#uid#]['imgGrise']);
+
+	f#uid#.stateRound	= parseInt(valDefaut('#stateRound#',tabParams[key1#uid#][key2#uid#]['stateRound']));
+	f#uid#.stateSize	= parseFloat(valDefaut('#stateSize#', tabParams[key1#uid#][key2#uid#]['stateSize']));
+	f#uid#.stateColor	= valDefaut('#stateColor#', tabParams[key1#uid#][key2#uid#]['stateColor']);
+	f#uid#.stateTop		= valDefaut('#stateTop#', tabParams[key1#uid#][key2#uid#]['stateTop']);
+	f#uid#.stateLeft	= valDefaut('#stateLeft#', tabParams[key1#uid#][key2#uid#]['stateLeft']);
+	f#uid#.unite		= valDefaut('#unite#', '');
+	f#uid#.uniteColor	= valDefaut('#uniteColor#', 'darkorange');
+
+	f#uid#.formCircle	= valDefaut('#formCircle#', tabParams[key1#uid#][key2#uid#]['formCircle']);
+	f#uid#.timerType	= valDefaut('#timerType#', tabParams[key1#uid#][key2#uid#]['timerType']);
+	f#uid#.timerTop		= parseFloat(valDefaut('#timerTop#', tabParams[key1#uid#][key2#uid#]['timerTop']));
+	f#uid#.sousType		= valDefaut('#sousType#', tabParams[key1#uid#][key2#uid#]['sousType']);
+
+	f#uid#.minValue		= parseFloat(valDefaut('#minValue#', Math.max('#minValue#', '#minHistoryValue#')));
+	f#uid#.maxValue		= parseFloat(valDefaut('#maxValue#', Math.min('#maxValue#', '#maxHistoryValue#')));
+	f#uid#.maxValue		= (f#uid#.maxValue != 100) ? f#uid#.maxValue : parseFloat('#maxHistoryValue#');	/* Correction pour Jeedom */
+	f#uid#.etatMin		= parseFloat(valDefaut('#etatMin#', tabParams[key1#uid#][key2#uid#]['etatMin']));
+	f#uid#.etatMax		= parseFloat(valDefaut('#etatMax#', tabParams[key1#uid#][key2#uid#]['etatMax']));
+	f#uid#.nbImg		= parseFloat(valDefaut('#nbImg#', tabParams[key1#uid#][key2#uid#]['nbImg']));
+
+	f#uid#.appelScenario= valDefaut('#appelScenario#', '');					// N° du scénario appelé par un type 'info'
+	f#uid#.cmdMaj 		= valDefaut('#cmdMaj#', '');						// Scénario de MàJ affichage à lancer
+	f#uid#.fileJS 		= valDefaut('#fileJS#', "");						// Chemin complet du script .JS complémentaire à charger
+
+	/* ******************************************* INITIALISATION DU WIDGET **************************************** */
+console.log ( $(":root").css('--MG-titre-color') );
+
+	// MàJ des données pour refresh de l'écran à la création ou via un bouton d'action (ex : tab_Conso_EDF)
+	function refresh() { jeedom.cmd.execute({id: f#uid#.cmdMaj }); }
+	if (f#uid#.cmdMaj != '') { refresh(); }
+	if (f#uid#.type == 'jauges') { initJauges(f#uid#); } // INIT JAUGES
+	if (f#uid#.type == 'highchart') { initHighChart(f#uid#); } // INIT HIGHCHART
+
+/* ------------------------------------------------ CREATION JEEDOM ------------------------------------------------ */
+	jeedom.cmd.update['#id#'] = function(_options){
+		var cmd#uid# = $('.cmd[data-cmd_id=#id#]')
+		cmd#uid#.find('.state#uid#').empty().append(_options.display_value);
+		f#uid#._options = _options;
+		f#uid#.state = _options.display_value;
+		$('.cmd[data-cmd_id=#id#]').attr('data-state', _options.display_value); // Memo etat pour on/off slider
+		if (f#uid#.fileJS != '') { $.getScript(f#uid#.fileJS); }
+
+		// Lancements routines par defaut
+		getImgName(f#uid#);
+		setTitre(f#uid#);
+		setState(f#uid#);
+		clicWidget(f#uid#);
+		timer(f#uid#);
+
+		if(f#uid#.type == 'highchart') {
+			try {
+				f#uid#.classHighChart.highcharts().series[0].points[0].update(_options.display_value);
+				// MàJ etat des jauges et vumetre pour éviter la fonte 'shadow' de highchart
+//				$('.highcharts-data-label').addClass(f.type+'JaugeState');
+
+				$('.highcharts-text-outline').html(f#uid#.stateHTML_1+_options.display_value+f#uid#.stateHTML_2);
+			} catch (err){
+
+				//console.log('** ERROR (init highchart par jeedom) '+f#uid#.titre+'  ** '+f#uid#.type+' / '+f#uid#.imgName);
+			}
+		}
+		/* ******************** Attente CHARGEMENT DES IMAGES POUR ACQUISITION DE LEURS TAILLES ******************** */
+		if(f#uid#.srcImg && f#uid#.sousType != 'sansImg') {
+			var image#uid# = new Image();
+			image#uid#.onload = function(){
+				f#uid#.imgWidth = image#uid#.width;
+				f#uid#.imgHeight = image#uid#.height;
+				setImg(f#uid#);
+				setActionBinaire(f#uid#);
+				setAiguille(f#uid#);
+				setGraduations(f#uid#, $('.gradMin#uid#'), $('.grad1#uid#'), $('.grad2#uid#'), $('.gradMid#uid#'), $('.grad4#uid#'), $('.grad5#uid#'), $('.gradMax#uid#'), $('.graduations#uid#'));
+				setSlider(f#uid#);
+			}
+			/* *********************************** // Fin de image.onload = function() ***************************** */
+			try {
+				image#uid#.src = f#uid#.srcImg; // Force le chargement des  images
+			} catch (err){
+				console.log('** ERROR (onLoad) '+f#uid#.titre+' ** '+f#uid#.type+' / '+f#uid#.imgName+' => L\'image '+f#uid#.srcImg+' est introuvable !!!');
+			}
+		}
+//console.log('TEST0 : '+f#uid#.titre+' - '+f#uid#.type+' / '+f#uid#.imgName+' - soustype : '+f#uid#.sousType+' - srcImg : '+f#uid#.srcImg+' (Defaut :  '+key1#uid#+' / '+key2#uid#+') taille '+f#uid#.taille+' - stateTop '+f#uid#.stateTop+' timerTop : '+f#uid#.timerTop);
+	}
+	/* ************************************************ FIN CREATION JEEDOM **************************************** */
+jeedom.cmd.update['#id#']({display_value:'#state#',valueDate:'#valueDate#',collectDate:'#collectDate#',alertLevel:'#alertLevel#'});
+
+ // ********** SLIDER plus ON/OFF **********
+if ($('.cmd[data-cmd_id=#id#]').attr('data-subtype') == 'slider' || $('.cmd[data-cmd_id=#id#]').attr('data-subtype') == 'other') {
+	$('.widget#uid#').off().on('click', function() {
+		if ($('.cmd[data-cmd_id=#id#]').attr('data-state') > '0') {
+			var value = parseFloat(valDefaut('#minValue#', 0));
+			jeedom.cmd.execute({id: '#id#', value: {slider: value}});
+		} else {
+			var value = parseFloat(valDefaut('#maxValue#', 99));
+			jeedom.cmd.execute({id: '#id#', value: {slider: value}});
+		}
+	});
+}
+
+$(".cmd[data-cmd_uid=#uid#] .slider-tooltip").on('slidestop', function (event,ui) {
+	jeedom.cmd.execute({id: '#id#', value: {slider: ui.value}});
+});
+
+/* ********************************************************************************************************************
+/* ********************************************************************************************************************
+********************************** DEBUT DE LA ZONE SPECIFIQUE DE JAUGE ET HIGHCHART **********************************
+******************************************************************************************************************** **
+/* *******************************************************************************************************************/
+// Complémentaire pour jauges classique et HighChart
+function initJauges(f) {
+	f.aiguilleTaille	= parseFloat(valDefaut('#aiguilleTaille#', tabParams[key1#uid#][key2#uid#]['aiguilleTaille']));
+	f.aiguilleColor		= valDefaut('#aiguilleColor#', tabParams[key1#uid#][key2#uid#]['aiguilleColor']);
+	f.angleMort			= parseFloat(valDefaut('#angleMort#', tabParams[key1#uid#][key2#uid#]['angleMort']));
+	f.sizeGrad			= parseFloat(valDefaut('#sizeGrad#', tabParams[key1#uid#][key2#uid#]['sizeGrad']));
+	f.alerteMin			= parseFloat(valDefaut('#alerteMin#', '#minHistoryValue#'));
+	f.alerteMax			= parseFloat(valDefaut('#alerteMax#', '#maxHistoryValue#'));
+	f.averageHistoryValue= parseFloat(valDefaut('#averageHistoryValue#', (f.MinValue+f.MaxValue)/2));
+
+//-------------------------------------------------------------------------------------------------------
+	if (f.alerteMin < 2) { f.alerteMin = f.averageHistoryValue; }
+	f.alerteColor		= valDefaut('#alerteColor#', 'red');
+	f.jaugeIntervalle	= parseFloat(valDefaut('#jaugeIntervalle#', Math.abs(Math.round((f.maxValue - f.minValue)/5)) + 1));
+	f.jaugeType			= valDefaut('#jaugeType#', 'linear');
+
+	f.font = 'serif'; // roboto, serif, Digital-7
+
+	f.startAngle = -(360-f.angleMort)/2;
+	f.endAngle = (360-f.angleMort)/2;
+	if (f.jaugeType == 'logarithmic') {	// linear / logarithmic
+		f.state = Math.max(1, f.state);
+		f.minValue	= Math.max(1, f.minValue);
+		f.jaugeIntervalle = 1;
+	}
+}
+
+/* ***************************************************************************************************************** */
+function initHighChart(f) {
+	initJauges(f)
+	// Nettoyage des class
+	if (!f.srcImg)	f.classIMG.remove();
+	f.classState.remove();
+	f.classPartInt.remove();
+	f.classPartDec.remove();
+	f.classUnite.remove();
+	f.classAiguille.remove();
+	f.classGraduations.remove();
+
+/* ***************************************************************************************************************** */
+	// VUMETRE
+	if (f.imgName == 'Vumetre') {
+		f.imgHeight = 120*f.taille;
+		f.imgWidth = Math.round(f.imgHeight*1.618);
+		$('.highcharts-background').css({'width':f.imgWidth+'px', 'height':f.imgHeight+'px'});
+		$('.widget#uid#').css({'top': '-7px'});
+
+		f.spacing = 15;  // Espace avant timer
+		f.stateColor = 'black';
+		f.colorBackground	= valDefaut('#colorBackground#', 'lemonchiffon');
+		f.fondColor2		= valDefaut('#fondColor2#', 'white');
+		f.fondColor3		= valDefaut('#fondColor3#', 'lemonchiffon');
+		f.fondColorCadre	= valDefaut('#fondColorCadre#', 'red');
+		f.fondEpaisCadre	= parseInt(valDefaut('#fondEpaisCadre#', 1.5*f.taille));
+
+		highChartVuMetre(f);
+	}
+/* ***************************************************************************************************************** */
+	// JAUGE
+	else if (f.sousType == 'jauge') {
+		getImgName(f);
+		f.imgWidth = f.imgHeight = (f.imgWidth ? f.imgWidth : 120)*f.taille;
+		$('.highcharts-background').css({'width':f.imgWidth+'px', 'height':f.imgHeight+'px'});
+		$('.widget#uid#').css({'top': '7px'});
+
+		f.timerTop			= f.timerTop*f.taille*((f.taille > 1) ? 1.52 : 1);
+		f.spacing = 1; // Espace avant timer
+		f.stateColor = 'silver';
+		f.colorBackground		= valDefaut('#colorBackground#', 'transparent');
+		f.fondColorCadre	= 'transparent';
+		f.fondEpaisCadre	= 0;
+
+		highChartJauge(f);
+	}
+}
+	/* ****************************************************************************************************************
+	***************************************** FIN ZONE SPECIFIQUE DU HIGHCHART ****************************************
+	**************************************************************************************************************** */
+</script>
+</div>

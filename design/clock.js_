@@ -1,0 +1,43 @@
+(function($) {
+
+	$.fn.clock = function() {
+
+		// Definition des jours et des mois
+		var weekdays = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"]
+		var months = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Aout", "Septembre", "Octobre", "Novembre", "Dezember"];
+
+		// getTime - The Gathering
+		function getTime() {
+			var date = new Date(),
+				hour = date.getHours();
+			return {
+				day: weekdays[date.getDay()],
+				date: date.getDate(),
+				month: months[date.getMonth()],
+				hour: appendZero(hour),
+				minute: appendZero(date.getMinutes()),
+				second: appendZero(date.getSeconds())
+			};
+		}
+
+		// On ajoute un zéro si < à 10 
+		function appendZero(num) {
+			if (num < 10) {
+				return "0" + num;
+			}
+			return num;
+		}
+
+		// recalcul de l'horloge
+		function refreshTime() {
+			var now = getTime();
+			$('#date').html(now.day + ' ' + now.date + ' ' + now.month);
+			$('#time').html("<span class='hour'>" + now.hour + "</span>" + "<span class='minute'>" + now.minute + "</span>" + "<span class='second'>" + now.second + "</span>");
+		}
+
+		// Lancement de l'horloge
+		refreshTime();
+		setInterval(refreshTime, 1000);
+
+	};
+})(jQuery);

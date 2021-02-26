@@ -1,0 +1,61 @@
+<!-- Debut HTML ***** widget Somfy -->
+<div  style="margin:0px; padding:0px;" class="cmd tooltips cmd-widget cursor" data-type="action" data-subtype="numeric" data-cmd_id="#id#" data-cmd_uid="#uid#" data-version="#version#">
+
+<!--	<div class="cadreWidget#id#" style="position:relative; transform-style: preserve-3d; top:40px; height:40px;"> -->
+  		<div class="rowdd">
+        	<span style="vertical-align:middle;" class="action center-block iconCmd"></span>
+    	</div>
+<!--  	</div> -->
+<!-- Fin HTML ***** widget Somfy -->
+  
+<script>
+/*
+Options :
+- reflet : valeur possible = yes
+- couleur : valeur possible = blue, red, green
+- taille : valeur possible = de 0.5 à 1.5
+- nom : valeur possible = no (pour cacher le nom de la commande)
+*/
+
+      
+jeedom.cmd.update['#id#'] = function(_options){
+       
+	// -----------------------------------------------------------
+	// Init et calcul des variables du widget
+	// -----------------------------------------------------------
+        var ImgPath = "mg/design/somfy";
+        
+    	var taille = (is_numeric('#taille#')) ? parseFloat('#taille#') : 0.5; 
+  
+   	var ImgWidth = (is_numeric('#ImgWidth#')) ? parseFloat('#ImgWidth#') : 80;
+		ImgWidth = Math.round ( ImgWidth*taille);
+		var ImgHeight = (is_numeric('#ImgHeight#')) ? parseFloat('#ImgHeight#') : 80;
+		ImgHeight = Math.round ( ImgHeight*taille);
+           
+        var sens;
+        if ('#name#'.search('Monter') >= 0) { sens = 'Up'; }
+        else if ('#name#'.search('Descendre') >= 0) { sens = 'Down'; }
+        else { sens = 'My'; }
+        var couleur;
+  
+        if ("#couleur#".charAt(0) != '#') { couleur = "_#couleur#"; } else { couleur = "_somfy"; }
+
+		if( '#nom#'  == 'no' ) { $('span.cmdName#id#').hide(); }
+
+        if( '#reflet#'  == 'no' ) {
+			var srcImg = ImgPath + "/" + sens + couleur + ".png";
+        } else {
+           var srcImg = ImgPath + "/" + sens + couleur + "_wr.png";
+	    }
+//console.log('------------------ ' + srcImg + ' - '  + srcImg + ' - ' + ImgHeight + ' - ' + ImgWidth +  + ' - ' + parseFloat('#taille#'));
+
+		$('.cmd[data-cmd_id=#id#] .iconCmd').empty().append('<img src="' + srcImg + '"height="' + ImgHeight + 'px";width="' + ImgWidth + 'px"' + 'alt=" " />');
+    
+    }
+    
+    jeedom.cmd.update['#id#']({display_value:'#state#'});
+    $('.cmd[data-cmd_uid=#uid#] .iconCmd').off().on('click', function () {
+        jeedom.cmd.execute({id: '#id#'});
+    });
+    </script>
+</div>

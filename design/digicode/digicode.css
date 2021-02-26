@@ -1,0 +1,66 @@
+.digicode {
+  font-family: 'HelveticaNeue-UltraLight', 'HelveticaNeue-Light', 'HelveticaNeue', 'Helvetica', 'Arial', sans-serif;
+  font-weight: 400;
+  line-height: 1.42857;
+  color: #fff;
+  margin: 5px;
+}
+
+.digicode ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  font-size: 0em;
+}
+  
+.digicode ul.digiEvent {
+  margin: 5px 0;
+}
+
+.digicode .digiEvent li {
+  display: inline-block;
+  margin: 3px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  height: 12px;
+  width: 12px;
+  border-radius: 75px;
+  -moz-border-radius: 75px;
+  -webkit-border-radius: 75px;
+}
+
+.digicode .digiEvent li.digiFilled {
+  background-color: #368EFF;
+  border: 1px solid rgba(255, 255, 255, 0.60);
+}
+  
+.digicode .digiEvent li.digiFilledOK {
+  background-color: #F89406;
+}  
+
+.digicode .digicodePanel li {
+  background: #333;
+  cursor: pointer;
+  display: inline-block;
+  padding-top: 7px;
+  margin: 5px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  height: 47px;
+  width: 47px;
+  border-radius: 75px;
+  -moz-border-radius: 75px;
+  -webkit-border-radius: 75px;
+  text-align: center;
+  font-size: 20px;
+}
+
+.digicode .digicodePanel li.digiSel {
+  background: #777;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  color: #6699ff;
+}
+
+.digicode .digicodePanel li.digiReset {
+  background: #dd0530;
+  border: 2px solid rgba(51, 9, 9, 0.41);
+}

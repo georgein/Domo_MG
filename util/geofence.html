@@ -1,0 +1,309 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fr">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+		<link rel="stylesheet" href="/mg/ressources/leaflet/leaflet.css" />
+		<script src="/mg/ressources/leaflet/leaflet.js"></script>
+		<link rel="stylesheet" href="/mg/ressources/leaflet/easy-button.css" />
+		<script src="/mg/ressources/leaflet/easy-button.js"></script>
+		<META HTTP-EQUIV='refresh' CONTENT='180; URL=/mg/util/geofence.html'>
+	</head>
+
+	<style>
+		html, body {
+			height: 100%
+		}
+		.leaflet-marker-icon.leaflet-interactive {
+			border-radius: 50% /* Mise cercle des icones */
+		}
+
+		.leaflet-bar button, .leaflet-bar button:hover, .leaflet-bar a, .leaflet-bar a:hover/*, .leaflet-touch*/, .leaflet-control-layers-toggle {
+			width: 96px!important; /* Largeur bouton image de zoom */
+			height: 96px!important; /* Hauteur bouton image de zoom */
+			line-height: 96px;
+		}
+
+		.leaflet-control-zoom-in, .leaflet-control-zoom-out {
+			font: bold 96px 'Lucida Console', Monaco, monospace;
+		}
+
+
+		.leaflet-bar, .leaflet-bar button:first-of-type, .leaflet-bar button:last-of-type, .leaflet-bar a:first-child, .leaflet-bar a:last-child {
+		  border-radius: 50%;
+		}
+
+		.leaflet-bar {
+			box-shadow: 0 15px 15px rgba(0,0,0,0.65);
+		}
+
+	.leaflet-popup-content {
+		margin: 5px 10px;
+		line-height: 1.4;
+		font-size: 22px!important;
+		width:600px!important;
+		}
+
+	.leaflet-tooltip {
+		font-size: 22px;
+	}
+
+	</style>
+
+	<body onload="initialize()">
+		<div id="map" style="width:100%; height:100%"></div>
+	</body>
+</html>
+
+<script type="text/javascript">
+// ***************** LISTE DES LAYERS SUR : http://leaflet-extras.github.io/leaflet-providers/preview/ ****************
+// ***************** SITE DE LEAFLET : https://leafletjs.com/ *****************
+
+function initialize() {
+
+	var latLng_Home = L.latLng(43.35071300,5.20839500);
+	var map = L.map('map').setView(latLng_Home, 15	);
+	L.control.scale().addTo(map); // Pose de l'échelle
+	// Options de la polyline : https://leafletjs.com/reference-1.6.0.html#path
+
+// ********************************************* MARQUEUR POINT DE TRACE **********************************************
+	var iconEntrainement = new L.Icon({
+	  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+	  iconSize: [20, 20],
+	  iconAnchor: [20/2, 20/2],
+	  popupAnchor: [1, -1.2*20],
+	});
+
+	var iconVoiture = new L.Icon({
+	  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+	  iconSize: [20, 20],
+	  iconAnchor: [20/2, 20/2],
+	  popupAnchor: [1, -1.2*20],
+	});
+
+/*	var iconPause = new L.Icon({
+	  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png',
+	  iconSize: [20, 20],
+	  iconAnchor: [20/2, 20/2],
+	  popupAnchor: [1, -1.2*20],
+	});*/
+
+	var iconPause = new L.Icon({
+	  iconUrl: "/mg/img/img_Binaire/presences/sleepingEmoji.png",
+	  iconSize: [20*2, 20*2],
+	  iconAnchor: [20/2, 20/2],
+//	  shadowSize: [41, 41]
+	  popupAnchor: [1, -1.2*20],
+	});
+
+
+/*	L.marker(latLng_Home, {icon: iconEntrainement}).addTo(map)
+	//	.bindTooltip("Maison Ensues", {permanent: true, direction: 'bottom'}); // Affichage permanent
+		.bindPopup('Maison Ensues'); // Affichage click*/
+
+	// *********************************************** DEBUT DE LA TRACE NR ****************************************
+	var latlngs = [[43.3507348,5.2083701, 1614124806],[43.3507336,5.2083683, 1614128407],[43.3507297,5.2083703, 1614132008],[43.3507347,5.2083683, 1614134033],[43.3507356,5.2083703, 1614135606],];
+	var complements = [[0.004, 3337, 0, 'I', 99],[0, 3601, 0, 'I', 100],[0.001, 3601, 0, 'I', 100],[0.001, 2025, 0, 'I', 100],[0, 1573, 0, 'I', 100],[0, 0, 0, '', 0],[0, 0, 0, '', 0],[0, 0, 0, '', 0],];
+	var dureePause = 0;
+
+	var polylineNR = L.polyline(latlngs, {color:'yellow', weight:'6' }).addTo(map);
+
+	var iconUser = new L.icon({
+		iconUrl: "/mg/img/img_Binaire/presences/NR.png",
+		shadowUrl:	  'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+		iconSize:	  [48, 48], // taille de l'icone
+		iconAnchor:	  [24, 48*1-48], // point de l'icone qui correspondra à la position du marker
+		shadowSize:	  [96, 96], // taille de l'ombre
+		shadowAnchor: [48, 96], // idem pour l'ombre
+		popupAnchor:  [-3, 42 -48*1] // point depuis lequel la popup doit s'ouvrir relativement à l'iconAnchor
+	});
+
+	// ********************************************* MARQUEUR SUR LA TRACE ********************************************
+	var sommeEcarts = 0;
+
+	for ( var i=1; i < latlngs.length-1; ++i ) {
+		var time = latlngs[i][2]*1000;
+
+		// Conversion date en string
+		var date = new Date(time);
+		annee = date.getFullYear();
+		moi = date.getMonth();
+	   mois = new Array('Janvier', 'F&eacute;vrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Ao&ucirc;t', 'Septembre', 'Octobre', 'Novembre', 'D&eacute;cembre');
+		j = date.getDate();
+		jour = date.getDay();
+		jours = new Array('Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi');
+		h = date.getHours();
+		if(h<10) { h = '0'+h; }
+		m = date.getMinutes();
+		if(m<10) { m = '0'+m; }
+		s = date.getSeconds();
+		if(s<10) { s = '0'+s; }
+		dateString = j+' '+mois[moi] +' '+annee + ' &#224; ' + h + ':' + m;
+		// Fin de la conversion
+
+		var coordonnee = latlngs[latlngs.length-1].toString();
+		var	 latLng = coordonnee.split(',');
+		latLng_ = L.latLng(latlngs[latlngs.length-1]);
+		var lat = Math.round(latLng[0]*1000000)/1000000;
+		var long = Math.round(latLng[1]*1000000)/1000000;
+
+		var ecart = parseFloat(complements[i][0]);
+		var dureeEcart = parseFloat(complements[i][1])/60;
+		var altitude = parseInt(complements[i][2]);
+		var activite = complements[i][3];
+		var pcBatterie = parseInt(complements[i][4]);
+
+
+		// Marqueur ENTRAINEMENT
+		if (activite == 'I' || activite == 'E') {
+			sommeEcarts = sommeEcarts + ecart;
+			L.marker( latlngs[i], {icon: iconEntrainement} ).bindTooltip( '<center> NR : ' + dateString + ' - '
+				+ Math.round(sommeEcarts*100)/100 + ' km - Alt ' + altitude + ' m - Bat. ' + pcBatterie + ' %'
+				+ '<br>Coordonn&#232;es : (' + lat + ' , ' + long + ')').addTo( map )
+			dureePause = 0;
+		}
+
+		// Marqueur VOITURE
+		if (activite == 'V') {
+			L.marker( latlngs[i], {icon: iconVoiture} ).bindTooltip('NR : '	+ dateString + ' - Bat. ' + pcBatterie + ' %').addTo( map );
+			dureePause = 0;
+		}
+
+		// Marqueur de PAUSE
+		if (activite == 'I' && sommeEcarts > 0) {
+			dureePause = dureePause + parseFloat(complements[i+1][1])/60; //dureeEcart;
+			// En fin de pause on affiche l'icone
+			if (dureePause > 2 && complements[i+1][3] != 'I') {
+			   L.marker( latlngs[i], {icon: iconPause} ).bindTooltip('NR : '	+ dateString + ' - PAUSE de ' + Math.round(dureePause) + ' mn - Alt ' + altitude + ' m').addTo( map );
+			}
+		}
+	}
+
+	// Icone du User sur la carte
+	var message = '';
+		if (0 != 0) {
+		message = ' <center>********************* ENTRAINEMENT NR *********************'
+		+ '<br>du 01/01 &#224; 01:00 au 24/02 &#224; 05:00'
+		+ '<br>Dur&eacute;e 00:00, en mouvement 00:00, (00:00 de pause)'
+		+ '<br>Dist ' + Math.round(0*100)/100 + ' km - d&eacute;nivel&eacute;s +' + 0 + ' m / ' + 0 + ' m - Vitesse		2.5 km/h'
+		+ '<br> -------------------------------------------------------------------------------<br>';
+		}
+		message =	message + '<center>NR : 24/02 &#224; 05:00 : Batterie 100 % -  Livebox-MG_5'
+					+'<br> Coordonn&#232;es : (' + lat + ' , ' + long + ')';
+
+	L.marker(latLng_, {icon: iconUser}).addTo(map).bindTooltip( message ).openPopup(); // POPUP : bindPopup
+
+	// ******************************************** BOUTONS de zoom NR *********************************************
+		L . easyButton ( '<img src = "/mg/img/img_Binaire/presences/NR.png">' ,  function ( btn ,	map ) {
+			var	 NR	=  L.latLng(latlngs[latlngs.length-1]);
+			var group = new L.featureGroup([polylineNR]);
+			map.fitBounds(group.getBounds());
+		} ) . addTo ( map ) ;
+	// ********************************************* FIN DE LA TRACE NR ********************************************
+	
+
+	// ********************************************* BOUTONS de zoom All **********************************************
+	L . easyButton ( '<img src = "/mg/img/img_Binaire/presences/monde.png">' ,	 function ( btn ,	 map ) {
+	var group = new L.featureGroup([polylineNR,]);
+	map.fitBounds(group.getBounds());
+} ) . addTo ( map ) ;
+
+	// ************************************** ZOOM AU CHARGEMENT SUR UserActif ***************************************
+	var group = new L.featureGroup([polylineNR]);
+	map.fitBounds(group.getBounds());
+
+	// *************************************** POSE DU REPERE HOME (REGION RONDE) *************************************
+	var influence = L.circle(latLng_Home, 100, {
+		'color': 'red',
+		'fill': true,
+		'fillColor': 'red',
+		'fillOpacity': 0.2,
+	}).addTo(map);
+
+	// ****************************************************************************************************************
+	// ****************************************************************************************************************
+
+	// **************************************** DEFINITIONS DES LAYERS PROPOSES ***************************************
+	
+var OpenStreetMap_France = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+	maxZoom: 20,
+	attribution: '&copy; Openstreetmap France | &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+});	
+
+	var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+		attribution: '© OpenStreetMap contributors',
+		maxZoom: 19,
+   });
+
+	var OpenTopoMap = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+		maxZoom: 17,
+		attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+	});
+
+	var Esri_WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+		attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+		minZoom: 0,
+		maxZoom: 19,
+	});
+
+	var GeoportailFrance_ignMaps = L.tileLayer('https://wxs.ign.fr/{apikey}/geoportail/wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&STYLE={style}&TILEMATRIXSET=PM&FORMAT={format}&LAYER=GEOGRAPHICALGRIDSYSTEMS.MAPS&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
+		attribution: '<a target="_blank" href="https://www.geoportail.gouv.fr/">Geoportail France</a>',
+		bounds: [[-75, -180], [81, 180]],
+		minZoom: 2,
+		maxZoom: 18,
+		apikey: 'choisirgeoportail',
+		format: 'image/jpeg',
+		style: 'normal'
+	});
+
+	var GeoportailFrance_parcels = L.tileLayer('https://wxs.ign.fr/{apikey}/geoportail/wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&STYLE={style}&TILEMATRIXSET=PM&FORMAT={format}&LAYER=CADASTRALPARCELS.PARCELS&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
+		attribution: '<a target="_blank" href="https://www.geoportail.gouv.fr/">Geoportail France</a>',
+		bounds: [[-75, -180], [81, 180]],
+		minZoom: 2,
+		maxZoom: 20,
+		apikey: 'choisirgeoportail',
+		format: 'image/png',
+		style: 'bdparcellaire'
+	});
+
+	var GeoportailFrance_maps = L.tileLayer('https://wxs.ign.fr/{apikey}/geoportail/wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&STYLE={style}&TILEMATRIXSET=PM&FORMAT={format}&LAYER=GEOGRAPHICALGRIDSYSTEMS.MAPS.SCAN-EXPRESS.STANDARD&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
+		attribution: '<a target="_blank" href="https://www.geoportail.gouv.fr/">Geoportail France</a>',
+		bounds: [[-75, -180], [81, 180]],
+		minZoom: 2,
+		maxZoom: 18,
+		apikey: 'choisirgeoportail',
+		format: 'image/jpeg',
+		style: 'normal'
+	});
+
+	var GeoportailFrance_orthos = L.tileLayer('https://wxs.ign.fr/{apikey}/geoportail/wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&STYLE={style}&TILEMATRIXSET=PM&FORMAT={format}&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
+		attribution: '<a target="_blank" href="https://www.geoportail.gouv.fr/">Geoportail France</a>',
+		bounds: [[-75, -180], [81, 180]],
+		minZoom: 2,
+		maxZoom: 19,
+		apikey: 'choisirgeoportail',
+		format: 'image/jpeg',
+		style: 'normal'
+	});
+/********** FIN INIT DES LAYERS **********/
+
+// ******************************************* AFFICHAGE DU CHOIX DES LAYERS ******************************************
+	map.addLayer(OpenStreetMap_France); // Le layer par dÃ©faut
+	map.addControl(new L.Control.Layers( {
+		
+		'OpenStreetMap_France': OpenStreetMap_France,
+		'OpenStreetMap': osmLayer,
+		'OpenTopoMap': OpenTopoMap,
+		'Esri_WorldImagery': Esri_WorldImagery,
+
+		'GeoportailFrance_ignMaps': GeoportailFrance_ignMaps,
+		'GeoportailFrance_parcels': GeoportailFrance_parcels,
+		'GeoportailFrance_maps': GeoportailFrance_maps,
+		'GeoportailFrance_orthos': GeoportailFrance_orthos,
+		}, {})
+	);
+	// ************************************ FIN DE L'AFFICHAGE DU CHOIX DES LAYERS ************************************
+
+}
+</script>
+

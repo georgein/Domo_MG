@@ -1,0 +1,19 @@
+	<!-- DEBUT HP-HC  - #name_display# -->
+<div style="top:45px;width:auto;height:auto;" class="cmd cmd-widget" data-type="info" data-subtype="other" data-cmd_id="#id#" data-cmd_uid="#uid#" data-version="#version#">
+
+    <span style="text-align:center;font-size: 52px;font-weight:bold;" class="iconCmd"></span> 
+
+<!-- FIN HP-HC  - #name_display# -->
+<script>
+         jeedom.cmd.update['#id#'] = function(_options){
+//			$('.cmd[data-cmd_id=#id#]').attr('title','Valeur du '+_options.valueDate+', collectée le '+_options.collectDate)
+
+            if (_options.display_value == 'HC') { var style = "<font color='#27F227'>"; } 
+           else { var style = "<font color='red'>"; }
+           
+             $('.cmd[data-cmd_id=#id#] .iconCmd').empty().append(style + _options.display_value);
+        }
+//    }
+    jeedom.cmd.update['#id#']({display_value:'#state#',valueDate:'#valueDate#',collectDate:'#collectDate#',alertLevel:'#alertLevel#'});
+  </script>
+</div>

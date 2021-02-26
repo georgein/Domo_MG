@@ -1,0 +1,272 @@
+/* ***************************************************************************************************************** */
+/* ***************************************** ZONE DE DEFINITION DES CSS MG ****************************************** */
+/* ***************************************************************************************************************** */
+
+/* ********************* DEFINITIONS DES COULEURS DE BASE DE DomoMG ********************* */
+:root {
+	--MG-titreBackground-color: darkgreen;
+	--MG-titre-color: lightsalmon;
+	--MG-slider-color: grey;
+	--MG-state-color: silver;
+}
+
+@font-face {
+	font-family: "Digital-7";
+		src: url("/mg/fonts/digital-7.ttf") format("truetype");
+	font-family: "nasalization";
+		src: url("/mg/fonts/nasalization.ttf") format("truetype");
+}
+
+.titre_MG{
+    position:relative;
+	font-size:1.1em!important;
+	color:var(--MG-titre-color) !important;
+	background: var(--MG-titreBackground-color);
+  	font-weight:bold;
+	 display:block;
+	white-space:nowrap;
+    width:fit-content;
+	justify-content:center;
+  	height: 16px;
+    padding: 0px 8px 0px 8px;
+    margin: 5px 8px 0px 8px;
+	border-radius: 25px;
+     box-shadow:0px 3px 3px 0px rgba(255, 255, 255, 0.5) inset,0px 3px 3px 0px rgba(0, 0, 0, 1);
+     text-shadow: 1px 2px 8px #000;
+    }
+
+.widget_MG {
+  	position:relative;
+	z-index:999;
+	top:6px;
+	float: center;
+    animation: blinking 1s infinite;
+	}
+
+.state_MG, .classState {
+    position:relative;
+	color:var(--MG-state-color);
+	white-space: nowrap!important;
+  	font-weight:bold;
+    }
+
+.unite_MG {
+	position: absolute;
+	font-size:7px;
+	color:var(--MG-titre-color);
+	white-space: nowrap!important;
+  	font-weight:bold;
+    }
+
+.timer_MG {
+  	position:relative!important;
+	font-size:0.8em!important;
+	color:var(--MG-state-color);
+	top:10px;
+	width:fit-content;
+	white-space:nowrap;
+	justify-content:center;
+    padding: 0px 8px 0px 8px;
+	border-radius: 25px;
+     box-shadow:0px 3px 3px 0px rgba(0, 0, 0, 1) inset,0px 3px 3px 0px rgba(255, 255, 255, 0.5);
+     text-shadow: 1px 2px 8px #000;
+	  z-index:1000;
+	}
+
+.aiguille_MG {
+    position: relative;
+  	background: center;
+	}
+
+.graduation_MG {
+	position:absolute;
+	font-weight:bold;
+	color:var(--MG-state-color);
+	white-space: nowrap!important;
+	}
+
+.blinkColor {
+  color:red;
+  animation: colorblink 1s infinite;
+}
+@keyframes colorblink {
+	0% { }
+	50% { color:var(--MG-titre-color); }
+}
+
+.imgGrise {
+-webkit-filter: grayscale(100%); /* Chrome, Safari, Opera */
+filter: grayscale(100%);
+}
+
+.tooltips_MG {
+  	position:relative;
+	font-size:0.9em!important;
+	color:var(--MG-titre-color);
+	background-color:#3c763d;
+	width:fit-content;
+	white-space:nowrap;
+	justify-content:center;
+    padding: 3px 7px 3px 7px;
+  	border-color:grey;
+	border-radius: 15px;
+	border-style:groove
+}
+
+.slider_MG {
+  	position:relative;
+	top:7px;
+	    margin: 5px 10px 8px 10px;
+}
+
+/* ***************************************************************************************************************** */
+/* ****************************************** CSS SPECIFIQUES AU WIDGET ******************************************** */
+/* ***************************************************************************************************************** */
+/* **************************** SliderBouton **************************** */
+.input_MG {
+  text-align: center;
+  font-family:"nasalization";
+  font-weight: normal;
+  border: none!important;
+  }
+input:not(.btn):not(.dial):not([type="radio"]):not([type="image"]):not(.expressionAttr):not(.knob):not([type="checkbox"]).input_MG {
+  color: unset!important;
+  }
+.timeCmd {
+  font-size:11px;
+  padding:2px 4px 2px 4px;
+  margin-top:4px;
+  line-height:1em!important;
+  display:inline-block!important;
+}
+
+
+
+
+
+
+.infoStringState, .BoutonRondState, .ThermometreState, .HygrometreState { position:relative!important }
+
+.highchartJaugeName  { top:5px!important;}
+
+/* *** SPECIFIQUE POUR Compteur *** */
+	.CompteurInt {
+    font-family: "Digital-7";
+	position: absolute;
+	white-space: nowrap!important;
+	font-size:2em!important;
+	text-align: right!important;
+	color: var(--MG-titre-color);
+	width: 57%;
+	height:28%;
+	top: 46%;
+	left: 14%;
+	text-align: left;
+	}
+	.CompteurDec {
+    font-family: "Digital-7";
+	position: absolute;
+	white-space: nowrap!important;
+	font-size: 1.5em!important;
+	text-align: center!important;
+	color: lightsalmon;
+	width: 13%;
+	height:28%;
+	top: 45%;
+	left: 75%;
+	}
+	.CompteurUnite {
+    font-family: "Digital-7";
+	font-size: 1.0em!important;
+     font-weight: bold;
+	color: darksalmon;
+	position: absolute;
+	text-align: center!important;
+	top: 71%;
+	left: 45%;
+	}
+
+/******************** STYLE SPECIFIQUE HIGHCHART ********************/
+.highcharts-background {
+	stroke-width: 0; /* Supprime le cadre de la zone de tracage */
+}
+
+  .highcharts-container {
+	overflow: visible !important;
+  }
+
+.highcharts-button-symbol {
+	display:none;			/* Suppression menu */
+  }
+
+.highcharts-button-box {
+  display:none;				/* Suppression menu */
+  }
+
+/* ***************************************************************************************************************** */
+/* **************************************************** SLIDER ***************************************************** */
+/* ***************************************************************************************************************** */
+.slider-tooltip{
+/*	display			: inline-block; */
+	position		: relative;
+	margin 			: 5px 10px 8px 10px;
+	width			: 80px;
+	height			: 6px;  /* Epaisseur du slider (13) */
+	border-width	: 1px;
+	border-style	: solid;
+	border-color	: #333 #333 #777 #333;
+	border-radius	: 25px;
+	background		: url(/mg/img/slider.png) repeat top left;
+	box-shadow		: inset 0 1px 5px 0px rgba(0, 0, 0, .5),
+					  0 1px 0 0px rgba(250, 250, 250, .5);
+}
+
+.slider-tooltip .ui-slider-handle{
+	width			: 15px;
+	height			: 15px;
+	background		: url(/mg/img/handle.png) no-repeat 50% 50% ;
+	top				: -4px ;	/* Decalage Vertical du handle (-7) */
+	border 			: 0;
+	outline			: none;
+}
+
+.slider-tooltip .ui-slider-range{
+    border-radius	: 25px;
+    background-image: linear-gradient(to bottom, var(--MG-slider-color), var(--MG-slider-color));	/* couleur partie gauche slider */
+}
+
+.tooltiptext {
+    visibility: hidden;
+    width: 40px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+    /* Position the tooltip text */
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -20px;
+
+    /* Fade in tooltip */
+    opacity: 0;
+    transition: opacity 1s;
+}
+/* Tooltip arrow */
+.tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent;
+}
+/* Show the tooltip text when you mouse over the tooltip container */
+.slider-tooltip :hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}

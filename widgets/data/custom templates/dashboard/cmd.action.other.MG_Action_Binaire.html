@@ -1,0 +1,159 @@
+<!-- DEBUT ACTION BINAIRE - #name_display# -->
+<div class="cmd-widget cmd" data-widgettype="actionOther" data-type="action" data-subtype="other" data-cmd_id="#id#" data-cmd_uid="#uid#" data-version="#version#">
+
+<center>
+	<div class="cmdStats #hide_history#"></div>
+		<div class="titre_MG"></div>
+	<div class="widget#uid# widget_MG">
+		<img class="img_MG">
+		<div class="state_MG">#state#</div>
+	</div>
+		<div class="timer_MG"></div>
+</center>
+
+	<template>
+		<div> ({{****** LA DOC SUR LES PARAMETRES DES WIDGETS SE TROUVE A "#VOTRE-IP#/mg/widgets/widgets.txt" ***** }})</div>
+	</template>
+
+	<link href='mg/widgets/widgets.css' rel='stylesheet'>
+	<script type='text/javascript' src='/mg/widgets/widgets.js'></script>
+	<script type="text/javascript" src='/mg/widgets/tabWidgets.json'></script>
+
+<!-- FIN VU-METRE - #name_display# -->
+<script>
+	var tabParams = JSON.parse(tabWidgets);
+	/* ************************************ LECTURE/MEMO DES PARAMETRES GENERAUX *********************************** */
+	var f#id# = new Array();
+	f#id#.cmd 			= $('.cmd[data-cmd_uid=#uid#]');
+	f#id#.path			= valDefaut('#path#', '/mg');						// Path général de DomoMG
+	f#id#.cmdType		= $('[data-cmd_uid=#uid#]') .data("type");			// type du widget info - action
+	f#id#.cmdSubtype	= $('[data-cmd_uid=#uid#]') .data("subtype");		// subtype du widget binaire - numerique - slider
+	f#id#.state			= (f#id#.state == 'string' ? '#state#' : parseFloat('#state#'));// Init de state
+	f#id#.type 			= valDefaut('#type#', $('[data-cmd_uid=#uid#]') .data("widgettype")).toLowerCase();
+	f#id#.name			= '#name#';
+	f#id#.titre			= valDefaut('#titre#', (f#id#.cmdType == 'action') ? '#valueName#' : '#name_display#');
+	f#id#.name_displayId= valDefaut('#name_displayId#', (f#id#.cmdType == 'action') ? '#name_displayId#' : '#id#');
+	f#id#.minHistoryValue = parseFloat(valDefaut('#minHistoryValue#', 0));
+	f#id#.averageHistoryValue = parseFloat(valDefaut('#averageHistoryValue#', 499));
+	f#id#.maxHistoryValue = parseFloat(valDefaut('#maxHistoryValue#', 9999));
+
+/* ************************************** PARAMETRAGES PAR DEFAUT SELON TYPE *************************************** */
+	key1#uid# = f#id#.type;  				// type		= #type#
+	try {
+		key2#uid# = ('#imgName#').indexOf('Jauge_') < 0 ? '#imgName#' : 'Jauge';
+		test = Object.keys(tabParams[key1#uid#][key2#uid#]['taille']);
+	} catch (err){
+		key2#uid# = Object.keys(tabParams[key1#uid#])[0];
+		//console.log('** ERROR '+f#id#.titre+' *** '+f#id#.type+' / '+f#id#.imgName+' #imgName# introuvable on prend le defaut :'+key2#uid#);
+	}
+
+/* **************************** RECUPERATION ET CALCUL DES PARAMETRES GENERAUX DU WIDGET *************************** */
+	f#id#.imgName = valDefaut('#imgName#', key2#uid#);
+	f#id#.taille	= parseFloat(valDefaut('#taille#', (tabParams[key1#uid#][key2#uid#]['taille'])));
+	f#id#.ratio		= parseFloat(valDefaut('#ratio#', tabParams[key1#uid#][key2#uid#]['ratio']));
+	f#id#.imgWidth	= parseFloat(valDefaut('#imgWidth#', tabParams[key1#uid#][key2#uid#]['imgWidth']));
+
+	f#id#.titreSize	= valDefaut('#titreSize#', tabParams[key1#uid#][key2#uid#]['titreSize']);
+	f#id#.titreBlink= valDefaut('#titreBlink#', tabParams[key1#uid#][key2#uid#]['titreBlink']);
+	f#id#.titreGrise= valDefaut('#titreGrise#', tabParams[key1#uid#][key2#uid#]['titreGrise']);
+	f#id#.imgGrise	= valDefaut('#imgGrise#', tabParams[key1#uid#][key2#uid#]['imgGrise']);
+
+	f#id#.stateRound= parseInt(valDefaut('#stateRound#',tabParams[key1#uid#][key2#uid#]['stateRound']));
+	f#id#.stateSize	= parseFloat(valDefaut('#stateSize#', tabParams[key1#uid#][key2#uid#]['stateSize']));
+	f#id#.stateColor= valDefaut('#stateColor#', tabParams[key1#uid#][key2#uid#]['stateColor']);
+	f#id#.stateTop	= valDefaut('#stateTop#', tabParams[key1#uid#][key2#uid#]['stateTop']);
+	f#id#.stateLeft	= valDefaut('#stateLeft#', tabParams[key1#uid#][key2#uid#]['stateLeft']);
+	f#id#.unite		= valDefaut('#unite#', '');
+	f#id#.uniteColor= valDefaut('#uniteColor#', 'lightsalmon');
+
+	f#id#.formCircle= valDefaut('#formCircle#', tabParams[key1#uid#][key2#uid#]['formCircle']);
+	f#id#.timerType	= valDefaut('#timerType#', tabParams[key1#uid#][key2#uid#]['timerType']);
+	f#id#.timerTop	= parseFloat(valDefaut('#timerTop#', tabParams[key1#uid#][key2#uid#]['timerTop']));
+	f#id#.sousType	= valDefaut('#sousType#', tabParams[key1#uid#][key2#uid#]['sousType']).toLowerCase();
+
+	f#id#.style		= valDefaut('#style#', 'dark');
+	f#id#.minusColor= valDefaut('#minusColor#', 'turquoise');
+	f#id#.plusColor	= valDefaut('#plusColor#', 'red');
+	f#id#.step		= parseFloat(valDefaut('#step#', 0.5));
+
+	f#id#.minValue	= parseFloat(valDefaut('#minValue#', Math.max('#minValue#', '#minHistoryValue#')));
+	f#id#.maxValue	= parseFloat(valDefaut('#maxValue#', Math.min('#maxValue#', '#maxHistoryValue#')));
+	f#id#.maxValue	= (f#id#.maxValue != 100) ? f#id#.maxValue : parseFloat('#maxHistoryValue#');	/* Correction pour Jeedom */
+	f#id#.etatMin	= parseFloat(valDefaut('#etatMin#', tabParams[key1#uid#][key2#uid#]['etatMin']));
+	f#id#.etatMax	= parseFloat(valDefaut('#etatMax#', tabParams[key1#uid#][key2#uid#]['etatMax']));
+	f#id#.nbImg		= parseFloat(valDefaut('#nbImg#', tabParams[key1#uid#][key2#uid#]['nbImg']));
+
+	f#id#.appelScenario= valDefaut('#appelScenario#', '');					// N° du scénario appelé par un type 'info'
+	f#id#.cmdMaj 	= valDefaut('#cmdMaj#', '');						// Scénario de MàJ affichage à lancer
+	f#id#.fileJS 	= valDefaut('#fileJS#', "");						// Chemin complet du script .JS complémentaire à charger
+
+	/* ******************************************* INITIALISATION DU WIDGET **************************************** */
+
+	// MàJ des données pour refresh de l'écran à la création ou via un bouton d'action (ex : tab_Conso_EDF)
+	function refresh() { jeedom.cmd.execute({id: f#id#.cmdMaj }); }
+	if (f#id#.cmdMaj != '') { refresh(); }
+	if (f#id#.type == 'jauges') { initJauges(f#id#); } // INIT JAUGES
+	if (f#id#.type == 'highchart') { initHighChart(f#id#); } // INIT HIGHCHART
+
+/* ------------------------------------------------ CREATION JEEDOM ------------------------------------------------ */
+	jeedom.cmd.update['#id#'] = function(_options){
+		var cmd#uid# = $('.cmd[data-cmd_id=#id#]')
+		cmd#uid#.find('.state_MG').empty().append(_options.display_value);
+		f#id#._options = _options;
+		f#id#.state = _options.display_value;
+		if (f#id#.fileJS != '') { $.getScript(f#id#.fileJS); }
+
+		// Lancements routines par defaut
+		getImgName(f#id#);
+		setTitre(f#id#);
+		setState(f#id#);
+		clicWidget(f#id#);
+		timer(f#id#);
+		sliderButton(f#id#);
+
+		if(f#id#.type == 'highchart') {
+			f#id#.cmd.find('.highChart').highcharts().series[0].points[0].update(_options.display_value);
+			$('.highcharts-text-outline').html(f#id#.stateHTML_1+_options.display_value+f#id#.stateHTML_2);
+		}
+		if (f#id#.type == 'sliderbutton') { $('.cmd[data-cmd_uid=#uid#] .input_MG').val(_options.display_value+' #unite#'); }
+
+		/* ******************** Attente CHARGEMENT DES IMAGES POUR ACQUISITION DE LEURS TAILLES ******************** */
+		if(f#id#.srcImg && f#id#.sousType != 'sansimg') {
+			var image#uid# = new Image();
+			image#uid#.onload = function(){
+				f#id#.imgWidth = image#uid#.width;
+				f#id#.imgHeight = image#uid#.height;
+				setImg(f#id#);
+				setActionBinaire(f#id#);
+				setAiguille(f#id#);
+				setGraduations(f#id#, $('.gradMin#uid#'), $('.grad1#uid#'), $('.grad2#uid#'), $('.gradMid#uid#'), $('.grad4#uid#'), $('.grad5#uid#'), $('.gradMax#uid#'));
+				setSlider(f#id#);
+			}
+			/* *********************************** // Fin de image.onload = function() ***************************** */
+			try {
+				image#uid#.src = f#id#.srcImg; // Force le chargement des  images
+			} catch (err){
+				console.log('** ERROR (onLoad) '+f#id#.titre+' ** '+f#id#.type+' / '+f#id#.imgName+' => L\'image '+f#id#.srcImg+' est introuvable !!!');
+			}
+		}
+//console.log('TEST0 : '+f#id#.titre+' - '+f#id#.type+' / '+f#id#.imgName+' - soustype : '+f#id#.sousType+' - srcImg : '+f#id#.srcImg+' (Defaut :  '+key1#uid#+' / '+key2#uid#+') taille '+f#id#.taille+' - stateTop '+f#id#.stateTop+' timerTop : '+f#id#.timerTop);
+
+	}
+	/* ************************************************ FIN CREATION JEEDOM **************************************** */
+jeedom.cmd.update['#id#']({display_value:'#state#',valueDate:'#valueDate#',collectDate:'#collectDate#',alertLevel:'#alertLevel#'});
+
+ // ************************************************ SLIDER plus ON/OFF ***********************************************
+	if (f#id#.cmdType == 'action' || f#id#.cmdSubType == 'slider') {
+		$('.widget#uid#').off().on('click', function() {
+			if (f#id#.state > '0') {
+				var value = parseFloat(valDefaut('#minValue#', 0));
+				jeedom.cmd.execute({id: '#id#', value: {slider: value}});
+			} else {
+				var value = parseFloat(valDefaut('#maxValue#', 99));
+				jeedom.cmd.execute({id: '#id#', value: {slider: value}});
+			}
+		});
+	}
+
+</script>
+</div>

@@ -1,0 +1,54 @@
+/* ------------------------------------------------ APPEL MODALE DES GRAPHIQUES -------------------------------------*/
+function graph(name, name_displayId) {
+	//remove any previously loaded history:
+	if (jeedom.history.chart['div_historyChart'] != undefined) {
+	  while (jeedom.history.chart['div_historyChart'].chart.series.length > 0) {
+		jeedom.history.chart['div_historyChart'].chart.series[0].remove(true)
+	  }
+	  delete jeedom.history.chart['div_historyChart']
+	}
+
+    modal = $('#md_modal3')
+	if (modal.is(':visible')) {
+		modal.modal('dispose');
+	}
+	modal.dialog({title: "Historique "+name+" (id : "+name_displayId+")"});
+	modal.load('index.php?v=d&modal=cmd.history&id='+name_displayId).dialog('open');
+}
+
+/* ------------------------------------------------------ CALCUL TIMER ----------------------------------------------*/
+	function timer2(type, idTimer, _options) {
+//var d = document.getElementById(id);
+		if (type == 'duree') {  
+			console.log('durée !!', _options.valueDate);
+//			jeedom.cmd.displayDuration(_options.valueDate,  $('.cmd[data-cmd_id=#id#] .timer#uid#'));
+			jeedom.cmd.displayDuration(_options.valueDate,  $(idTimer));
+		 }
+		else if (type == 'date') {
+			var date = new Date(_options.valueDate.replace(' ', 'T'));
+			var t = _options.valueDate.split(/[- :]/);
+			var format = $.datepicker.formatDate('D d M', date);
+			var time = "à "+t[3]+":"+t[4];  
+//			$('.cmd[data-cmd_id=#id#] .timer#uid#').html(format+'<br>'+time);
+			$(idTimer).html(format+'<br>'+time);
+		}
+		else if (type == 'heure') {
+			var date = new Date(_options.valueDate.replace(' ', 'T'));
+			var t = _options.valueDate.split(/[- :]/);
+			var time = "à "+t[3]+":"+t[4]+":"+t[5];  
+//			$('.cmd[data-cmd_id=#id#] .timer#uid#').html(time);
+			$(idTimer).html(time);
+		} else { $(idTimer).remove(); }
+	}
+
+/* ---------------------------------------------------- INCLUDE SCRIPT JS -------------------------------------------*/
+//addScript('mg/design/css/MG_util_js.js');
+/*function addScript(filename){
+ var head = document.getElementsByTagName('head')[0];
+
+ var script = document.createElement('script');
+ script.src = filename;
+ script.type = 'text/javascript';
+
+ head.append(script);
+}*/

@@ -1,0 +1,160 @@
+<!-- ***** DEBUT AFFICHAGE REVEIL -->
+<div class="tete_widget#uid# tete_widget_MG cmd #history# container-fluid tooltips cmd-widget conso#id#" data-type="action" data-subtype="slider" data-cmd_id="#id#" data-cmd_uid="#uid#" data-version="#version#" title="#collectDate#">
+
+<center>
+	
+	<img class="IMG#uid# " src="mg/img/reveil/fond bose.png">
+	
+	<div class="date titre_MG" style = "    font-size: 1.2em!important;"></div> 
+	
+	<span class="digit1#uid# digit_MG"></span>
+	<span class="digit2#uid# digit_MG"></span>
+	<span class="digit3#uid# digit_MG"></span>
+	<span class="digit4#uid# digit_MG"></span>
+	
+	<div class="btn-group" style:"padding-bottom:20px><br>
+		<a class="bt_plusH btn-sm "><i class="fa fa-plus-circle btn_MG"></i></a>
+		<a class="bt_minusH btn-sm"><i class="fa fa-minus-circle btn_MG"></i></a>
+		<a class="bt_plusM btn-sm"><i class="fa fa-plus-circle btn_MG"></i></a>
+		<a class="bt_minusM btn-sm"><i class="fa fa-minus-circle btn_MG"></i></a>
+	</div>
+</center>
+<!-- Fin HTML ***** FIN AFFICHAGE REVEIL -->
+
+<style>
+@font-face {
+	font-family: "Digital-7";
+	src:url("mg/fonts/digital-7.ttf") format("truetype"),
+		url("mg/fonts/digital-7.svg#Digital-7") format("svg");
+}
+
+.date {
+	top:15px;
+	margin-bottom: 7px;
+}
+
+.digit_MG {
+	position: absolute;
+	width: 9%;
+	height:35%;
+	top: 30%;
+	text-align: center;
+	font-family: "Digital-7";
+	font-size:1.6em;
+	font-weight:normal;
+	font-style:normal;
+	color: LawnGreen;
+}
+
+.btn_MG {
+	color:orange !important;
+	font-size:1.5em; 
+	padding:2px;
+}
+
+</style>
+<script>
+// creation
+jeedom.cmd.update['#id#'] = function(_options){
+	jeedom.cmd.displayDuration(_options.valueDate,	$('.cmd[data-cmd_id=#id#] .#id#'));
+	$('.cmd[data-cmd_id=#id#] .state').empty().append(_options.display_value);
+	appelScenario		 = valDefaut('#appelScenario#', '');
+	
+	// Lancement manuel du reveil
+	if (appelScenario != '') {
+		$('.cmd[data-cmd_uid=#uid#] .IMG#uid#, .digit1#uid#, .digit2#uid#, .digit3#uid#, .digit4#uid#').on('click',function(){
+				jeedom.scenario.changeState({
+					id: appelScenario, state: 'start' 
+				});
+		});
+	}
+	
+	// Calcul de la taille
+	taille = ("#taille#" == '#'+'taille#');
+	var taille#uid# = (taille != true ?	 parseFloat("#taille#")*1 : 1.5);
+	var imgHeight#uid# = Math.round(taille#uid#*90);
+	var imgWidth#uid# = Math.round(taille#uid#*250);
+	
+	var state = parseFloat(_options.display_value);
+	var reveil = new Date(state);
+
+	// calcul des digits de l'heure
+	var hour = reveil.getHours();
+	if (hour < 10)
+		{
+			hour = "0" + hour;
+		}
+	mn = reveil.getMinutes();
+	if (mn < 10)
+		{
+			mn = "0" + mn;
+		}
+
+	// calcul de la date
+	annee = reveil.getFullYear();
+	moi = reveil.getMonth();
+	mois = new Array('Janvier', 'F&eacute;vrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Ao&ucirc;t', 'Septembre', 'Octobre', 'Novembre', 'D&eacute;cembre');
+	
+	j = reveil.getDate();
+	
+	jour = reveil.getDay();
+	jours = new Array('Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi');
+	
+	date = jours[jour] + '  ' + j + '  ' + mois[moi] + '  ' + annee;
+	$('.cmd[data-cmd_id=#id#] .date').empty().append(date);
+	
+	var state2 = hour + ':' + mn;
+	var digits = state2.split("");
+	(isNaN(digits[0]) && digits[0]!='-') ? d1='x' : d1=digits[0];
+	(isNaN(digits[1]) && digits[1]!='-') ? d2='x' : d2=digits[1];
+	(isNaN(digits[3]) && digits[3]!='-') ? d3='x' : d3=digits[3];
+	(isNaN(digits[4]) && digits[4]!='-') ? d4='x' : d4=digits[4];
+
+	// Calcul des tailles des fonds et image
+	$('.tete_widget#uid#').css ({ 'min-height':imgHeight#uid#+'px' });
+	$('.tete_widget#uid#').css ({ 'min-width':imgWidth#uid#+'px' });
+	
+	$('.IMG#uid#').css('position', 'relative');
+	$('.IMG#uid#').css('top', '7px');
+	$('.IMG#uid#').css('width', imgWidth#uid#+'px');
+	$('.IMG#uid#').css('height', imgHeight#uid#+'px');
+
+	// Calcul des font-size selon la taille du widget
+	$('.digit1#uid#').css({ 'left':'32%', 'font-size':(40*taille#uid#)+'px' });
+	$('.digit2#uid#').css({ 'left':'40%', 'font-size':(40*taille#uid#)+'px' });
+	$('.digit3#uid#').css({ 'left':'51%', 'font-size':(40*taille#uid#)+'px' });
+	$('.digit4#uid#').css({ 'left':'59%', 'font-size':(40*taille#uid#)+'px' });
+
+	$('.cmd[data-cmd_id=#id#] .digit1#uid#').empty().append(d1);
+	$('.cmd[data-cmd_id=#id#] .digit2#uid#').empty().append(d2);
+	$('.cmd[data-cmd_id=#id#] .digit3#uid#').empty().append(d3);
+	$('.cmd[data-cmd_id=#id#] .digit4#uid#').empty().append(d4);
+
+	 // Modification des heures
+	 $('.cmd[data-cmd_uid=#uid#] .bt_plusH').on('click', function () {
+		state = state + 3600*1000;
+		jeedom.cmd.execute({id: '#id#', value: {slider: state}});
+	});
+
+	$('.cmd[data-cmd_uid=#uid#] .bt_minusH').on('click', function () {
+		state = state - 3600*1000;
+		jeedom.cmd.execute({id: '#id#', value: {slider: state}});
+	});
+
+	 // Modification des minutes
+	 $('.cmd[data-cmd_uid=#uid#] .bt_plusM').on('click', function () {
+		state = state + 5*60*1000;
+		jeedom.cmd.execute({id: '#id#', value: {slider: state}});
+	});
+
+	$('.cmd[data-cmd_uid=#uid#] .bt_minusM').on('click', function () {
+		state = state - 5*60*1000;
+		jeedom.cmd.execute({id: '#id#', value: {slider: state}});
+	});
+	
+// actualisation
+}
+jeedom.cmd.update['#id#']({display_value:'#state#',valueDate:'#valueDate#',collectDate:'#collectDate#',alertLevel:'#alertLevel#'});
+
+</script>
+</div>

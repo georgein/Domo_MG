@@ -1,0 +1,67 @@
+	<template>
+		<div>............({{Couleurs au format HTML standard (red, lime, …, #F00, …, #000000, …, rgb(255,0,0), …, rgba(255,0,0,0.5) transparence avec dernier paramètre entre 0 et 1}})</div>
+		<div>............({{..................................................................................}})</div>
+		<div>............({{Type 'type Voyant : 4 états : KO -2 (img:0), Inhibé)}})</div>
+		<div>............({{..................................................................................}})</div>
+		<div>............({{type BoutonRond : (0) Rouge foncé, (1) Rouge, (2) Bleu clair, (3) Jaune, (4) Orange, (5) Bleu foncé,(6) Violet, (7) Vert, (8) Noir, (9) Blanc, (10) Transparent}})</div>
+		<div>............({{..................................................................................}})</div>
+
+		<div>path: '/mg/' ({{Path général de la domotique, par defaut '/mg'}})</div>
+		<div>type: TYPE_DU_WIDGET ({{compteurs/boutons/lumieres/temperatures/humidites/fermetures/presences/voyants/highchart/jauges : boussoles/barometres/jauges/vents}})</div>
+		<div>taille: 1 ({{Taille du widget}})</div>
+		<div>ratio: 1 ({{Proportion hauteur/largeur demandée pour l'image}})</div>
+		<div>imgWidth: 120({{Largeur de l'image en pixel}})</div>
+
+		<div>............({{..................................................................................}})</div>
+		<div>titre: TITRE_WIDGET ({{Titre du widget}})</div>
+		<div>titreSize: true/false ({Affichage du titre}})</div>
+		<div>titreBlink: true/false ({{Fait clignoter le titre}})</div>
+		<div>titreGrise: true/false ({{Met le titre en N&B si Etat <= 0}})</div>
+		<div>imgName: NOM_IMAGE ({{Nom de l'image du répertoire 'type' (sans le '_ON' ou '_OFF')}})</div>
+		<div>imgGrise: 0/1 ({{Passage en N&B de l'image si Etat <= 0}})</div>
+
+		<div>............({{..................................................................................}})</div>
+		<div>stateRound: 1 ({{Nb de chiffre après la virgule de la valeur}})</div>
+		<div>stateSize: 13 ({{size-font de la valeur, 0 : pas de 'State' affiché}})</div>
+		<div>stateColor: black ({{Couleur de 'state'}})</div>
+		<div>stateTop: 25 ({{Position en hauteur de 'state' en %}})</div>
+		<div>stateLeft: 50 ({{Position depuis la gauche de 'state' en %}})</div>
+		<div>unite:  Kw/h ({{Unité du la commande W/A/... (Par defaut repris de la commande)}})</div>
+		<div>uniteColor: red ({{Couleur de l'unité}})</div>
+
+		<div>............({{.................................................................................}})</div>
+		<div>formCircle: true/false ({{Demande à mettre l'img dans un cercle rouge ou vert selon l'état de la commande}})</div>
+		<div>appelScenario: 99 ({{N° du scénario appelé par un clic sur l'image d'une commande de type 'info'}})</div>
+		<div>cmdMaj: 99 ({{N° d'une commande à lancer au chargement du widget pour le mettre à jour}})</div>
+		<div>timerType: duree/heure/val/dateVal ({{Type affichage du timer (si vide pas d'affichage du timer)}})</div>
+		<div>timerTop: 20 ({{Position en hauteur du 'timer' en %}})</div>
+
+		<div>............({{............................SPECIFIQUES AUX NUMERIQUES ...........................}})</div>
+		<div>sousType: center ({{Sous-type du widget : center, right, jauge}})</div>
+		<div>etatMin: white ({{Valeur de l'état minimum}})</div>
+		<div>etatMax: lemonchiffon ({{Valeur de l'état maximum}})</div>
+		<div>nbImg: 1 ({{Nombre d'images utilisés dans le widget (pour les variateurs}})</div>
+		<div>minValue:	0 ({{Min de la jauge (Par defaut Min de Jeedom ou MinHistory}})</div>
+		<div>maxValue:	99 ({{Max de la jauge (Par defaut Max de Jeedom ou MaxHistory}})</div>
+
+		<div>............({{..............................AUX SLIDER BUTTON .............................}})</div>
+		<div>style: light ({{style des boutons, 'light' ou 'dark'}})</div>
+		<div>minusColor: turquoise ({{Couleur des boutons 'moins' (orange, pink, purple, red, turquoise, yellow, green, neutral)}})</div>
+		<div>plusColor: red ({{Couleur des boutons 'plus' (orange, pink, purple, red, turquoise, yellow, green, neutral)}})</div>
+		<div>step: 0.5 ({{Incrément de progression des boutons}})</div>
+
+		<div>............({{..............................SPECIFIQUES AUX JAUGES .............................}})</div>
+		<div>aiguilleTaille: red ({{Taille de l'aiguille en % du rayon}})</div>
+		<div>aiguilleColor: red ({{Couleur de l'aiguille}})</div>
+		<div>angleMort: 30 ({{Valeur de l'angle mort de la jauge}})</div>
+		<div>sizeGrad:	1 ({{Font size des graduations, 0 : pas de graduation}})</div>
+		<div>colorBackground: lemonchiffon ({{Couleur colorBackground de base}})</div>
+		<div>fondColor2: white ({{Couleur de fond_2}})</div>
+		<div>fondColor3: lemonchiffon ({{Couleur de fond_3}})</div>
+		<div>fondColorCadre: red ({{Couleur du cadre}})</div>
+		<div>fondEpaisCadre: red ({{Epaisseur du cadre en px (Par defaut 1 x taille)}})</div>
+		<div>jaugeType: linear/logarithmic ({{TRype de jauge (Par defaut linear)}})</div>
+		<div>alerteMin: 10 ({{Valeur de l'alerte min (Par defaut 10 % de maxValue)}})</div>
+		<div>alerteMax: 70 ({{Valeur de l'alerte max (Par defaut minValue)}})</div>
+		<div>alerteColor: red ({{Couleur de l'alerte}})</div>
+	</template>

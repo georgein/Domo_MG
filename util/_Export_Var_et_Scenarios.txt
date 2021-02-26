@@ -1,0 +1,1592 @@
+<?php
+
+/***********************************************************************************************************************/
+													EXPORT DU 26/02/2021 à 05h15mn
+/***********************************************************************************************************************/
+
+/***********************************************************************************************************************/
+													Liste des variables Jeedom
+/***********************************************************************************************************************/
+_alertes ==> '[object Object]'
+_alertes_ ==> '[object Object]'
+_Aurore ==> '1614230473'
+_consoEDF_NbLgn ==> '31'
+_consoEDF_TabAff ==> '[{'
+_consoEDF_TabNomCol ==> '['
+_CtrlErreurBat ==> 'Capteurs en ERREUR : <br>openzwave-[Extérieur][Température'
+_designActif ==> '75'
+_equipErreur ==> 'Capteurs en ERREUR : <br>enedis - [Maison][Enedis] - last Co'
+_Heure_Reveil ==> '1614324600'
+_htmlOK ==> '0'
+_LastCompteur ==> '48370.834'
+_LastTimeConso ==> '1614312841'
+_majTabOK ==> '1'
+_MeteoLocale ==> '(...)
+(...) Les prévisions de Météo France pour la Mété'
+_Notif_ICO ==> 'Info Piscine Ensuèse : ,  La température de l'eau est de 9'
+_OldDist_NR ==> '0.56464520075764'
+_seuilVentFort ==> '30'
+_Snapmessage ==> '***Cam_Bureau*** Inhib. 1 - Mémo 0, ***Cam_SàM*** Inhib. 1'
+_tabChauffages ==> '[object Object]'
+_tabUser ==> '[object Object]'
+_VoletGeneral ==> 'D'
+dist_Tel-MG ==> '-1'
+dist_Tel-NR ==> '-1'
+FREE_OK ==> '0'
+HP_HC ==> 'HC'
+interactReponse ==> ''
+NuitExt ==> '1'
+NuitSalon ==> '1'
+Présence ==> '2'
+Saison ==> 'HIVER'
+tabChauffages ==> '[object Object]'
+tabChauffages_ ==> '[object Object]'
+tabConso ==> '[object Object]'
+tabConso_ ==> '[object Object]'
+tabGeofence ==> '[object Object]'
+tabParams ==> '[object Object]'
+tabParams_ ==> '[object Object]'
+tabPassword ==> '[object Object]'
+tabPassword_ ==> '[object Object]'
+tabTooltips ==> '[object Object]'
+tabTooltips_ ==> '[object Object]'
+tabUser ==> '[object Object]'
+tabUser_ ==> '[object Object]'
+tabVolets ==> '[object Object]'
+tabVolets_ ==> '[object Object]'
+tabWidgets ==> '[object Object]'
+tabWidgets_ ==> '[object Object]'
+VRState ==> '0'
+
+													49 Variables Jeedom.
+
+/***********************************************************************************************************************/
+													function Test_1__178()
+/***********************************************************************************************************************/
+Sheduler : * * * * *
+
+
+/************************************************************************************************************************
+Test_1 - 178
+************************************************************************************************************************/
+include_once getRootPath(false) . '/mg/mg.class.php'; mg::init();
+
+$tmp = '#[Sys_Virtuel][*Lampe Yanna][Etat]#';
+$tmp1 = '#[Sys_Virtuel][*Lampe Yanna]#';
+
+// findCmds(/Nom objet/i, Catégorie, /Nom équipement/i, Type, /Sous-type/i, /Nom commande/i, /Type générique/i)
+mg::getCmd($tmp1, 'Etat');
+mg::message('', $maxValue = mg::getMinMaxCmd($tmp1, 'Etat', 'max'));
+mg::isActive($tmp1);
+
+// ******************************************** Suite du code du scénario ***********************************************
+//include_once getRootPath() . '/mg/_test_1.php';
+
+/***********************************************************************************************************************/
+													function Test_2__190()
+/***********************************************************************************************************************/
+Sheduler : */5 * * * *
+
+
+/************************************************************************************************************************
+_test_2 - 190
+*************************************** UTILISE LORS DE L'ENREGISTREMENT  ***********************************************
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+/*
+global $debug;
+$debug = 0; mg::test();
+$debug = 1; mg::test();
+$debug = 2; mg::test();
+$debug = 3; mg::test();
+$debug = 4; mg::test();
+return;
+*/
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/_test_2.php';
+
+/***********************************************************************************************************************/
+													function AL_Froid_EDF__102()
+/***********************************************************************************************************************/
+Sheduler : */10 * * * *
+
+Trigger (0) : #[Salon][Frigo Salon][Température]#
+
+/************************************************************************************************************************
+Alerte_Froid_EDF - 102
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$infAffAlerte = '#[Maison][Général]#';
+
+// Liste des frigos à surveiller (créer une ligne pour chacun).
+	$infTempCongeloSS = '#[Extérieur][Congélateur Extérieur_2][Température]#';
+	$infTempFrigoSalon = '#[Salon][Frigo Salon][Température]#';
+	$infTempCongeloSalon = '#[Salon][Congélateur Salon][Température]#';
+
+// Liste des equipements sous surveillance EDF et Charge (créer une ligne pour chacun).
+	$infPuissanceEDF = '#[Maison][Gen5 ZW095][Puissance]#';
+	$infPuissanceCongelo = '#[Extérieur][Congélateur][Puissance]#';
+	$infPuissanceInfoSauvegarde = '#[Salon][Informatique][Puissance]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/AL_Alerte_Froid_EDF.php';
+
+/***********************************************************************************************************************/
+													function AL_Gestion__64()
+/***********************************************************************************************************************/
+Sheduler : * * * * * 
+
+Trigger (0) : #[Maison][Général][NbPortes]#
+Trigger (1) : #[Maison][Général][NbMvmt]#
+
+/************************************************************************************************************************
+Alarme Gestion - 64
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$infoPorteEntree = '#[Salon][Porte Entree][Ouverture]#';
+$equipAlarme = '#[Maison][* Alarme]#';
+$equipLampeCouleur = '#[Salon][Lampe Couleurs]#';
+$equipSirene = '#eqLogic1046#';
+
+$equipGeneralMaison = '#[Maison][Général]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/AL_Alarme_Gestion.php';
+
+/***********************************************************************************************************************/
+													function AL_Lancement__57()
+/***********************************************************************************************************************/
+Sheduler : 
+
+Trigger (0) : #[Maison][* Alarme][Sirène Etat]#
+Trigger (1) : #[Maison][* Alarme][Inhibition Etat]#
+Trigger (2) : #[Maison][* Alarme][Force Etat]#
+Trigger (3) : #[Maison][* Alarme][CodeSaisi]#
+Trigger (4) : #[Maison][* Alarme][NomUserSaisi]#
+Trigger (5) : #[Maison][* Alarme][NomUserModif]#
+
+/************************************************************************************************************************
+Alarme Lancement - 57
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$equipAlarme = '#[Maison][* Alarme]#';
+$equipGeneralMaison = '#[Maison][Général]#';
+
+$infoPorteEntree = '#[Salon][Porte Entree][Ouverture]#';
+$equipEcl ='[Salon][Eclairages]';
+$equipLampeCouleur = '#[Salon][Lampe Couleurs]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/AL_Alarme_Lancement.php';
+
+/***********************************************************************************************************************/
+													function AL_Presence__65()
+/***********************************************************************************************************************/
+Sheduler : */5 * * * *
+
+Trigger (0) : #[Salon][Ouvertures][Porte Entrée Ouverture]#
+Trigger (1) : #[Extérieur][Mouvements][Mvmt_Cam_Entrée]#
+Trigger (2) : #[Extérieur][Mouvements][Mvmt_Oeil_Entree]#
+Trigger (3) : #[Extérieur][DoorBird Ensues][Présence]#
+Trigger (4) : #[Extérieur][Ouvertures][Portail]#
+Trigger (5) : #[Sys_Présence][Ensues ][Présence NR]#
+Trigger (6) : #[Sys_Présence][Ensues ][Présence MG]#
+Trigger (7) : #[Sys_Présence][Ensues ][Présence PS]#
+Trigger (8) : #[Systéme][*Réseau][Maj_Aff]#
+Trigger (9) : #variable(dist_Tel-NR)#
+Trigger (10) : #variable(dist_Tel-MG)#
+
+/************************************************************************************************************************
+Alarme Presence - 65
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$equipTabReseau = '#[Systéme][*Réseau]#';
+$infTabReseau_Aff = '#[Systéme][*Réseau][TabReseau_Aff]#';
+$equipGeoloc = '#[Sys_Présence][*Map Présence]#';
+$infNbMvmtSalon = '#[Salon][Mouvements][nbMvmt]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/AL_Alarme_Presence.php';
+
+/***********************************************************************************************************************/
+													function CH_AutoForcé__112()
+/***********************************************************************************************************************/
+Sheduler : 22 14 09 01 * 2021
+
+Trigger (0) : #variable(_TypeChauffage)#
+
+/************************************************************************************************************************
+Chauffages Auto-Forcé - 112
+Gestion globale des chauffages en mode automatique, ou forcé en Eco (HG après $Timing heures suivant le mode Eco).
+Positionner la variable 'TypeChauffage' à Auto, Eco ou HG avant de lancer le scénario.
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/CH_Chauffages_Auto-Force.php';
+
+/***********************************************************************************************************************/
+													function CH_Mode__104()
+/***********************************************************************************************************************/
+Sheduler : */1 * * * *
+
+Trigger (0) : #variable(Alarme)#
+Trigger (1) : #variable(NuitSalon)#
+
+/************************************************************************************************************************
+Chauffages Mode - 104
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$infTempExt = '#[Extérieur][Résumé][Température]#';
+$infPresenceEtage = '#[Etage][Mouvements][Présence]#';
+$equipGeneralMaison = '#[Maison][Général]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/CH_Chauffages_Mode.php';
+
+/***********************************************************************************************************************/
+													function CH_Ouvertures_Salon__121()
+/***********************************************************************************************************************/
+Sheduler : */2 * * * * *
+
+Trigger (0) : #[Salon][Ouvertures][NbPortes]#
+
+/*************************************************************************************************************************
+Ouvertures Salon - 121
+*************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$infTempExt = '#[Extérieur][Résumé][Température]#';
+$infTempSalon = '#[Salon][Résumé][Température]#';
+$infNbPortesSalon = '#[Salon][Ouvertures][NbPortes]#';
+
+$equipLampeCouleur = '#[Salon][Lampe Couleurs]#';
+$equipReveil= '#[Chambre][*Reveil chambre]#';
+$equipGeneralMaison = '#[Maison][Général]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/CH_Ouvertures_Salon.php';
+
+/***********************************************************************************************************************/
+													function CH_Régulation__115()
+/***********************************************************************************************************************/
+Sheduler : */2 * * * *
+
+Trigger (0) : #variable(_ModeNomChauffage)#
+Trigger (1) : #variable(_InfPorte)#
+Trigger (2) : #variable(Alarme)#
+
+/************************************************************************************************************************
+Chauffages Régulation - 115
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$infTempExt = '#[Extérieur][Températures][Température Extérieur]#';
+$infRouteurBroadlink = '#[Sys_Routeur][Broadlink][Présence]#';
+
+$equipDaemon = '#[Systéme][Exploit Controle]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/CH_Chauffages_Regulation.php';
+
+/***********************************************************************************************************************/
+													function CO_Aérateur_SdB__185()
+/***********************************************************************************************************************/
+Sheduler : */15 * * * *
+
+Trigger (0) : #[RdCSdB][Thermomètre SdB][Humidité]#
+
+/************************************************************************************************************************
+CO_Aérateur_SdB - 185
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$EquipAerateur = '#[RdCSdB][Aérateur]#';
+$infHumiditeExt = '#[Extérieur][Températures][Humidité Réelle]#';
+$infHumiditeSdB = '#[RdCSdB][Températures][Humidité]#';
+$seuilHumiditeSdB = mg::getParam('Confort', 'seuilHumiditeSdB');
+
+$HumiditeExt = mg::getCmd($infHumiditeExt);
+$HumiditeSdB = mg::getCmd($infHumiditeSdB);
+
+if ($HumiditeSdB > $HumiditeExt && $HumiditeSdB > $seuilHumiditeSdB) {
+	mg::setCmd($EquipAerateur, 'Intensité', 30);
+} else if ($HumiditeSdB > $HumiditeExt +5 && $HumiditeSdB > $seuilHumiditeSdB+10) {
+	mg::setCmd($EquipAerateur, 'Intensité', 100);
+} else {
+	mg::setCmd($EquipAerateur, 'Off');
+	mg::setCmd($EquipAerateur, 'Intensité', 0);
+}
+
+// ******************************************** Suite du code du scénario ***********************************************
+
+/***********************************************************************************************************************/
+													function CO_BAL__175()
+/***********************************************************************************************************************/
+Sheduler : 50 21 24 02 * 2021
+
+Trigger (0) : #[Salon][Porte Entree][Ouverture]#>0
+Trigger (1) : #[Extérieur][BAL][Présence]#
+
+/************************************************************************************************************************
+BAL - 175
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$inPorteEntree = '#[Salon][Ouvertures][Porte Entrée Ouverture]#';
+$infBAL_Mvmt = '#[Extérieur][BAL][Présence]#';
+$infBalAff = '#[Maison][Présences][BAL_Aff]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/CO_BAL.php';
+
+/***********************************************************************************************************************/
+													function CO_Cinema__179()
+/***********************************************************************************************************************/
+Sheduler : 
+
+Trigger (0) : #[Maison][Général][Cinéma Etat]#
+
+/*************************************************************************************************************************
+Cinema - 179
+*************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$equipEcl ='[Salon][Eclairages]';
+$equipSmartThings = '#[Salon][The Frame]#';
+
+$infTV_Sendkey = '#[Sys_Comm][Frame TV][SendKey]#';
+$infTVOnOff = '#[Sys_Comm][Frame TV][OnOff]#';
+$infCinemaEtat = '#[Maison][Général][Cinéma Etat]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/CO_Cinema.php';
+
+
+
+/***********************************************************************************************************************/
+													function CO_Covid__191()
+/***********************************************************************************************************************/
+Sheduler : * * * * *
+
+Trigger (0) : #[Maison][Présences][MG]#>0
+Trigger (1) : #[Sys_Présence][*Map Présence][MG]#
+Trigger (2) : #[Maison][Présences][NR]#>0
+Trigger (3) : #[Sys_Présence][*Map Présence][NR]#
+
+/************************************************************************************************************************
+CO_Covid - 191
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+  
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/CO_Covid.php';
+
+/***********************************************************************************************************************/
+													function CO_Cube__132()
+/***********************************************************************************************************************/
+Sheduler : 12 01 04 03 * 2018
+
+Trigger (0) : #[Maison][Cube Magic][Bouton 02]#
+Trigger (1) : #[Maison][Cube Magic][Bouton 03]#
+
+/************************************************************************************************************************
+Cube - 132
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$equipEcl ='#[Salon][Eclairages]#';
+$equipEclExt = '#[Extérieur][Eclairages]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/CO_Cube.php';
+
+
+/***********************************************************************************************************************/
+													function CO_DoorBird__133()
+/***********************************************************************************************************************/
+Sheduler : 41 15 25 02 * 2021
+
+Trigger (0) : #[Extérieur][DoorBird Ensues][Sonnerie]# > 0
+Trigger (1) : #[Extérieur][Mouvements][Mvmt_Cam_Doorbird]# > 0
+Trigger (2) : #[Extérieur][Mouvements][Mvmt_Oeil_Entree]# > 0
+
+/************************************************************************************************************************
+DoorBird - 133
+Gestion de DoorBird
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$infAffDoorbird = '#[Extérieur][Mouvements][Mvmt_Cam_Doorbird_Aff]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/CO_DoorBird.php';
+
+
+/***********************************************************************************************************************/
+													function CO_Frame_TV__187()
+/***********************************************************************************************************************/
+Sheduler : 34 05 26 02 * 2021
+
+Trigger (0) : #variable(NuitSalon)#
+Trigger (1) : #[Salon][Oeil Séjour][Présence]#
+
+/*************************************************************************************************************************
+FrameTV - 187
+*************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$infTV_Sendkey = '#[Sys_Comm][Frame TV][SendKey]#';
+$infMvmt = '#[Salon][Oeil Séjour][Présence]#';
+$infCinema = '#[Maison][Général][Cinéma Etat]#';
+
+$equipSmartThings = '#[Salon][The Frame]#';
+$equipFrameTV = '#[Salon][Frame TV]#';
+
+  // ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/CO_FrameTV.php';
+
+
+
+/***********************************************************************************************************************/
+													function CO_Geofence__123()
+/***********************************************************************************************************************/
+Sheduler : */5 * * * *
+
+Trigger (0) : #[Sys_Présence][*Map Présence][MG]#
+Trigger (1) : #[Sys_Présence][*Map Présence][NR]#
+
+/************************************************************************************************************************
+Geofence - 123
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$equipPresence = '#[Maison][Présences]#';
+$tabUserGeofence = array(
+    'MG'=> array('ID' => '10996'),
+    'NR'=> array('ID' => '10995')
+);
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/CO_Geofence.php';
+
+/***********************************************************************************************************************/
+													function CO_Interactions__186()
+/***********************************************************************************************************************/
+Sheduler : 
+
+Trigger (0) : #[Sys_Comm][Telegram MG][Message]#
+Trigger (1) : #[Sys_Comm][*Interactions][VR Etat]#
+Trigger (2) : #[Sys_Comm][*Interactions][Interaction]#
+
+/************************************************************************************************************************
+Interactions - 186
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$infVRstate = '#[Sys_Comm][*Interactions][VR Etat]#';
+$infReponse = '#[Sys_Comm][*Interactions][Réponse]#';
+
+$Telegram = '#[Sys_Comm][Telegram MG][Georgein - 649118864]#'; // Cmd de réponse au groupe TELEGRAM
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/CO_Interactions.php';
+
+/***********************************************************************************************************************/
+													function CO_Lave_Linge__158()
+/***********************************************************************************************************************/
+Sheduler : 35 16 25 02 * 2021
+
+Trigger (0) : #[RdCSdB][Lave Linge][Puissance]#
+
+/************************************************************************************************************************
+Lave_Linge - 158
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$infPuissanceLaveLinge = '#[RdCSdB][Lave Linge][Puissance]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/CO_Lave_Linge.php';
+
+/***********************************************************************************************************************/
+													function CO_Menu_du_Soir__108()
+/***********************************************************************************************************************/
+Sheduler : 0 19 * * *
+
+Trigger (0) : 00 19 * * * * 
+
+/************************************************************************************************************************
+Menu du Soir - 108
+Envoi des proposition de menu par SMS le soir
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/CO_Menu_du_Soir.php';
+
+/***********************************************************************************************************************/
+													function CO_Netatmo__189()
+/***********************************************************************************************************************/
+Sheduler : 
+
+Trigger (0) : #[Sys_Présence][Cam Bureau][Evènement]#
+Trigger (1) : #[Sys_Présence][Cam SàM][Evènement]#
+Trigger (2) : #[Sys_Présence][Cam Piscine][Evènement]#
+Trigger (3) : #[Sys_Présence][Cam Entrée][Evènement]#
+
+/************************************************************************************************************************
+Netatmo - 189
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+//Gère les détecteurs virtuels de mouvement des caméras Netatmo
+
+  $tab_Cameras = array(
+// Nom 						(0)equipCaméra,			 			(1)$InfMvmtCam
+'Cam Bureau'	=> array('#[Sys_Présence][Cam Bureau]#',	'#[Salon][Mouvements][Mvmt_Cam_Bureau]#'),
+'Cam SàM'		=> array('#[Sys_Présence][Cam SàM]#',		'#[Salon][Mouvements][Mvmt_Cam_SàM]#'),
+'Cam Entrée'	=> array('#[Sys_Présence][Cam Entrée]#',	'#[Extérieur][Mouvements][Mvmt_Cam_Entrée]#'),
+'Cam Piscine'	=> array('#[Sys_Présence][Cam Piscine]#',	'#[Extérieur][Mouvements][Mvmt_Cam_Piscine]#'),
+);
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/CO_Netatmo.php';
+
+
+
+/***********************************************************************************************************************/
+													function CO_Porte_entree__103()
+/***********************************************************************************************************************/
+Sheduler : 
+
+Trigger (0) : #[Salon][Porte Entree][Ouverture]#>0
+
+/************************************************************************************************************************
+Porte entree - 103
+Joue un son à l'ouverture et à la fermeture du déclencheur.
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$equipEclCuisine = '#[Salon][Lampe Cuisine]#'; 
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/CO_Porte_Entree.php';
+
+/***********************************************************************************************************************/
+													function CO_Télécommande__74()
+/***********************************************************************************************************************/
+Sheduler : 
+
+Trigger (0) : #[Salon][Télécommande 1][Scene]#
+
+/************************************************************************************************************************
+Télécommande - 74
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$infoNumBouton = '#[Salon][Télécommande 1][Scene]#';
+
+$equipCube = '#eqLogic1082#';
+$equipEcl ='#[Salon][Eclairages]#';
+$equipEclExt = '#[Extérieur][Eclairages]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/CO_Telecommande.php';
+
+/***********************************************************************************************************************/
+													function EDF_Calcul_Virtuels__177()
+/***********************************************************************************************************************/
+Sheduler : * * * * *
+
+Trigger (0) : #[Salon][Lampe Yanna1][Etat]#
+Trigger (1) : #[Salon][Lampe Yanna2][Etat]#
+Trigger (2) : #[Salon][Lampe Oeuf_old_][Etat]#
+
+/************************************************************************************************************************
+EDF_Calcul_Virtuels - 177
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/EDF_Calcul_Virtuels.php';
+
+/***********************************************************************************************************************/
+													function EDF_HCHP__176()
+/***********************************************************************************************************************/
+Sheduler : * * * * *
+
+
+/************************************************************************************************************************
+Test_PHP - 175
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$infCompteur = '#[Maison][Gen5 ZW095][Consommation]#';
+$equipEDF = '#[Maison][*Conso EDF]#';
+  
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/EDF_HC-HP.php';
+
+/***********************************************************************************************************************/
+													function EDF_Tab_Conso__127()
+/***********************************************************************************************************************/
+Sheduler : */2 * * * *
+
+Trigger (0) : #[Maison][*Conso EDF][Detail_Lignes]#
+Trigger (1) : #end_restore#
+Trigger (2) : #start#
+Trigger (3) : #[Maison][*Conso EDF][Maj_Aff]#
+
+/************************************************************************************************************************
+EDF Conso - 127
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$equipEDF = '#[Maison][*Conso EDF]#';
+$equipConso = '#[Maison][*Conso EDF]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/EDF_Tab_Conso.php';
+
+/***********************************************************************************************************************/
+													function LU_Allumage_Couloir__157()
+/***********************************************************************************************************************/
+Sheduler : */5 * * * *
+
+Trigger (0) : #variable(NuitSalon)# != 1
+Trigger (1) : #[Salon][Mouvement Entrée][Présence]# > 0
+Trigger (2) : #[Salon][Porte Entree][Ouverture]# > 0
+Trigger (3) : #[Salon][Eclairages][Lampe Générale Etat]# <= 0
+
+/************************************************************************************************************************
+LU_Allumage_Couloir - 157
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+if(mg::getCmd('#[Salon][Inter Entrée][Bouton]#') == 1004) { sleep(180); return; }
+
+$equipEcl = '#[Salon][Lampe Couloir]#';
+$infNbMvmt = '#[Salon][Mouvement Entrée][Présence]#';
+$timer = mg::getParam('Lumieres', 'timerEclCouloir');
+
+$infEclRdC = '#[Salon][Eclairages][Lampe Générale Etat]#';
+$cdExtinction = (mg::getVar('NuitSalon') != 1); // || mg::getCmd($infEclRdC) == 0);
+$cdAllumage = '';
+
+mg::minuterie($equipEcl, $infNbMvmt, $timer, $cdExtinction, $cdAllumage);
+// ******************************************** Suite du code du scénario ***********************************************
+
+/***********************************************************************************************************************/
+													function LU_Allumage_Cuisine__161()
+/***********************************************************************************************************************/
+Sheduler : */5 * * * *
+
+Trigger (0) : #variable(NuitSalon)#
+Trigger (1) : #[Salon][Eclairages][Lampe Générale Etat]# <= 0
+Trigger (2) : #[Salon][Mouvements][Mouvement Oeil Cuisine]# > 0
+Trigger (3) : #[Salon][Mouvements][Fen Cuisine]# > 0
+
+/************************************************************************************************************************
+LU_Allumage_Cuisine - 161
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+if(mg::getCmd('#[Salon][Inter Entrée][Bouton]#') == 1004) { sleep(180); return; }
+
+$equipEcl = '#[Salon][Lampe Cuisine]#';
+$infNbMvmt = '#[Salon][Mouvements][Mouvement Oeil Cuisine]#' ;
+$infNbMvmt2 = '#[Salon][Mouvements][Fen Cuisine]#';
+$timer = mg::getParam('Lumieres', 'timerCuisine');
+$infLuminositeSalon = '#[Salon][Eclairages][Luminosité]#';
+$seuilLumSalon = mg::getParam('Lumieres', 'seuilLumSalon');	// Seuil luminosité ambiante de passage à l'état (1) "soir".
+$infEclRdC = '#[Salon][Eclairages][Lampe Générale Etat]#';
+
+$cdExtinction = mg::getVar('NuitSalon') != 1 || mg::getCmd($infLuminositeSalon) > $seuilLumSalon || (time() > mg::getVar('_Heure_Reveil')-2*3600 && time() < (mg::getVar('_Heure_Reveil')+3600));
+$cdAllumage = mg::getCmd($infNbMvmt) || mg::getCmd($infNbMvmt2);
+
+mg::minuterie($equipEcl, $infNbMvmt2, $timer, $cdExtinction, $cdAllumage);
+
+//******************************************** Suite du code du scénario ***********************************************
+
+/***********************************************************************************************************************/
+													function LU_Allumage_Entree_Ext__80()
+/***********************************************************************************************************************/
+Sheduler : */3 * * * *
+
+Trigger (0) : #[Extérieur][Mouvements][Mvmt_Oeil_Entree]# > 0
+Trigger (1) : #[Salon][Porte Entree][Ouverture]# > 0
+Trigger (2) : #variable(NuitExt)#
+
+/************************************************************************************************************************
+Allumage Entree_Ext - 80
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$equipEcl = '#[Extérieur][Eclairages]#';
+$actionEtat = 'Lampe ProjoEntrée Etat'; 
+
+$infNbMvmt = '#[Extérieur][Mouvements][Mvmt_Oeil_Entree]#';
+$timer = mg::getParam('Lumieres', 'timerPorteEntree');
+
+$infVoletChambre = '#[Chambre][Ouvertures][Volet Chambre Etat]#';
+$cdExtinction = !mg::getVar('NuitExt') || mg::getCmd($infVoletChambre) > 1;
+
+$porteEntree = '#[Salon][Porte Entree][Ouverture]#';
+$cdAllumage = mg::getCmd($porteEntree) == 1 && !mg::getVar('NuitExt');
+
+mg::minuterie($equipEcl, $infNbMvmt, $timer, $cdExtinction, $cdAllumage, $actionEtat);
+
+// ******************************************** Suite du code du scénario ***********************************************
+
+/***********************************************************************************************************************/
+													function LU_Allumage_Exterieur__23()
+/***********************************************************************************************************************/
+Sheduler : */5 * * * *
+
+Trigger (0) : #[Extérieur][Mouvements][NbMvmt]# > 0
+Trigger (1) : #[Extérieur][Eclairages][Lampe Générale Etat]#
+Trigger (2) : #variable(NuitExt)# > 0
+Trigger (3) : #[Extérieur][Eclairages][Lampe ProjoEntrée Etat]# > 0
+Trigger (4) : #[Extérieur][Eclairages][Lampe ProjoPiscine Etat]# > 0
+
+/************************************************************************************************************************
+Allumage Exterieur - 23
+Allume les lampes extérieure SI il fait nuit ET pas de VentFort en cas de mouvememnt détecté.
+Programme l'extinction $Timer mn plus tard si pas d'autres mouvements.
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$equipMeteoFrance = '#[Extérieur][Températures]#';
+$cmdEtatEclExt = '#[Extérieur][Eclairages][Lampe Générale Etat]#';	// Equipement de contrôle général des lampes extérieures
+$cmdVentFort = '#[Extérieur][Températures][VentFort]#';
+$equipMvmtExt = '#[Extérieur][Mouvements]#';
+
+// Tableau des équipements lampes extérieures
+$tab_EquipLampes = array(
+    '#[Extérieur][Eclairages][Lampe ProjoEntrée Etat]#',
+   	'#[Extérieur][Eclairages][Lampe Sud Etat]#',
+    '#[Extérieur][Eclairages][Lampe Ouest Etat]#',
+    '#[Extérieur][Eclairages][Lampe ProjoEntrée Etat]#',
+    '#[Extérieur][Eclairages][Lampe Piscine Etat]#',
+);
+  
+$infNbMvmtExt = '#[Extérieur][Mouvements][NbMvmt]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/LU_Allumage_Exterieur.php';
+
+/***********************************************************************************************************************/
+													function LU_Allumage_Salon__44()
+/***********************************************************************************************************************/
+Sheduler : */5 * * * *
+
+Trigger (0) : #variable(NuitSalon)#
+Trigger (1) : #[Salon][Mouvements][nbMvmt]#
+Trigger (2) : #[Salon][Eclairages][Lampe Générale Etat]#
+Trigger (3) : #[Salon][Eclairages][Ambiance]#
+Trigger (4) : #variable(Alarme)#
+Trigger (5) : #[Salon][Inter Entrée][Bouton]#
+
+ /***********************************************************************************************************************
+Allumage Salon - 44
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+//Tableau des commandes de l'état des lampes à gérer, de leur intensité max et des intensité "Ambiance, pour les lampes ON/OFF seule l'extinction est géré
+$tabLampes = array(					// MAX		LIGHT		BUREAU		CINEMA		TAMISEE
+	'#[Sys_Virtuel][*Lampe Yanna]#		:99		:50			:25			:00			:35',
+//	'#[Salon][Lampe Yanna1]#			:99		:50			:25			:00			:35',
+//	'#[Salon][Lampe Yanna2]#			:99		:50			:25			:00			:35',
+	'#[Salon][Lampe Oeuf]#				:99		:50			:25			:55			:35',
+	'#[Salon][Lampe Séjour]#			:99		:50			:25			:00			:12',
+	'#[Salon][Lampe Salle à Manger]#	:99		:50			:25			:00			:12',
+ 	'#[Salon][Lampe Bureau]#			:99		:50			:25			:00			:12',
+  
+  	'#[Salon][Lampe Cuisine]#			:99		:99			:00			:00			:00',
+ 	'#[Salon][Lampe Couloir]#			:99		:99			:00			:00			:00',
+ );
+
+$equipEcl = '#[Salon][Eclairages]#';					// Nom de l'équipement virtuel à piloter
+$infNbMvmtSalon = '#[Salon][Mouvements][nbMvmt]#';
+$infBoutonOnOff = '#[Salon][Inter Entrée][Bouton]#';
+$infCinemaEtat = '#[Maison][Général][Cinéma Etat]#';
+$cmdCinemaOff = '#[Maison][Général][Cinéma Off]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/LU_Allumage_Salon.php';
+
+/***********************************************************************************************************************/
+													function LU_Luminosité_Exterieur__69()
+/***********************************************************************************************************************/
+Sheduler : */3 * * * *
+
+Trigger (0) : #[Extérieur][Eclairages][Luminosité]#
+
+/************************************************************************************************************************
+Luminosite Exterieur - 69
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$equipLumExt = '#[Extérieur][Eclairages]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/LU_Luminosite_Exterieur.php';
+
+/***********************************************************************************************************************/
+													function LU_Luminosité_Salon__59()
+/***********************************************************************************************************************/
+Sheduler : */5 * * * *
+
+Trigger (0) : #[Salon][Mouvements][nbMvmt]# > 1
+Trigger (1) : #[Salon][Eclairages][Luminosité]#
+
+/************************************************************************************************************************
+Luminosite Salon - 59
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$equipEcl = '#[Salon][Eclairages]#';
+$equipLumSalon = '#[Salon][Eclairages]#';
+$infNbMvmtSalon = '#[Salon][Mouvements][nbMvmt]#';
+$infCinemaEtat = '#[Maison][Général][Cinéma Etat]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/LU_Luminosite_Salon.php';
+
+/***********************************************************************************************************************/
+													function LU_Veilleuse_SDB__184()
+/***********************************************************************************************************************/
+Sheduler : */5 * * * *
+
+Trigger (0) : #variable(NuitSalon)#
+Trigger (1) : #[RdCSdB][Oeil RdCSdB][Présence]# > 0
+
+/************************************************************************************************************************
+LU_Allumage_Veilleuse SdB - 184
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$equipEclReel = '#[Sys_Comm][Xiaomi-2]#';
+$equipEcl = '#[Sys_Virtuel][*TranspoLpXiaomi_2]#';
+$infNbMvmt = '#[RdCSdB][Oeil RdCSdB][Présence]#';
+$timer = mg::getParam('Lumieres', 'timerVeilleuseSdB');
+
+$cdExtinction = mg::getVar('NuitSalon') == 0;
+$cdAllumage = 0;
+
+mg::minuterie($equipEcl, $infNbMvmt, $timer, $cdExtinction, $cdAllumage);
+
+if (mg::getCmd($equipEclReel, 'Luminosité Anneau')) {
+  mg::setCmd($equipEclReel, 'Définir Couleur', '#ff8000');
+  mg::setCmd($equipEclReel, 'Définir Luminosité', 15);
+} else {
+  mg::setCmd($equipEclReel, 'Définir Luminosité',0);
+}
+//******************************************** Suite du code du scénario ***********************************************
+
+
+/***********************************************************************************************************************/
+													function SY_Météo__163()
+/***********************************************************************************************************************/
+Sheduler : */30 * * * *
+
+
+/************************************************************************************************************************
+ME Météo - 163
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$equipMeteo = '#[Extérieur][Températures]#';
+$equipMeteoFrance = '#[Extérieur][Météo France]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/ME_Meteo.php';
+
+/***********************************************************************************************************************/
+													function OUT_MakeOffsetThermometre()
+/***********************************************************************************************************************/
+Sheduler : * * * * *
+
+
+/************************************************************************************************************************
+OUT_MakeOffsetThermometre - 195
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+	$infSalonRefRfx = '#[Salon][Thermomètre Salon][Température]#';
+	$infTempRef = '#[Salon][Résumé][Température]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/OUT_MakeOffsetThermometre.php';
+
+/***********************************************************************************************************************/
+													function PI_Piscine__114()
+/***********************************************************************************************************************/
+Sheduler : */5 * * * * 
+
+Trigger (0) : #[Extérieur][Piscine][Etat_Piscine_Forcé]#
+Trigger (1) : #[Extérieur][Températures][VentFort]#
+
+/************************************************************************************************************************
+Piscine - 114
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$infTempPiscine = '#[Extérieur][Piscine][Temp_piscine]#';
+$infPiscineForcee = '#[Extérieur][Piscine][Etat_Piscine_Forcé]#';
+$equipPiscine = '#[Extérieur][Piscine]#';
+$equipCompresseur = '#[Extérieur][Compresseur Piscine]#';
+$equipMeteoFrance = '#[Extérieur][Températures]#';
+$equipOndilo = '#[Extérieur][Piscine Ensues ICO]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/PI_Piscine.php';
+
+/***********************************************************************************************************************/
+													function RE_Réveil__48()
+/***********************************************************************************************************************/
+Sheduler : 30 08 26 02 * 2021
+
+
+/************************************************************************************************************************
+Réveil - 48
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$infReveil = '#[Chambre][*Reveil chambre][Stop_Reveil]#';
+$infMusique = '#[Chambre][*Reveil chambre][Musique]#';
+$equipMvmtEtage = '#[Etage][Mouvements]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/RE_Reveil.php';
+
+/***********************************************************************************************************************/
+													function RE_Reveil_Cron__47()
+/***********************************************************************************************************************/
+Sheduler : 00 00 * * * 
+
+Trigger (0) : #[Chambre][*Reveil chambre][Heure_Reveil]#
+Trigger (1) : #[Chambre][*Reveil chambre][Stop_Reveil]#
+
+/************************************************************************************************************************
+Reveil_Cron - 47
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$equipReveil = '#[Chambre][*Reveil chambre]#';
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/RE_Reveil_Cron.php';
+
+/***********************************************************************************************************************/
+													function SY_Controle_Daemon__111()
+/***********************************************************************************************************************/
+Sheduler : */5 * * * *
+
+
+/************************************************************************************************************************
+Controle Daemon - 111
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/SY_Controle_Daemon.php';
+
+/***********************************************************************************************************************/
+													function SY_ControleZWave__194()
+/***********************************************************************************************************************/
+Sheduler : */16 * * * *
+
+
+/************************************************************************************************************************
+SY_ControleZWave - 194
+*************************************** UTILISE LORS DE L'ENREGISTREMENT  ***********************************************
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$equipJeelink = '#[Systéme][Exploit Controle]#'; 
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/SY_ControleZWave.php';
+
+/***********************************************************************************************************************/
+													function SY_Daily__105()
+/***********************************************************************************************************************/
+Sheduler : 30 3 * * *
+
+Trigger (0) : #end_backup#
+Trigger (1) : #end_update#
+Trigger (2) : #end_restore#
+Trigger (3) : #start#
+
+/************************************************************************************************************************
+Daily - 105
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$equipBackupGDrive = '#[Systéme][Gdrive]#';
+$vmWareJeedom = '#[Systéme][Jeedom Exploitation]#';
+$vmWareAntenne = '#[Systéme][Antenne Jeedom]';
+$googleCastStart = '#[Systéme][Exploit Controle][Démarrer Google Cast]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/SY_Daily.php';
+
+/***********************************************************************************************************************/
+													function SY_Extinction_Lp_couleur__90()
+/***********************************************************************************************************************/
+Sheduler : 25 14 10 01 * 2021
+
+
+/************************************************************************************************************************
+SY_Extinction Lampe couleur - 90
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$InfLpCouleurOff = 'Salon][Lampe Couleurs][Off]';
+mg::setCmd($InfLpCouleurOff);
+
+// ******************************************** Suite du code du scénario ***********************************************
+
+/***********************************************************************************************************************/
+													function SY_Gere_Informatique__126()
+/***********************************************************************************************************************/
+Sheduler : */10 * * * *
+
+Trigger (0) : #variable(NuitSalon)#
+Trigger (1) : #variable(Alarme)#
+
+/************************************************************************************************************************
+SY_Gere_Informatique - 126
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$infNbMvmtSalon = '#[Salon][Mouvements][nbMvmt]#';
+$infCinemaEtat = '#[Maison][Général][Cinéma Etat]#';
+$equipSmartThings = '#[Salon][The Frame]#';
+$equipPcMg = '#[Salon][PC-MG]#';
+$equipFrameTV = '#[Salon][Frame TV]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/SY_Gere_Informatique.php';
+
+/***********************************************************************************************************************/
+													function SY_Inactive_Scenarios__193()
+/***********************************************************************************************************************/
+Sheduler : * * * * *
+
+Trigger (0) : #end_update#
+Trigger (1) : #end_restore#
+Trigger (2) : #start#
+
+/************************************************************************************************************************
+SY_Inactive_Scenarios - 193
+
+Desactive tous les scénario (sauf celui ci) si l'IP courante correspond à la machine de test.
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+	$ipStationTest = '192.168.2.19';
+	$clefInstallTest = 'b7e969cc0f9083dc680b14cdb5be0cdf3313f7e12fa1e02ab917124f13191e7';
+	$nomStationTest = 'TEST';
+	$scenarioAction = 'deactivate';
+	$pluginActif = 0; // 0 pour désactiver, 1 pour activer
+	$pluginExclus = "virtual, htmldisplay, script, jeexplorer, pimpJeedom, , camera";
+
+// ******************************************** Suite du code du scénario ***********************************************
+//include_once getRootPath() . '/mg/SY_Inactive_Scenarios.php';
+
+/***********************************************************************************************************************/
+													function SY_Monitoring__159()
+/***********************************************************************************************************************/
+Sheduler : * * * * *
+
+
+/************************************************************************************************************************
+SY_Monitoring - 159
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$equipMonitoring = '#[Systéme][*Monitoring]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/SY_Monitoring.php';
+
+
+
+/***********************************************************************************************************************/
+													function SY_Tetes_Scenarios__129()
+/***********************************************************************************************************************/
+Sheduler : 15 05 * * * 
+
+
+/************************************************************************************************************************
+Tetes Scenarios - 129
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/SY_Tetes_Scenarios.php';
+
+/***********************************************************************************************************************/
+													function Util_Zwave()
+/***********************************************************************************************************************/
+Sheduler : 0 0 0,3 ? * DIM, WED *
+
+
+/************************************************************************************************************************
+Util_Zwave - 183
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/SY_Util_Zwave.php';
+
+/***********************************************************************************************************************/
+													function TAB_Tabulator__192()
+/***********************************************************************************************************************/
+Sheduler : * * * * *
+
+
+/************************************************************************************************************************
+TAB Tabulator - 192
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/tabulator/TAB_tabulator.php';
+
+/***********************************************************************************************************************/
+													function VO_Volets_Jour_Nuit__29()
+/***********************************************************************************************************************/
+Sheduler : */5 * * * * *
+
+Trigger (0) : #[Maison][Général][NbMvmt]# > 1
+Trigger (1) : #[Maison][Général][NbPortes]# >0
+Trigger (2) : #variable(NuitSalon)#
+Trigger (3) : #variable(NuitExt)#
+Trigger (4) : #variable(Alarme)#
+Trigger (5) : #[Extérieur][Températures][VentFort]# >0
+
+/************************************************************************************************************************
+Volets Jour_Nuit - 29
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+$InfLumExt = '#[Extérieur][Eclairages][Luminosité]#';	
+$InfLumInt = '#[Salon][Eclairages][Luminosité]#';	
+$infMvmtEtg = '#[Etage][Mouvements][NbMvmt]#';
+
+$equipGeneralMaison = '#[Maison][Général]#';
+$equipMvmtSalon = '#[Salon][Mouvements]#';
+$EquipReveil = '#[Chambre][*Reveil chambre]#';
+$equipMeteoFrance = '#[Extérieur][Températures]#';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/VO_Volets_Jour_Nuit.php';
+
+/***********************************************************************************************************************/
+													function VO_Volets_Général__156()
+/***********************************************************************************************************************/
+Sheduler : 
+
+Trigger (0) : #[Salon][Ouvertures][Général Salon_Etat]#
+Trigger (1) : #[Etage][Ouvertures][Général Etage Etat]#
+
+/************************************************************************************************************************
+Volets Général 156
+Ouvre ou ferme l'ensemble des volets d'une pièce
+Le nom de l'Inf du déclencheur doit être celui de la pièce, Valeur de linf : 1 monter, 0 Descendre
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/VO_Volets_General.php';
+
+/***********************************************************************************************************************/
+													function VO_Volets_Manuel_Etat__107()
+/***********************************************************************************************************************/
+Sheduler : 
+
+Trigger (0) : #[Salon][Ouvertures][Volet Bureau Etat]#
+Trigger (1) : #[Salon][Ouvertures][Volet Séjour Etat]#
+Trigger (2) : #[Salon][Ouvertures][Volet SàM Etat]#
+Trigger (3) : #[Salon][Ouvertures][Volet Ouest Etat]#
+Trigger (4) : #[Salon][Ouvertures][Volet Cuisine Etat]#
+Trigger (5) : #[Chambre][Ouvertures][Volet Chambre Etat]#
+Trigger (6) : #[RdCSdB][Ouvertures][Volet RdCSdB Etat]#
+Trigger (7) : #[EtgChb1][Ouvertures][Volet Chambre Sud Etat]#
+Trigger (8) : #[EtgChb1][Ouvertures][Volet Chambre Ouest Etat]#
+Trigger (9) : #[Extérieur][Ouvertures][Store Banne Etat]#
+
+/************************************************************************************************************************
+Volets Manuel_Etat - 107
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/VO_Volets_Manuel.php';
+
+/***********************************************************************************************************************/
+													function VO_Volets_Manuel_Ouverture__168()
+/***********************************************************************************************************************/
+Sheduler : 
+
+Trigger (0) : #[Salon][Fenêtre Bureau][Ouverture]#
+Trigger (1) : #[Salon][Porte Ouest][Ouverture]#
+Trigger (2) : #[Salon][Fenêtre SàM][Ouverture]#
+Trigger (3) : #[Salon][Porte Séjour][Ouverture]#
+Trigger (4) : #[Salon][Fenêtre Bureau][Ouverture]#
+Trigger (5) : #[Chambre][Fenêtre Chambre][Ouverture]#
+Trigger (6) : #[RdCSdB][Fenêtre RdCSdB][Ouverture]#
+Trigger (7) : #[EtgChb1][Fenêtre Chambre Sud][Ouverture]#
+Trigger (8) : #[EtgChb2][Fenêtre Chambre Ouest][Ouverture]#
+Trigger (9) : #[EtgSdB][Fenêtre EtgSdB][Ouverture]#
+Trigger (10) : #[Etage][Fenêtre EtgWC][Ouverture]#
+Trigger (11) : #[Salon][Fenêtre Cuisine][Ouverture]#
+
+/************************************************************************************************************************
+Volets Manuel_Ouverture - 168
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/VO_Volets_Manuel.php';
+
+/***********************************************************************************************************************/
+													function MO_Snapshot_Motion__100()
+/***********************************************************************************************************************/
+Sheduler : */4 * * * *
+
+Trigger (0) : #variable(NuitExt)#
+Trigger (1) : #variable(NuitSalon)#
+Trigger (2) : #variable(Alarme)#
+Trigger (3) : #[Extérieur][Températures][VentFort]#
+Trigger (4) : #start#
+Trigger (5) : #[Sys_Présence][Cam Bureau][Evènement]#
+Trigger (6) : #[Sys_Présence][Cam SàM][Evènement]#
+
+/************************************************************************************************************************
+Snapshot Motion - 100
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+// Capteur/Motion inhibés si condition (4)cdNuitSalon OU (5)cdNuitExt OU (6)cdVentFort satisfaite ( condition '<0' = false, pas prise en compte)
+// Memo : En alarme OU condition (9)cdMemoNuitSalon satisfaite
+// ViaFTP : Précise si les snaps arrive via FTP (Si 0 pas de nettoyage auto)
+// Type : Type de caméro pour transpo du nom en clair (format : Cam_Entrée_Ext_2019-10-20_03-20-13.jpg)
+$Tab_Cameras = array(
+// Nom 									(0)Rep FTP (réception),					(1)Zone, 	(2)InfCam (Affichage) 							(3)ID_Cam, 	(4)NuitSalon,	(5)NuitExt	(6)VentFort	(7)ViaFTP	(8)Type		(9)cdMemoNuitSalon
+'Cam_Bureau'	=> array('/home/debian9/Bureau/FI9826P_00626E61A38E/snap',	'Salon',	'#[Salon][Mouvements][Mvmt_Cam_Bureau]#',			'39',		'==0',			'<0',		'<0',		'1',	'FOSCAM',	'>1'),
+'Cam_SàM'		=> array('/home/debian9/Salon/FI9826P_00626E627558/snap',	'Salon',	'#[Salon][Mouvements][Mvmt_Cam_SàM]#',				'339',		'==0',			'<0',		'<0',		'1',	'FOSCAM',	'>1'),
+'Cam_Doorbird' 	=> array('/var/www/html/plugins/camera/data/records/498',	'Ext',		'#[Extérieur][Mouvements][Mvmt_Cam_Doorbird]#',		'498',		'>1',			'<0',		'>0',		'0',	'',			'>=0'),
+'Cam_Entrée'	=> array('/var/www/html/plugins/netatmoWelcome/data',		'Ext',		'#[Extérieur][Mouvements][Mvmt_Cam_Entrée]#',	'1172',		'<0',			'<0',		'<0',		'0',	'NETATMO',	'>0'),
+'Cam_Piscine'	=> array('/home/debian9/Piscine/FI9828P_00626E6AC29C/snap',	'Salon',	'#[Extérieur][Mouvements][Mvmt_Cam_Piscine]#',		'1224',		'<0',			'<0',		'>0',		'1',	'FOSCAM',	'>0'),
+);
+
+$equipMeteoFrance = '#[Extérieur][Températures]#';
+$PathDatasCamera = '/var/www/html/mg/Snapshots';
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/MO_Snapshot_Motion.php';
+
+
+
+/***********************************************************************************************************************/
+													function Modif_Core__181()
+/***********************************************************************************************************************/
+Sheduler : 
+
+Trigger (0) : #end_restore#
+Trigger (1) : #end_update#
+
+/************************************************************************************************************************
+Modif_Core - 181
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+// ******************************************** Suite du code du scénario ***********************************************
+ include_once getRootPath() . '/mg/SY_Modif_Core.php';
+
+/***********************************************************************************************************************/
+													function PA_Parametrages__137()
+/***********************************************************************************************************************/
+Sheduler : 
+
+Trigger (0) : #start#
+Trigger (1) : #end_restore#
+Trigger (2) : #end_update#
+
+/************************************************************************************************************************
+Parametrages - 137
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+//return;
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/PA_Parametrages.php';
+
+/***********************************************************************************************************************/
+													function PA_TAB_CONSO__142()
+/***********************************************************************************************************************/
+Sheduler : 
+
+
+/************************************************************************************************************************
+Tab_Conso - 142
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+/*-------------------------------------------- TABLEAU DES CONSOMMATIONS ----------------------------------------------
+---------------------------------------------------------------------------------------------------------------------*/
+
+$TabConso = array( // adresse de l'équipement 	(0) Nom du groupe			(1) TypeResult : D = end-start, E end
+'#[Maison][Gen5 ZW095]#'			=> array(	'type'=>'COMPTEUR GENERAL',		'typeResult'=>'D' , 'consoEstimee' => ''),
+//'#[Salon][Chauffage Salon Conso]#'	=> array(	'type'=>'Chauffage',		'typeResult'=>	'', 'consoEstimee' => ''),
+'#[Sys_Virtuel][*Chauffage Salon]#'	=> array(	'type'=>'Chauffage',			'typeResult'=>'D', 'consoEstimee' => ''),
+'#[Salon][Booster Salon]#'			=> array(	'type'=>'Chauffage',			'typeResult'=>'D', 'consoEstimee' => ''),
+'#eqLogic815#'	=> array(	'type'=>'Chauffage',			'typeResult'=>'D', 'consoEstimee' => ''),
+'#eqLogic41#'		=> array(	'type'=>'Chauffage',			'typeResult'=>'D', 'consoEstimee' => ''),
+'#[EtgSdB][Chauffage EtgSdB]#'		=> array(	'type'=>'Chauffage',			'typeResult'=>'D', 'consoEstimee' => ''),
+'#[EtgChb2][Chauffage EtgChb2]#'	=> array(	'type'=>'Chauffage',			'typeResult'=>'D', 'consoEstimee' => ''),
+'#[Sys_Virtuel][*Chauffe Eau]#'		=> array(	'type'=>'Chauffage',			'typeResult'=>'D', 'consoEstimee' => '650'),
+  
+'#[Salon][Lampe Bureau]#'			=> array(	'type'=>'EclairInt',			'typeResult'=>'D', 'consoEstimee' => ''),
+'#[Salon][Lampe Séjour]#'  			=> array(	'type'=>'EclairInt',			'typeResult'=>'D', 'consoEstimee' => ''),  
+'#[Salon][Lampe Salle à Manger]#'	=> array(	'type'=>'EclairInt',			'typeResult'=>'D', 'consoEstimee' => ''),  
+'#[Sys_Virtuel][*Lampe Yanna]#'		=> array(	'type'=>'EclairInt',			'typeResult'=>'D', 'consoEstimee' => ''),  
+'#[Sys_Virtuel][*Lampe Oeuf]#'		=> array(	'type'=>'EclairInt',			'typeResult'=>'D', 'consoEstimee' => ''),  
+'#[Salon][Lampe Cuisine]#'			=> array(	'type'=>'EclairInt',			'typeResult'=>'D', 'consoEstimee' => ''),  
+'#eqLogic1273#'			=> array(	'type'=>'EclairInt',			'typeResult'=>'D', 'consoEstimee' => ''),
+ 
+'#[Salon][Informatique]#'			=> array(	'type'=>'Informatique',			'typeResult'=>'D', 'consoEstimee' => ''),
+ 
+'#[Salon][Frame TV]#'				=> array(	'type'=>'ElectroMénager',		'typeResult'=>'D', 'consoEstimee' => ''),
+'#[Salon][Réfrigérateur]#'			=> array(	'type'=>'ElectroMénager',		'typeResult'=>'D', 'consoEstimee' => ''),
+'#[Extérieur][Congélateur]#'		=> array(	'type'=>'ElectroMénager',		'typeResult'=>'D', 'consoEstimee' => ''),
+'#[Salon][Plaque Electrique]#'		=> array(	'type'=>'ElectroMénager',		'typeResult'=>'D', 'consoEstimee' => ''),
+'#[Salon][Micro Onde]#'				=> array(	'type'=>'ElectroMénager',		'typeResult'=>'D', 'consoEstimee' => ''),
+'#[RdCSdB][Lave Linge]#'	=> array(	'type'=>'ElectroMénager',		'typeResult'=>'D', 'consoEstimee' => ''),  
+'#[Salon][Lave Vaisselle]#'			=> array(	'type'=>'ElectroMénager',		'typeResult'=>'D', 'consoEstimee' => ''),  
+'#[Salon][Bouilloire Nespresso]#'	=> array(	'type'=>'ElectroMénager',		'typeResult'=>'D', 'consoEstimee' => ''),  
+'#eqLogic1238#'				=> array(	'type'=>'ElectroMénager',		'typeResult'=>'D', 'consoEstimee' => ''),
+  
+'#[Extérieur][Lampe Sud]#'			=> array(	'type'=>'Extérieur',			'typeResult'=>'D', 'consoEstimee' => ''),
+'#[Extérieur][Lampe Ouest]#'		=> array(	'type'=>'Extérieur',			'typeResult'=>'D', 'consoEstimee' => ''),
+
+'#[Extérieur][Compresseur Piscine]#'=> array(	'type'=>'Extérieur',			'typeResult'=>'D', 'consoEstimee' => ''),
+'#eqLogic1803#'				=> array(	'type'=>'Enedis',				'typeResult'=>'E', 'consoEstimee' => '')
+);
+
+// Enregistrement dans la BdD
+//$scenario->removeData('TabConso');
+$scenario->setData('tabConso_2', $TabConso);
+
+/***********************************************************************************************************************/
+													function PA_TAB_VOLETS__139()
+/***********************************************************************************************************************/
+Sheduler : 
+
+
+/************************************************************************************************************************
+Tab Volets - 139
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+/*-------------------------------------- LISTE DES ATTRIBUTS DES EQUIPEMENTS VOLETS -----------------------------------
+
+zone 		: Nom de la Zone (localisation)
+genantHiver : Valeur du Slider si Soleil Genant en Hiver - 0 si pas géré
+genantEte 	: Valeur du Slider si Soleil Genant en Ete - 0 si pas géré
+soir 		: Valeur du slider si fenêtre ouverte le soir en été
+nuit 		: Valeur du slider si fenêtre ouverte la nuit en été
+vent 		: Vent Max pour fermeture des volets - 0 si pas géré
+reveil 		: 'R' pour Inhibition de la commande des volets jusqu'a heure de réveil + 2,
+duree		: Duree totale du Mouvement montée ou descente du volet (si == 0 : pas de volet)
+groupe 		: Nom de regroupement du volet pour montée générale, vide sinon
+inverse 	: '-' si volet à inverser (store banne par exemple)
+alerteOuvert: 'A' Pour Alerte si fenetre encore ouverte la nuit - '!' si pas ouvrant
+ouvrant		: Nom de l'ouvrant associé
+
+*/
+
+$TabVolets = array(
+  'Portail'				=> array(	'zone' => 'Extérieur',	'ouvrant' => 'Portail',					'genantHiver' => '0', 	'genantEte' => '0',  'soir' => '00', 'nuit' => '0','vent' =>  '0',  'reveil' => '',	'duree' => '00', 'groupe' => '',		'inverse' => '',	'alerteOuvert' => 'A'),
+  'Store Banne'			=> array(	'zone' => 'Extérieur',	'ouvrant' => '',						'genantHiver' => '99',	'genantEte' => '40', 'soir' => '00', 'nuit' => '00','vent' => '22', 'reveil' => '',	'duree' => '44', 'groupe' => 'Salon ',	'inverse' => '-',	'alerteOuvert' => '!'),
+'Volet Bureau'			=> array(	'zone' => 'Salon',		'ouvrant' => 'Fenêtre bureau',			'genantHiver' => '50',	'genantEte' => '50', 'soir' => '50', 'nuit' => '30','vent' => '00', 'reveil' => '',	'duree' => '10', 'groupe' => 'Salon',	'inverse' => ' ',	'alerteOuvert' => ' '),
+'Volet Séjour'			=> array(	'zone' => 'Salon',		'ouvrant' => 'Porte Séjour',			'genantHiver' => '99',	'genantEte' => '60', 'soir' => '50', 'nuit' => '00','vent' => '00', 'reveil' => '',	'duree' => '20', 'groupe' => 'Salon',	'inverse' => ' ',	'alerteOuvert' => ' '),
+'Volet SàM'				=> array(	'zone' => 'Salon',		'ouvrant' => 'Fenêtre sàM',				'genantHiver' => '80',	'genantEte' => '50', 'soir' => '50', 'nuit' => '30','vent' => '00', 'reveil' => '',	'duree' => '10', 'groupe' => 'Salon',	'inverse' => ' ',	'alerteOuvert' => ' '),
+'Volet Ouest'			=> array(	'zone' => 'Salon',		'ouvrant' => 'Porte Ouest',				'genantHiver' => '99',	'genantEte' => '60', 'soir' => '99', 'nuit' => '00','vent' => '00', 'reveil' => '',	'duree' => '20', 'groupe' => 'Salon',	'inverse' => ' ',	'alerteOuvert' => ' '),
+'Volet Cuisine'			=> array(	'zone' => 'Salon',		'ouvrant' => 'Fenêtre Cuisine',			'genantHiver' => '99',	'genantEte' => '60', 'soir' => '00', 'nuit' => '00','vent' => '00', 'reveil' => '',	'duree' => '09', 'groupe' => 'Salon',	'inverse' => ' ',	'alerteOuvert' => ' '),
+'Porte Entrée'			=> array(	'zone' => 'Salon',		'ouvrant' => 'Porte Entrée',			'genantHiver' => '00',	'genantEte' => '00', 'soir' => '00', 'nuit' => '00','vent' => '00', 'reveil' => '',	'duree' => '00', 'groupe' => '',		'inverse' => ' ',	'alerteOuvert' => ' '),
+//'RdCWC'				=> array(	'zone' => 'Salon',		'ouvrant' => 'Fenêtre WC',				'genantHiver' => '00',	'genantEte' => '00', 'soir' => '00', 'nuit' => '00','vent' => '00', 'reveil' => '',	'duree' => '00', 'groupe' => '',		'inverse' => ' ',	'alerteOuvert' => ' '),
+'Volet Chambre'			=> array(	'zone' => 'Chambre',	'ouvrant' => 'Fenêtre Chambre',			'genantHiver' => '99',	'genantEte' => '30', 'soir' => '15', 'nuit' => '15','vent' => '00', 'reveil' => 'R','duree' => '12', 'groupe' => 'Chambre',	'inverse' => ' ',	'alerteOuvert' => ' '),
+'Volet RdCSdB'			=> array(	'zone' => 'RdCSdB',		'ouvrant' => 'Fenêtre RdCsdB',			'genantHiver' => '99',	'genantEte' => '50', 'soir' => '50', 'nuit' => '00','vent' => '00', 'reveil' => 'R','duree' => '06', 'groupe' => 'Chambre',	'inverse' => ' ',	'alerteOuvert' => ' '),
+'Volet Chambre Sud'		=> array(	'zone' => 'EtgChb1',	'ouvrant' => 'Fenêtre Chambre Sud',		'genantHiver' => '99',	'genantEte' => '30', 'soir' => '30', 'nuit' => '30','vent' => '30', 'reveil' => 'R','duree' => '10', 'groupe' => 'Etage',	'inverse' => ' ',	'alerteOuvert' => 'A'),
+'Volet Chambre Ouest'	=> array(	'zone' => 'EtgChb2',	'ouvrant' => 'Fenêtre Chambre Ouest',	'genantHiver' => '99',	'genantEte' => '30', 'soir' => '30', 'nuit' => '30','vent' => '30', 'reveil' => 'R','duree' => '10', 'groupe' => 'Etage',	'inverse' => ' ',	'alerteOuvert' => 'A'),
+'Volet EtgSdB'			=> array(	'zone' => 'EtgSdB',		'ouvrant' => 'Fenêtre EtgSdB',			'genantHiver' => '00',	'genantEte' => '00', 'soir' => '00', 'nuit' => '00','vent' => '00', 'reveil' => '',	'duree' => '00', 'groupe' => '',		'inverse' => ' ',	'alerteOuvert' => 'A'),
+'Volet EtgWC'			=> array(	'zone' => 'Etage',		'ouvrant' => 'Fenêtre EtgWC',			'genantHiver' => '00',	'genantEte' => '00', 'soir' => '00', 'nuit' => '00','vent' => '00', 'reveil' => '',	'duree' => '00', 'groupe' => '',		'inverse' => ' ',	'alerteOuvert' => 'A'),
+);
+
+// Enregistrement dans la BdD
+//$scenario->removeData('TabVolets'); 
+$scenario->setData('tabVolets', $TabVolets);
+
+
+/***********************************************************************************************************************/
+													function POST_HtmlEditTable__173()
+/***********************************************************************************************************************/
+Sheduler : * * * * *
+
+
+/************************************************************************************************************************
+HtmlEditTable - 173
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+// ******************************************** Suite du code du scénario ***********************************************
+include_once getRootPath() . '/mg/HtmEditTable/HtmlEditTable.php';
+
+/***********************************************************************************************************************/
+													function TAB_CHAUFFAGES_140()
+/***********************************************************************************************************************/
+Sheduler : 
+
+
+/************************************************************************************************************************
+Tab_Chauffages - 140
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+/*---------------------------------------- TABLEAU DES ZONES DE CHAUFFAGE-----------------------------------------------
+----------------------------------------------------------------------------------------------------------------------*/
+
+/*	(Chauffage) : 1 Si chauffage existe, 0 sinon
+    (Clim) : 1 Si climatisation existe, 0 sinon
+    (Zone) : Zone du chauffage 
+    (Equip) : Equipement de pilotage du chauffage si spécifique
+    (EquipBooster) : Nom de l'équipement du booster si il éxiste, '' sinon
+*/
+
+$TabChauffages = array(
+// 								(0)Chauffage, 	(1)Clim,,		'2)Zone 			(3)EquipChauf, 									(4) EquipBooster
+'Salon' 	=> array(			'chauffage' => '1',	'clim' => '1',	'zone' => 'Salon',		'equip' => '#[Sys_Virtuel][*Chauffage Salon]#',	'equipBooster' => '#[Salon][Booster Salon]#'),
+'Chambre' 	=> array(			'chauffage' => '1',	'clim' => '0',	'zone' => 'Chambre',	'equip' => '#eqLogic815#',	'equipBooster' => ''),
+'RdCSdB' 	=> array(			'chauffage' => '1',	'clim' => '0',	'zone' => 'Chambre',	'equip' => '#eqLogic41#',		'equipBooster' => ''),
+'EtgChb1'	=> array(			'chauffage' => '0',	'clim' => '0',	'zone' => 'EtgChb1',	'equip' => '',									'equipBooster' => ''),
+'EtgChb2'	=> array(			'chauffage' => '1',	'clim' => '0',	'zone' => 'EtgChb2',	'equip' => '#[EtgChb2][Chauffage EtgChb2]#',	'equipBooster' => ''),
+'EtgSdB'	=> array(			'chauffage' => '1',	'clim' => '0',	'zone' => 'EtgSdB',		'equip' => '#[EtgSdB][Chauffage EtgSdB]#',		'equipBooster' => ''),
+'Extérieur' => array(			'chauffage' => '0',	'clim' => '0',	'zone' => 'Extérieur',	'equip' => '',									'equipBooster' => ''),
+);
+
+// Enregistrement dans la BdD
+//$scenario->removeData('TabChauffages');
+$scenario->setData('tabChauffages', $TabChauffages);
+//mg::message('', print_r($TabChauffages, true));
+
+
+/***********************************************************************************************************************/
+													function TAB_USER__165()
+/***********************************************************************************************************************/
+Sheduler : 
+
+
+/************************************************************************************************************************
+Tab Users - 165
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+/*------------------------------------------------- TABLEAU DES USER --------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------*/
+/*
+		(BLEA) : Nom du NUT du User, laisser vide si aucun
+        (geo) : Distance min pour être présent via Geofence
+		(Type) : Type de User : 'user' (pour Ctrl présence et gestion MdP) / 'res' pour surveillance des connexion réseau
+		(Tel) : prefixé de 33
+		(mail) : Adresse Mail
+        (class) : Nom de la class du plugin pour mise à jour de la (config)
+        (config) : Nom du champ de la config à mettre à jour
+        (port) : Complément de l'ip pour lancement de la page HTML de l'équipement
+*/
+
+//$scenario->removeData('tabUser'); 
+
+$tabUser = array(
+	'Options'		=> array('MAC'=> '', 					'IP' => '', 'BLEA'=>'',			'geo'=>'', 		'type'=>'user',	'tel'=>'',				'mail'=>'', 'visible' => 'non'),
+
+	'Tel-NR' 		=> array('MAC'=> '04:D6:AA:2B:31:1D',	'IP' => '192.168.2.157', /*'BLEA'=>'MiBand3 NR',*/	'geo'=>'0.015',	'type'=>'user',	'tel'=>'33673885846',	'mail'=>'nadine.roulier@gmail.com'),
+ 	'Tel-MG'		=> array('MAC'=> 'E4:FD:A1:B4:CD:97',	'IP' => '192.168.2.12', /*'BLEA'=>'MiBand4 MG',*/	'geo'=>'0.015',	'type'=>'user',	'tel'=>'33607020842',	'mail'=>'m.georgein@gmail.com'),
+//	'Tel-CB'		=> array('MAC'=> '02:0F:B5:70:DD:xx',	'IP' => '192.168.2.999', 'BLEA'=>'',				'geo'=>'0.015', 	'type'=>'user',	'tel'=>'33686663387',	'mail'=>'c.combreas@gmail.com'),
+    'Tel-PS'		=> array('MAC'=> '2C:0E:3D:3A:17:75',	'IP' => '192.168.2.11',	/*'BLEA'=>'',				'geo'=>'0.015',*/'type'=>'user',	'tel'=>'33663604207',	'mail'=>''),
+
+	'ESXi'			=> array('MAC'=> 'D4:5D:DF:07:BC:53',	'IP' => '192.168.2.150', 'class'=>'vmware', 'config'=>'ipAddress', 'port' => '/ui/#/host/vms/16'),
+  	'Jeedom'		=> array('MAC'=> '00:0C:29:2C:0C:84',	'IP' => '192.168.2.30'	),
+//   	'Antenne-blea'	=> array('MAC'=> '00:0C:29:54:1C:68',	'IP' => '192.168.2.91',	),
+  	'EX7000'		=> array('MAC'=> '02:0F:B5:E9:6E:E0',	'IP' => '192.168.2.29'	),
+//  	'AC1200'		=> array('MAC'=> '02:0f:b5:40:a2:8c',	'IP' => '192.168.2.217'	),
+  	'JPI'			=> array('MAC'=> '0c:2f:b0:5f:4e:d2',	'IP' => '192.168.2.51'	, 'class'=>'camera', 'config'=>'ip', 'port' => ':8080'),
+	'Google-Home'	=> array('MAC'=> '7c:d9:5c:2f:9a:eA',	'IP' => '192.168.2.118'	,'class'=>'googlecast', 'config'=>'ip'),
+
+	'Cam Doorbird'	=> array('MAC'=> '1c:ca:e3:70:dd:2e',	'IP' => '192.168.2.2',	'class'=>'camera', 'config'=>'ip',	'port' => '/bha-api/view.html'),
+//	'Cam Doorbird'	=> array('MAC'=> '02:0F:B5:70:DD:2E',	'IP' => '192.168.2.3',	'class'=>'camera', 'config'=>'ip',	'port' => '/bha-api/view.html'),
+  
+	'Cam SàM' 		=> array('MAC'=> '70:EE:50:5D:4A:D5',	'IP' => '192.168.2.120','class'=>'camera', 'config'=>'ip',	'port' => ':80/a3b26616fbc07e7d837d9b9a9ba9dc57/live/snapshot_720.jpg'),
+	'Cam Bureau' 	=> array('MAC'=> '70:EE:50:5D:2B:58',	'IP' => '192.168.2.40', 'class'=>'camera', 'config'=>'ip',	'port' => ':80/b6c06842823f870250dbd643e84a413d/live/snapshot_720.jpg'),
+	'Cam Entrée'	=> array('MAC'=> '70:EE:50:62:78:78',	'IP' => '192.168.2.13',	'class'=>'camera', 'config'=>'ip', 'port' => ':80/a7766a107870f0bdefd64727f07f64a9/live/snapshot_720.jpg'),
+	'Cam Piscine'	=> array('MAC'=> '70:EE:50:51:F7:04',	'IP' => '192.168.2.213','class'=>'camera', 'config'=>'ip', 'port' => ':80/fca21aa860003214ae2a028c851c8578/live/snapshot_720.jpg'),
+
+//	'NUC-MG'		=> array('MAC'=> 'D4:5D:DF:07:BC:53',	'IP' => '192.168.2.150'	),
+  	'PC-MG'			=> array('MAC'=> 'D4:5D:64:B1:36:8D',	'IP' => '192.168.2.67'	),
+  	'PC-NR'			=> array('MAC'=> '74:C6:3B:39:54:8F',	'IP' => '192.168.2.197'	),
+  	'PC-Mamina'		=> array('MAC'=> 'F0:7B:CB:68:4D:3D',	'IP' => '192.168.2.60'	),
+    'Tablette-NR'	=> array('MAC'=> '60:AF:6D:78:3C:A1',	'IP' => '192.168.2.129'	),
+  
+  	'SonosD'		=> array('MAC'=> '00:0E:58:55:89:7C',	'IP' => '192.168.2.68', 'class_MANUELLE'=>'', 'config'=>''),
+	'SonosG'		=> array('MAC'=> '00:0E:58:55:89:84',	'IP' => '192.168.2.76', 'class_MANUELLE'=>'', 'config'=>''),
+  	'Broadlink'		=> array('MAC'=> 'C8:F7:42:21:A3:EC',	'IP' => '192.168.2.115','class'=>'broadlink', 'config'=>'ip'),
+    'Xiaomi-1'		=> array('MAC'=> '78:11:DC:B0:6B:6E',	'IP' => '192.168.2.139'	),
+	'Xiaomi-2'		=> array('MAC'=> '34:CE:00:8A:EA:3E',	'IP' => '192.168.2.223'	),
+  	'Lampe Oeuf'	=> array('MAC'=> '34:CE:00:88:7D:07',	'IP' => '192.168.2.77'	),
+    'Frame TV'		=> array('MAC'=> 'D0:D0:03:A6:8A:7A',	'IP' => '192.168.2.130'	),
+  	'ICO-ONDILO'	=> array('MAC'=> '00:80:E1:C0:54:42',	'IP' => '192.168.2.47',	'visible' => 'oui'),
+  	'Withing'		=> array('MAC'=> '00:24:E4:4B:E5:3E',	'IP' => '192.168.2.188','visible' => 'non'),
+);
+
+// Enregistrement dans la BdD
+$scenario->setData('tabUser', $tabUser);
+//mg::Message('', print_r($tabUser, true));
+
+
+/***********************************************************************************************************************/
+													function WI_Scen._FileEdit2__164()
+/***********************************************************************************************************************/
+Sheduler : 
+
+
+/************************************************************************************************************************
+WI_Scen. FileEdit2 - 164
+*************************************** UTILISE LORS DE L'ENREGISTREMENT  ***********************************************
+************************************************************************************************************************/
+include_once getRootPath() . '/mg/mg.class.php'; mg::init();
+
+// Récupère le fichier ini à éditer
+mg::setVar('_EditFile', shell_exec("sudo cat " . mg::getVar('_EditFileName')));
+
+$file = shell_exec("sudo cat " . mg::getVar('_EditFileName'));
+//$file = str_replace("\\", "", $file);
+
+mg::unsetVar('_EditFile');
+mg::setVar('_EditFile', $file);
+mg::message('', $file);
+
+// ******************************************** Suite du code du scénario ***********************************************
+
+?>

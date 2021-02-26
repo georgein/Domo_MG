@@ -1,0 +1,60 @@
+.tabTabulator .tabulator-row.tabulator-group {
+	font-size: 20px!important;/* size font des groupes*/
+}
+
+.tabTabulator .tabulator-row.tabulator-group {
+	background: lightgrey!important;/* Background des groupes*/
+/*height: 30px; 
+    margin-top: 0px;*/
+}
+
+/*Theme the Tabulator element*/
+.tabTabulator{
+    background-color:#ccc;			/* fond de page */
+    border: 1px solid #333; 		/* Cadre de tableau */
+    border-radius: 10px;
+}
+
+/*Theme the header*/
+.tabTabulator .tabulator-header {
+ /*   background-color:#333; 			/* ??????????? */
+    color:lightgreen;  					/* typo en tête */
+	font-size: 18px; /*auto; /* taille de police relative */
+}
+
+.tabulator .tabulator-header .tabulator-col {
+    background-color: grey; 		/* Background ligne de titre */
+//    height: 28px!important;
+}
+
+/*Allow column header names to wrap lines*/
+.tabTabulator .tabulator-header .tabulator-col,
+.tabTabulator .tabulator-header .tabulator-col-row-handle {
+    white-space: normal;
+}
+
+/*Color the table rows*/
+.tabTabulator .tabulator-tableHolder .tabulator-table .tabulator-row{
+    color:black; 					/* typo ligne */
+	font-size: 1.2em; /*auto; /* taille de police relative */
+    background-color: #FFF4C4; 		/* ligne impaire */
+}
+
+.tabulator-row .tabulator-cell {
+	height:25px!important; <* Hauteur de ligne */
+}
+
+/*Color even rows*/
+ .tabTabulator .tabulator-tableHolder .tabulator-table .tabulator-row:nth-child(even) {
+    background-color: #FFD264;			/* ligne paire */
+}
+
+.tabulator .tabulator-header .tabulator-calcs-holder .tabulator-row  {
+    background-color: lightgrey; 		/* Background ligne de totalisation */
+    height: 16px;
+	font-size: 14px; /*auto; /* taille de police relative */
+}
+
+.select {
+	style='font-size:16px;
+}

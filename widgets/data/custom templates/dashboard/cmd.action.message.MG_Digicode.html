@@ -1,0 +1,34 @@
+<div style="width:180px;" class="cmd cmd-widget reportModeHidden" data-type="action" data-subtype="message" data-cmd_id="#id#" data-cmd_uid="#uid#" data-version="#version#" data-eqLogic_id="#eqLogic_id#" style="width: 146px;">
+<script type="text/javascript">
+
+/******************************************************************************************************************************************************************
+Ce widget permet d'afficher un tableau généré à la demande et une interaction utilisateur pour renvoyer le contenu d'une cellule et permettre ainsi un traitement.
+						 Le gros inconvénient est que le tableau étant en cache de js il faut un Ctrl-F5 pour l'actualiser.
+/*****************************************************************************************************************************************************************/
+jeedom.cmd.update['#id#'] = function(_options ){
+
+	var DesignPath = "mg/design/digicode";
+
+    $.include([  DesignPath + '/digicode.css' , DesignPath + '/digicode.js' ],
+    	function() {
+        	$('div.cmd[data-cmd_id="#id#"]').digicode(function(code) {
+            	jeedom.cmd.execute({
+                	id: '#id#',
+                    value: { title : '', message: code }
+                    });
+            }, 4);
+        }
+	);
+
+}
+
+jeedom.cmd.update['#id#']({display_value:'#state#'});
+$('.cmd[data-cmd_uid=#uid#] .iconCmd').off().on('click', function () {
+   	jeedom.cmd.execute({id: '#id#'});
+  });
+</script>
+
+<style>
+  center { padding: 0 !important; }
+</style>
+</div>

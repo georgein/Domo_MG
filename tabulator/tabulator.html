@@ -1,0 +1,256 @@
+
+<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN' 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
+<html lang='fr'>
+	<head>
+		<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+
+		<link href='/mg/ressources/tabulator-master/dist/css/tabulator.min.css' rel='stylesheet'>
+		<!-- LISTE DES CHOIX DE THEME DU TABLEAU -->
+			<link rel='alternate stylesheet' type='text/css' title='themeCustom' href='/mg/tabulator/theme_Custom.css'/>
+			<link rel='stylesheet' type='text/css' title='themeMidnight' href='/mg/ressources/tabulator-master/dist/css/tabulator_midnight.min.css' rel='stylesheet' />
+			<link rel='alternate stylesheet' type='text/css' title='themeStandard' href='/mg/ressources/tabulator-master/dist/css/tabulator.min.css' rel='stylesheet'/>
+		<link href='tabulator.css' rel='stylesheet'>
+	</head>
+
+	<body>
+		<!-- ****************************************** TITRE DU TABLEAU ****************************************** -->
+		<table id='titre' class='teteTab' width='100%'>
+			<tr>
+				<td width='25%' align='left'
+				</td>
+				<td width='50%' align='center'>
+					<div class='titrePage'>6 lignes - TABCHAUFFAGES - 10h 19mn
+					<button class='bt-reload' value='Reload' id='reload' onclick='reload();' title='Recharge la page, souvent necessaire après une longue inactivité.'>--- Reload ---</button>
+					</div>
+				</td>
+				<td width='25%' align='right'>
+					<span style='font-size:20px;'>Sauvegardé le 19/02/2021 à 16h56mn.
+				</td>
+			<tr>
+		</table>
+		<div id='imgWait' class='titrePage'> </div>
+
+		<!-- ************************************** TABLEAU POUR LES BOUTONS ************************************** -->
+		<table id='Boutons' class='teteTab' width='100%''>
+			<tr>
+				<td width='25%' align='left'>
+					<button id='reset' class='bt-rest' title='Supprime tous les filtres.'>Reset</button>
+					*** Ctrl-Maj-Suppr Efface le cache ***
+				</td>
+
+
+				<td width='20%' align='center'>
+					<select id='choixTheme' style='font-size:16px;'>
+						<option></option>
+						<option selected value='themeCustom'>Thème Custom</option>
+						<option value='themeMidnight'>Thème Midnight</option>
+						<option value='themeStandard'>Thème standard</option>
+					  </select>
+				</td>
+
+				<td width='55%' align='right'>
+					<!-- ///////////////////////////////////////////// -->
+					<FORM method=post action='http://192.168.2.196/mg/tabulator/TAB_tabulator_POST.php' enctype='application/x-www-form-urlencoded' onsubmit='return appelJeedom()'>
+						<input	type='submit' class='bt-rest' name='submit' value='RestaureSav' title='Restauration de la dernière sauvegarde .json du 19/02/2021 à 16h56mn.'>
+						<input	type='submit' class='bt-rest' name='submit' value='RestaureLast' title='Restauration de la version précédent le dernier enregistrement.'>
+
+						<input	type='submit' class='bt-charge' name='submit' value='Charge'>
+						<input type='hidden' id='message' name='message'>
+						<input type='hidden' name='nomTabOrg' value=tabChauffages>
+						<input type='hidden' name='IP' value=192.168.2.196>
+						<input type='hidden' name='apikey' value='w35cb9cmgg2ehbsbca1h'>
+						<input type='hidden' name='numScenario' value=192>
+						<SELECT name='nomTab' class='select' size='1' style='font-size:16px;'>
+							<option value='tabParams'>tabParams</option>
+<option value='tabVolets'>tabVolets</option>
+<option value='tabUser'>tabUser</option>
+<option value='tabConso'>tabConso</option>
+<option selected value='tabChauffages'>tabChauffages</option>
+<option value='tabPassword'>tabPassword</option>
+<option value='	tabTooltips'>	tabTooltips</option>
+<option value='_alertes'>_alertes</option>
+<option value='tabWidgets'>tabWidgets</option>
+
+						</SELECT>
+						<input	type='submit' class='bt-enr' name='submit' value='Enregistre'>
+						<input	type='submit' class='bt-sav' name='submit' value='Sauvegarde' title='Sauvegarde .json sur disque.'>
+					</FORM>
+					<!-- ///////////////////////////////////////////// -->
+				</td>
+			</tr>
+		</table>
+
+		<!-- ******************************************* TAB_TABULATOR ******************************************** -->
+		<div id='tabChauffages' class='tabTabulator'></div>
+
+<script type='text/javascript' src='/mg/ressources/tabulator-master/dist/js/tabulator.min.js'></script>
+<!-- <script type='text/javascript' src='/mg/tabulator/tabulator.js'></script> -->
+<script>
+	twChangeStyle('themeCustom');
+
+/******************************************************** APPEL JEEDOM **********************************************/
+		appelJeedom = function() {
+			table.clearFilter(true); // Efface TOUS les filtres par sécurité
+
+			// Affichage image d'attente
+			var nouvelleimage=document.createElement('IMG');
+			document.getElementById('imgWait').appendChild(nouvelleimage);
+			document.getElementById('imgWait').lastChild.setAttribute('src','wait.gif');
+
+			table.download('csv', 'data.csv', {delimiter:';'});
+			//console.log(tbldata);
+			//console.log(tbldata.length + ' octets.');
+
+/*			if (tbldata.length < 10) {
+				alert ('Tableau < 10 octets, Annulation de l\'enregistrement !!!')
+				return false;
+			}*/
+			document.getElementById('message').value = tbldata;
+			return true;
+		}
+
+/******************************************************* BOUTON DE Reload ********************************************/
+		function reload() { document.location.reload(); }
+
+/******************************************************** BOUTON DE Reset ********************************************/
+// button click de reset
+document.getElementById('reset').addEventListener('click', function(){
+table.clearSort();
+table.clearFilter(true);
+});
+
+/*************************************************** CHANGEMENT DE THEME *********************************************/
+document.getElementById('choixTheme').addEventListener('change', twChangeStyle);
+// Fonction pour changer le thème
+function twChangeStyle(sTitre) {
+	var i, a;
+	if ((typeof sTitre === 'object' && sTitre !== null) || typeof sTitre === 'function') {
+		sTitre = document.getElementById('choixTheme').value;
+	}
+	// Boucle tout les élément « link » du document.
+	for(i=0; (a = document.getElementsByTagName('link')[i]); i++) {
+		// Si l’élément est à un attribut « rel » et qu’il contient un titre.
+		if(a.getAttribute('rel').indexOf('style') != -1 && a.getAttribute('title')) {
+			// Désactive la feuille de style
+			a.disabled = true;
+			// Active la feuille de style avec le bon titre.
+			if(a.getAttribute('title') == sTitre) a.disabled = false;
+		}
+	}
+}
+
+/************************************************ BOUTONS ADD-DEL LIGNES *********************************************/
+ var bt_AddLigne = function(cell, formatterParams, onRendered){ //plain text value
+return	'<img src="add.png">';
+};
+var addLigne = function(cell){
+	table.addRow({ KEY_1 :cell.getRow().getData().KEY_1, /*type:'inconnu'*/}, true, cell.getRow().getData().id);
+};
+
+ var bt_DelLigne = function(cell, formatterParams, onRendered){ //plain text value
+return	'<img src="poubelle.png">';
+};
+var delLigne = function(cell){
+		table.deleteRow(cell.getRow().getData().id);
+};
+
+/****************************************************** ZONE DATAS ***************************************************/
+var tabledata = [
+{id:1, KEY_1:'Salon', 'zone':'Salon', 'chauffage':'1', 'clim':'1', 'equip':'#[Sys_Virtuel][*Chauffage Salon]#', 'equipBooster':'#[Salon][Booster Salon]#', },
+{id:2, KEY_1:'Chambre', 'zone':'Chambre', 'chauffage':'1', 'clim':'0.0', 'equip':'#[Chambre][Chauffage Chambre]#', 'equipBooster':'', },
+{id:3, KEY_1:'RdCSdB', 'zone':'Chambre', 'chauffage':'1', 'clim':'0.0', 'equip':'#[RdCSdB][Chauffage RdCSdB]#', 'equipBooster':'', },
+{id:4, KEY_1:'EtgChb1', 'zone':'EtgChb1', 'chauffage':'0.0', 'clim':'0.0', 'equip':'', 'equipBooster':'', },
+{id:5, KEY_1:'EtgChb2', 'zone':'EtgChb2', 'chauffage':'1', 'clim':'0.0', 'equip':'#[EtgChb2][Chauffage EtgChb2]#', 'equipBooster':'', },
+{id:6, KEY_1:'EtgSdB', 'zone':'EtgSdB', 'chauffage':'1', 'clim':'0.0', 'equip':'#[EtgSdB][Chauffage EtgSdB]#', 'equipBooster':'', },
+
+];
+
+/***************************************************** HEADER MENU ***************************************************/
+//var headerMenu = [
+var headerContextMenu = [
+	{ label:'move Colonne <= left', action:function(e, column){
+		column.move(column.getPrevColumn().getField(), false);
+	}},
+	{ label:'Ajoute Colonne', action:function(e, column){
+		var newName = prompt('Quel est le nom de la nouvelle colonne ?');
+		if (newName.length > 2) {
+			table.addColumn({title:newName, field:newName, editor:'input', headerContextMenu:headerContextMenu}, false, column.getField());
+		}
+	}},
+	{ label:'move Colonne => right', action:function(e, column){
+		column.move(column.getNextColumn().getField(), true);
+	}},
+	{ label:'Efface Colonne', action:function(e, column){
+		if ( confirm( 'Etes vous sur de vouloir supprimer la colonne "'+column.getField()+'" ?') ) {
+			column.delete();
+		} else {
+			return;
+		}
+	}},
+	{ label:'Renomme Colonne', action:function(e, column){
+		var newName = prompt('Quel est le nouveau nom pour la colonne "'+column.getField()+'" ?');
+		if (newName.length > 2) {
+			column.updateDefinition({title:newName}) //change the column title
+		} else {
+			return;
+		}
+	}},
+]
+
+/************************************************* DECLARATION TABLE *************************************************/
+	var table = new Tabulator('#tabChauffages', {
+
+	downloadReady:function(fileContents, blob){
+		tbldata = fileContents;
+   return false; //must return a blob to proceed with the download, return false to abort download
+},
+
+//		height: (window.innerHeight/*-100*/)+'px',
+//		maxHeight:(window.innerHeight-100)+'px', //'100%',
+		//pagination:'local', //enable local pagination.
+		data:tabledata, //load initial data into table
+		layout:'fitColumns', // fitData - fitColumns - fitDataFill - fitDataStretch - fitDataTable	//fit columns to width of table (optional)
+		cellHozAlign:'center', //center align cell contents
+		headerSort:true, //disable header sort for all columns
+		history:true, //record table history
+		// autoColumns: true,
+		 validationMode:'blocking', // highlight - blocking
+
+		resizableColumns:true, // this option takes a boolean value (default = true)
+		autoResize:true,  // prevent auto resizing of table
+
+		persistence:false,
+		persistenceMode:false, //store persistence information in a 'cookie' or 'local'
+		persistence:{columns: true, filter: false,	sort: false, group: false, page: false, }, //persist column layout
+
+		movableRows:true,
+
+		tooltipsHeader:true, //enable header tooltips
+
+		groupBy:'',
+		groupHeader: function(value, count, data, group){
+			//value - the value all members of this group share
+			//count - the number of rows in this group
+			//data - an array of all the row data objects in this group
+			//group - the group component for the group
+		   return value + "<center><span style='color:red; margin-left:10px;'>" + '***** ' + value.toUpperCase() + ' - ' + count + ' items *****</center></span>';
+		},
+
+/****************************************************** ZONE HEADER **************************************************/
+		// Zone Header
+		columns:[ //Define Table Columns
+		   {rowHandle:true, formatter:'handle', headerSort:false, frozen:true, width:25, minWidth:30},
+		{title:"KEY_1" , field:"KEY_1" , headerTooltip: "KEY_1 -  Nom donné au chauffage." , headerHozAlign:"center", headerFilter:"input", hozAlign:"center", sorter:"string", editor:"input", minWidth:100, hozAlign:"left", frozen:true}, 
+{title:"zone" , field:"zone" , headerTooltip: "zone - Zone du chauffage." , headerHozAlign:"center", headerFilter:"input", hozAlign:"center", sorter:"string", editor:"input", hozAlign:"center", headerContextMenu:headerContextMenu}, 
+{title:"chauffage" , field:"chauffage" , headerTooltip: "chauffage - 1 si le chauffage existe, 0 sinon." , headerHozAlign:"center", hozAlign:"center", editor:true, formatter:"tickCross", minWidth:30, width:" 110", hozAlign:"center", headerContextMenu:headerContextMenu}, 
+{title:"clim" , field:"clim" , headerTooltip: "clim - 1 si la climatisation existe, 0 sinon." , headerHozAlign:"center", hozAlign:"center", editor:true, formatter:"tickCross", minWidth:30, width:" 70", hozAlign:"center", headerContextMenu:headerContextMenu}, 
+{title:"equip" , field:"equip" , headerTooltip: "equip - Equipement de pilotage du chauffage (format #[xxxxxxx][yyyyyy]#, sinon rien." , headerHozAlign:"center", hozAlign:"center", sorter:"string", editor:"input", hozAlign:"center", headerContextMenu:headerContextMenu}, 
+{title:"equipBooster" , field:"equipBooster" , headerTooltip: "equipBooster - Equipement de pilotage du booster si il existe (format #[xx][yy]#, sinon rien." , headerHozAlign:"center", hozAlign:"center", sorter:"string", editor:"input", hozAlign:"center", headerContextMenu:headerContextMenu}, 
+
+		{formatter:bt_AddLigne, width:25, minWidth:35, hozAlign:'center', cellClick:function(e, cell){addLigne(cell)}, headerSort:false},
+		{formatter:bt_DelLigne, width:25, minWidth:35, hozAlign:'center', cellClick:function(e, cell){delLigne(cell)}, headerSort:false},
+		], // Fin columns
+	}); // Fin newTabulator
+
+/*********************************************************************************************************************/
+</script>
