@@ -2019,7 +2019,7 @@ function FONCTIONS_SCENARIOS(){}
 
 			$return = self::__action('scenario', array("scenario_id" => $actionScenario->getId(), "action" => $action, "tags" => $tags));
 			if ($startAction) {
-				self::message('', self::$__log_ERROR . __FUNCTION__ . " : $return");
+				self::message('', self::$__log_SP . __FUNCTION__ . " : $return");
 				return $return;
 			}
 			else {
