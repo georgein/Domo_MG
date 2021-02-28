@@ -39,7 +39,7 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	$pcEcartMax = $detailsZone['pcEcartMax'];
 	$periodicite = $detailsZone['periodicite'];
 	if (!$equip) { continue; }
-	
+
 	$cmdResume = mg::toID("#[$zone][Résumé][$nomResume]#");
 	$valResume = mg::getCmd($cmdResume);
 	$nbHeures_1 = $periodicite -1;
@@ -49,7 +49,7 @@ mg::message('', mg::toHuman($cmdResume));
 
 	$cdMakeOffset = ($periodicite > 0 && mg::getTag('#heure#')%$periodicite == 0 && mg::getTag('#minute#') < $cron) ? 1 : 0;
 //	$cdMakeOffset = 1; // ************** POUR TEST **************
-	
+
 	ControleResumes($zone, $cleResume, $timeOutDown, $timeOutUp, $pcEcartMax, $valResume, $valResumeMoyenne, $periodicite, $cdMakeOffset, $logDebug);
 }
 
@@ -71,13 +71,13 @@ function ControleResumes($zone, $cleResume, $timeOutDown, $timeOutUp, $pcEcartMa
 		if ($pcEcartMax > 0) {
 			$enable = $details['enable'];
 			cmdIsOK($cmd, $valResume, $lastComm, $pcEcart, $valCmd, $enable);
-			if ($valResume == 0 || $valCmd == 0) { 
+			if ($valResume == 0 || $valCmd == 0) {
 				mg::message($logDebug, "*** ERROR *** ".mg::toHuman('#'.$cmd.'#')." sur la/les Températures ref/Comd : $valResume/$valCmd");
-				continue; 
+				continue;
 			}
 			if (($lastComm > $timeOutDown || $pcEcart > $pcEcartMax) && $enable) {
 				mg::messageT($logDebug, ". DESACTIVATION de la commande ".mg::toHuman('#'.$cmd.'#')." ($cmd) - last comm $lastComm mn - $pcEcart % ($valResume/$valCmd)");
-				if ($cptCmd > 1) { $configuration['summary'][$cleResume][$number]['enable'] = 0; } 
+				if ($cptCmd > 1) { $configuration['summary'][$cleResume][$number]['enable'] = 0; }
 				else { mg::message ($logDebug, "*** ERRO R *** La première commande du Résumé ne peut pas être désactivée !!!");}
 			} elseif ($lastComm <= $timeOutUp && $pcEcart <= $pcEcartMax && !$enable) {
 				mg::messageT($logDebug, ". REACTIVATION de la commande ".mg::toHuman('#'.$cmd.'#')." ($cmd) - last comm $lastComm mn - $pcEcart % ($valResume/$valCmd)");
@@ -91,8 +91,8 @@ function ControleResumes($zone, $cleResume, $timeOutDown, $timeOutUp, $pcEcartMa
 		$resultSql = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
 		// **************************************** FIN DU CONTROLE DU RESUME ****************************************/
 		// ***********************************************************************************************************/
-		
-		
+
+
 		// ***********************************************************************************************************/
 		// **************************************** MODIFICATION DES OFFSETS *****************************************/
 		// ***** *Recherche de la configuration de la commande pour le MakeOffset (à optimiser ... largement ...) *****
@@ -107,7 +107,7 @@ function ControleResumes($zone, $cleResume, $timeOutDown, $timeOutUp, $pcEcartMa
 					$eqLogicCmd = $allCmd->getId();
 					if ($eqLogicCmd == $cmd) {
 						$valueOffset = $allCmd->getConfiguration('calculValueOffset');
-						makeOffset($cmd, $allCmd, $valResumeMoyenne, $valueOffset, $periodicite, $logDebug); 
+						makeOffset($cmd, $allCmd, $valResumeMoyenne, $valueOffset, $periodicite, $logDebug);
 						$break = 1;
 					}
 					if ($break) { break; }
@@ -127,7 +127,7 @@ function ControleResumes($zone, $cleResume, $timeOutDown, $timeOutUp, $pcEcartMa
 function makeOffset($cmd, $allCmd, $valResumeMoyenne, $valueOffset, $periodicite, $logDebug) {
 	$periodicite = $periodicite-1;
 	$temperatureMoyenneCmd = round(scenarioExpression::averageBetween($cmd, "$periodicite hour ago", 'now'), 1);
-	
+
 	// Lecture de la correction actuelle
 	$oldCorrection = '+0.0';
 	$regex = '.*([+-][\d]*.[\d]*)';
@@ -136,7 +136,7 @@ function makeOffset($cmd, $allCmd, $valResumeMoyenne, $valueOffset, $periodicite
 		$oldCorrection = $found[1];
 		if ($oldCorrection == 0) { $oldCorrection = "+0.0"; }
 	}
-	
+
 	$regex = '(\(.*\))';
 	preg_match("/$regex/ui", $valueOffset, $found);
 	if (@iconv_strlen($found[1]) != 0) {
@@ -144,17 +144,17 @@ function makeOffset($cmd, $allCmd, $valResumeMoyenne, $valueOffset, $periodicite
 	} else {
 		$baseValueOffset = "(#value#)";
 	}
-	
+
 	// Calcul de la nouvelle correction à appliquer
 	// On sort en cas d'anomalie
-	if ($valResumeMoyenne == 0 || $temperatureMoyenneCmd == 0) { 
+	if ($valResumeMoyenne == 0 || $temperatureMoyenneCmd == 0) {
 		mg::message($logDebug, "*** ERRO R *** ".mg::toHuman('#'.$cmd.'#')." sur la/les Températures moyennes ref/Comd : $valResumeMoyenne/$temperatureMoyenneCmd");
-		return; 
+		return;
 	}
 	$newCorrection = round($oldCorrection + ($valResumeMoyenne - $temperatureMoyenneCmd), 2);
 	if ( $newCorrection >= 0) { $newCorrection = "+$newCorrection"; }
 	elseif ($newCorrection == 0) { $newCorrection = "+0.0"; }
-	
+
 	//  Recalcul de la chaine 'ValueOffset'
 	$newValueOffset = "$baseValueOffset$newCorrection";
 

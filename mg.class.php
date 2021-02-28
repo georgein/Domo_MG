@@ -38,7 +38,7 @@ class mg {
 	private static $__debug = 4;
 	private static $__wait_cmd = true;
 	private static $__stop_exception = 'Arrêt forcé du scénario';
-	
+
 	// Variables globales
 	var $tabParams, $scenario, $debugVolet, $scenarioVoletManuel;
 
@@ -1669,7 +1669,7 @@ function getPingIP($IP, $user='', $nbTentatives=2, $delay=200) {
 							}	else {
 								$contenuLog = $contenu;
 							}
-							
+
 							// Filtrage selon niveau d'affichage des logs
 							// self::$__debug == 0 pas de log, 1 (INFO), 2 (INFO + ERROR), 3 (INFO + WARNING + ERROR), 4 (TOUT, par defaut)
 							$OK = 0;
@@ -2216,9 +2216,9 @@ function ConfigEquiLogic($typeName, $equipement, $name, $newValue='') {
 * Positionne les min et max de la commande																				*
 ************************************************************************************************************************/
 	function getMinMaxCmd($cmd, $complement, $min_max='max') {
-//		mg::message('', "$0cmd, $complement"); 
+//		mg::message('', "$0cmd, $complement");
 		if ($complement) { $cmd = self::mkCmd($cmd, $complement); }
-//		mg::message('', "1 $cmd, $complement"); 
+//		mg::message('', "1 $cmd, $complement");
 
 		$cmd = self::_tag($cmd);
 		if (!$cmd) {
@@ -2252,9 +2252,9 @@ function ConfigEquiLogic($typeName, $equipement, $name, $newValue='') {
 	$action : Commande avec ou sans les []																				*
 ************************************************************************************************************************/
 	function mkCmd($equipement, $action) {
-		if ($action) { 
-			$equipement = trim(trim(self::ToHuman(trim($equipement)), '#')); 
-			$action = trim(trim($action), '#'); 
+		if ($action) {
+			$equipement = trim(trim(self::ToHuman(trim($equipement)), '#'));
+			$action = trim(trim($action), '#');
 			$result = '#'.$equipement."[$action]"."#";
 		} else { $result = $equipement; }
 		return $result;
@@ -2779,7 +2779,7 @@ function isActive($eqLogic, $_log = true, $_logStyle = null) {
 		if ($category) {
 			$category = strtolower(trim($category));
 			$catAvailable = array('heating', 'security', 'energy', 'light', 'opening', 'automatism', 'multimedia', 'default');
-		  
+
 			if (!in_array($category, $catAvailable)) {
 				self::message('', self::$__log_SP . __FUNCTION__ . " : La catégorie n'est pas valide (catégorie valides : ". implode(", ", $catAvailable) . ")");
 				return self::_returnCmds(array());
@@ -2797,7 +2797,7 @@ function isActive($eqLogic, $_log = true, $_logStyle = null) {
 		}
 		return self::_getCmds($objectFilter, $category, $eqFilter, $type, $subTypeFilter, $cmdNameFilter, $genericTypeFilter);
 	}
-	
+
 		// Fonction _returnCmds
 		function _returnCmds($returnList) {
 			$count = count($returnList);
@@ -2805,7 +2805,7 @@ function isActive($eqLogic, $_log = true, $_logStyle = null) {
 			self::message('', self::$__log_SP . __FUNCTION__ . " : ". (($count > 0) ? '' : 'ERREUR ') . $count . ' commande' . $pluriel . ' trouvée' . $pluriel . "<br>".print_r($returnList, true));
 			return $returnList;
 		}
-		
+
 		// Fonction _cmdsFilter
 		function _cmdsFilter($returnList, $cmds, $cmdNameFilter, $subTypeFilter, $genericTypeFilter, $eqLogic = null) {
 			foreach ($cmds as $cmd) {
@@ -2842,11 +2842,11 @@ function isActive($eqLogic, $_log = true, $_logStyle = null) {
 			}
 			else {
 				foreach (($category) ? eqLogic::byCategorie($category) : eqLogic::all() as $eqLogic) {
-					if ( is_object($eqLogic) 
+					if ( is_object($eqLogic)
 						&& (!$objectFilter || (is_object($eqLogic->getObject()) && preg_match('/' . $objectFilter . '/i', $eqLogic->getObject()->getName())))
 						&& (!$eqFilter || preg_match('/' . $eqFilter . '/i', $eqLogic->getName()))
 					) {
-					$returnList = self::_cmdsFilter($returnList, $eqLogic->getCmdByGenericType($type), $cmdNameFilter, $subTypeFilter, $genericTypeFilter, $eqLogic);	
+					$returnList = self::_cmdsFilter($returnList, $eqLogic->getCmdByGenericType($type), $cmdNameFilter, $subTypeFilter, $genericTypeFilter, $eqLogic);
 					}
 				}
 			}
