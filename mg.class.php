@@ -2985,20 +2985,23 @@ function FONCTIONS_VARIABLES(){}
 		 $message = '';
 		 $listVar = explode(',', $tabVar);
 		for ($i = 0; $i < count($listVar); $i++) {
-			$Name = trim($listVar[$i]);
-			if ($Name != '') {
-				 $value = self::getVar($Name);
+			$name = trim($listVar[$i]);
+			$value = trim($listVar[$i]);
+			
+			if ($name != '') {
+				 $value = self::getVar($name);
 				if ( $value > 1000000000) {
 						$value = date('d\/m\/Y \à H\hi\m\n', $value);
 				} elseif ( $value == null ) {
 						$value = '*** Inconnue ***';
 						}
-				$message .= "$Name = $value -- ";
+				$message .= "$name = $value -- ";
 			}
 		}
 		$message = trim($message, ' -- ');
 		self::message('', self::$__log_SP . __FUNCTION__ . " : $message");
 		return $message;
+		
 	}
 
 /************************************************************************************************************************

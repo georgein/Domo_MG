@@ -55,6 +55,7 @@ foreach ($tabChauffages as $nomChauffage => $details_Chauffage) {
 	$chauffage = intval($details_Chauffage['chauffage']);
 	$clim =	 intval($details_Chauffage['clim']);
 	$equipChauf = trim($details_Chauffage['equip']);
+	$correction = $tabChauffages[$nomChauffage]['correction'];
 	// ON NE GERE LE CHAUFFAGE QUE SI NECESSAIRE
 	if ($saison == 'HIVER' && !$chauffage || $saison == 'ETE' && !$clim) { continue; }
 	if (!$equipChauf) { continue; }
@@ -71,7 +72,7 @@ foreach ($tabChauffages as $nomChauffage => $details_Chauffage) {
 	if ($mode == 'HG') {
 		$consigne = $tempHG;
 	} else {
-		$consigne = $tabChauffages_[$nomChauffage]["temp$mode"];
+		$consigne = $tabChauffages_[$nomChauffage]["temp$mode"]+$correction;
 	}
 	$boosterOK = ($equipBooster && $saison == 'HIVER') ? true : false;
 

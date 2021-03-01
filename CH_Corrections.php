@@ -29,7 +29,6 @@ mg::setCron('', "*/$cron * * * *");
 
 // Lecture du tableau de paramètrage
 foreach ($tabChauffages as $nomChauffage => $detailsZone) {
-//foreach($tabResumes as $n => $detailsZone) {
 	$zone = $detailsZone['zone'];
 	$equip = $detailsZone['equip'];
 	$nomResume = $detailsZone['nomResume'];
@@ -44,7 +43,6 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	$valResume = mg::getCmd($cmdResume);
 	$nbHeures_1 = $periodicite -1;
 	$valResumeMoyenne = round(scenarioExpression::averageBetween($cmdResume, "$nbHeures_1 hour ago", 'now'), 1);
-mg::message('', mg::toHuman($cmdResume));
 	mg::messageT('', "! Traitement de $zone/$cleResume avec timeOuts : $timeOutDown/$timeOutUp - pcEcartMax : $pcEcartMax - TempMoyenneRef : $valResumeMoyenne (sur $periodicite heures)");
 
 	$cdMakeOffset = ($periodicite > 0 && mg::getTag('#heure#')%$periodicite == 0 && mg::getTag('#minute#') < $cron) ? 1 : 0;
@@ -158,7 +156,7 @@ function makeOffset($cmd, $allCmd, $valResumeMoyenne, $valueOffset, $periodicite
 	//  Recalcul de la chaine 'ValueOffset'
 	$newValueOffset = "$baseValueOffset$newCorrection";
 
-	mg::message($logDebug, mg::toHuman("#$cmd#")." - tempRef/tempCmd : $valResumeMoyenne/$temperatureMoyenneCmd - old/New Correction : $oldCorrection/$newCorrection - ValueOffset : $newValueOffset - correction : $correction");
+	mg::message($logDebug, mg::toHuman("#$cmd#")." - tempRef/tempCmd : $valResumeMoyenne/$temperatureMoyenneCmd - old/New Correction : $oldCorrection/$newCorrection - ValueOffset : $newValueOffset");
 
 	// **************************************
 	// BIEN CONTROLER LE LOG AVANT D'ENLEVER LES REM.)
