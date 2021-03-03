@@ -24,7 +24,7 @@ mg::message('', "Volets général : $declencheur " . mg::ExtractPartCmd($declenc
 
 $zone = mg::ExtractPartCmd($declencheur, 1);
 $sens = mg::getCmd($declencheur, '') == 1 ? 'M' : 'D';
+mg::messageT('', "!Volets général : $zone - $sens");
 mg::VoletsGeneral($zone, $sens, 1);
-mg::message('', "Volets général : $sens");
 
 ?>

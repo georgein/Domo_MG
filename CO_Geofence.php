@@ -14,7 +14,7 @@ Signale l'approche d'un user
 	$homeSSID = ' Livebox-MG';					// Valeur contenue dans le SSID de 'HOME'
 
 	$destinatairesSOS = "Log, SMS:@MG, Mail:MG";// Destinataires du SOS
-	$timingSOS = 600;						// Durée de pause 'normale' avant d'envoi un SOS
+	$timingSOS = 900;						// Durée de pause 'normale' avant d'envoi un SOS
 
 	$destinataires = 'Log, TTS:GOOGLECAST';	// Destinataire du message d'annonce de proximité
 	$coeffDist = 0.9;						// Annonce de proximité faite si DistCouranteUser * $CoeffDist < OldDistUser
@@ -569,7 +569,7 @@ function makeLatLng(&$tabGeofence, $user, $id, $latLng_Home, $distanceSleep, $pa
 						$dureePause += $dureeEcart_2;
 						// *************** ENVOIS D'UN SOS AUTOMATIQUE ***************
 						if ($dureePause / 60 > $timingSOS && (time() - $timeCourante) < 60) {
-							mg::message($destinatairesSOS, "SOS AUTOMATIQUE de $user, Aucun mouvement depuis " . $dureePause/60 . " mn, Coordonnées ($latlng). VOIR :  https://georgein.dns2.jeedom.com/mg/util/geofence.html");
+							mg::message($destinatairesSOS, "SOS AUTOMATIQUE de $user, Aucun mouvement depuis plus de " . $timingSOS/60 . " mn, Coordonnées ($latlng). VOIR :  https://georgein.dns2.jeedom.com/mg/util/geofence.html");
 						}
 						// ***********************************************************
 						// Fin de pause

@@ -529,13 +529,12 @@ mg::message('', $requete);
 			$voletInverse =	 trim($details_Volet['inverse']);
 
 			// Uniquement si volet existe et volets dans le groupe
-			if (/* $duree != 0 && */strpos($voletsGroupe, $groupe) !== false) {
+			if (strpos($voletsGroupe, $groupe) !== false) {
 				// Si volet inversé
 				if ($voletInverse == '-') {
 					// Si descente on inverse (store banne)
 					if( $slider == 0.1) { $slider = 99; }
 					// Sinon on passe au suivant
-				else { continue; }
 				}
 				mg::debug();
 				self::Message('', "-------------- $sens ($sensDemandé) individuelle du volet : $cmd / $zone ($slider) --------------");
@@ -554,7 +553,6 @@ mg::message('', $requete);
 				mg::debug(0);
 				self::VoletRoulant($zone, $cmd, 'Slider', $slider);
 				self::wait("scenario($scenarioVoletManuel) == 0", 180);
-//				sleep(1);
 			}
 		} // fin for each TabVolets
 	self::setVar('_VoletGeneral', $sensDemandé);
