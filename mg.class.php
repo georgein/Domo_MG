@@ -922,6 +922,11 @@ function FONCTIONS_UTILITAIRES(){}
 			$MAC = $tabUser[$nomStation]['MAC'];
 
 			if ($IP != '' && $MAC != '') {
+//				$wol = "wakeonlan -i $IP -p 7 $MAC";
+				$regex = "(\d+[\.]\d+[\.]\d+[\.])";
+				preg_match("/$regex/ui", $IP, $found);
+				$IP = $found[0].'255';
+				//$MAC = 'D0:D0:03:A6:8A:7A';
 				$wol = "wakeonlan -i $IP -p 7 $MAC";
 				self::message('', self::$__log_SP . __FUNCTION__ . " : Wol : $wol");
 				shell_exec($wol);

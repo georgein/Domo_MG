@@ -40,7 +40,7 @@ if ($alarme || ( $puissancePcMg > 8 && $nuitSalon == 2 && !$etatCinema && $lastM
 	if (mg::getCmd($equipFrameTV, 'Etat')) { mg::setCmd($equipFrameTV, 'Off'); }
 	mg::Message($logTimeLine, "Informatique - Arrèt.");
 
-} elseif (!$alarme && $puissancePcMg < 8 && $nuitSalon < 2 && Time() >= ($heureReveil - 1800) && $lastMvmt < $timingExtinctionPC && $nbMvmt > 1) {
+} elseif (!$alarme && $puissancePcMg < 8 && $nuitSalon != 2 && Time() >= ($heureReveil - 1800) && $lastMvmt < $timingExtinctionPC && $nbMvmt > 1) {
 	// ------------------------------------------------------------------------------------------------------------
 	mg::messageT('', "! REMISE EN ROUTE INFORMATIQUE");
 	// ------------------------------------------------------------------------------------------------------------
