@@ -33,8 +33,7 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	$equip = $detailsZone['equip'];
 	$nomResume = $detailsZone['nomResume'];
 	$cleResume = $detailsZone['cleResume'];
-	$timeOutDown = $detailsZone['timeoOutDown'];
-	$timeOutUp = $detailsZone['timeoOutUp'];
+	$timeOut = $detailsZone['timeOut'];
 	$pcEcartMax = $detailsZone['pcEcartMax'];
 	$periodicite = $detailsZone['periodicite'];
 	if (!$equip) { continue; }
@@ -42,22 +41,20 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	$cmdResume = mg::toID("#[$zone][Résumé][$nomResume]#");
 	$valResume = mg::getCmd($cmdResume);
 	$valResumeMoyenne = round(scenarioExpression::averageBetween($cmdResume, "$periodicite hour ago", 'now'), 1);
-	mg::messageT('', "! Traitement de $zone/$cleResume avec timeOuts : $timeOutDown/$timeOutUp - pcEcartMax : $pcEcartMax - TempMoyenneRef : $valResumeMoyenne (sur $periodicite heures)");
+	mg::messageT('', "! Traitement de $zone/$cleResume avec timeOuts : $timeOut - pcEcartMax : $pcEcartMax - TempMoyenneRef : $valResumeMoyenne (sur $periodicite heures)");
 
 	$mode = mg::toID("#[$zone][Températures][Consigne Chauffage]#");
 	$valMode = mg::getCmd($mode,  '', $collectDate, $valueDate);
 	$lastMode = round(((time() - $valueDate)/3600), 1);
-	mg::message('', "***************** $lastMode - $valueDate ".time());
-//	$cdMakeOffset = ($periodicite > 0 && mg::getTag('#heure#')%$periodicite == 0 && mg::getTag('#minute#') < $cron) ? 1 : 0;
 	$cdMakeOffset = ($periodicite > 0 && mg::getTag('#heure#')%$periodicite == 1 && mg::getTag('#minute#') < $cron && $lastMode > $periodicite) ? 1 : 0;
 //	$cdMakeOffset = 1; // ************** POUR TEST **************
 
-	ControleResumes($zone, $cleResume, $timeOutDown, $timeOutUp, $pcEcartMax, $valResume, $valResumeMoyenne, $periodicite, $cdMakeOffset, $logDebug);
+	ControleResumes($zone, $cleResume, $timeOut, $pcEcartMax, $valResume, $valResumeMoyenne, $periodicite, $cdMakeOffset, $logDebug);
 }
 
 // *******************************************************************************************************************/
 // ************************************************ CONTROLE DU RESUME ***********************************************/
-function ControleResumes($zone, $cleResume, $timeOutDown, $timeOutUp, $pcEcartMax, $valResume, $valResumeMoyenne, $periodicite, $cdMakeOffset, $logDebug) {
+function ControleResumes($zone, $cleResume, $timeOut, $pcEcartMax, $valResume, $valResumeMoyenne, $periodicite, $cdMakeOffset, $logDebug) {
 	// Extraction SQL de la configuration de l'objet
 	$values = array();
 	$sql  = "SELECT `configuration` FROM `object` WHERE `name` = '$zone'";
@@ -71,11 +68,12 @@ function ControleResumes($zone, $cleResume, $timeOutDown, $timeOutUp, $pcEcartMa
 		$cptCmd++;
 		$cmd = trim($details['cmd'], '#');
 
-	if ($cptCmd == 1) {/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+/*	if ($cptCmd == 1) {
 		$valResumeMoyenne = round(scenarioExpression::averageBetween($cmd, "$periodicite hour ago", 'now'), 1);
 		$valResume = mg::getCmd($cmd);
-	}
-
+	}*/
+/////////////////////////////////////////////////////////////////
 
 		if ($pcEcartMax > 0) {
 			$enable = $details['enable'];
@@ -84,14 +82,16 @@ function ControleResumes($zone, $cleResume, $timeOutDown, $timeOutUp, $pcEcartMa
 				mg::message($logDebug, "*** ERROR *** ".mg::toHuman('#'.$cmd.'#')." sur la/les Températures ref/Comd : $valResume/$valCmd");
 				continue;
 			}
-/*			if (($lastComm > $timeOutDown || $pcEcart > $pcEcartMax) && $enable) {
-				mg::messageT($logDebug, ". DESACTIVATION de la commande ".mg::toHuman('#'.$cmd.'#')." ($cmd) - last comm $lastComm mn - $pcEcart % ($valResume/$valCmd)");
+			if (($lastComm > $timeOut || $pcEcart > $pcEcartMax) && $enable) {
+				if ($cptCmd != 1) {
+					mg::messageT($logDebug, ". DESACTIVATION de la commande ".mg::toHuman('#'.$cmd.'#')." ($cmd) - last comm $lastComm mn - $pcEcart % ($valResume/$valCmd)");
+				}
 				if ($cptCmd > 1) { $configuration['summary'][$cleResume][$number]['enable'] = 0; }
-				else { mg::message ($logDebug, "*** ERRO R *** La première commande du Résumé ne peut pas être désactivée !!!");}
-			} elseif ($lastComm <= $timeOutUp && $pcEcart <= $pcEcartMax && !$enable) {
+				//else { mg::message ($logDebug, "*** ERRO R *** La première commande du Résumé ne peut pas être désactivée !!!");}
+			} elseif ($lastComm <= $timeOut && $pcEcart <= $pcEcartMax && !$enable) {
 				mg::messageT($logDebug, ". REACTIVATION de la commande ".mg::toHuman('#'.$cmd.'#')." ($cmd) - last comm $lastComm mn - $pcEcart % ($valResume/$valCmd)");
 				$configuration['summary'][$cleResume][$number]['enable'] = 1;
-			}*/
+			}
 		}
 
 		// *************************** Enregistrement de la nouvelle configuration du résumé **************************
