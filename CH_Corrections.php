@@ -83,11 +83,9 @@ function ControleResumes($zone, $cleResume, $timeOut, $pcEcartMax, $valResume, $
 				continue;
 			}
 			if (($lastComm > $timeOut || $pcEcart > $pcEcartMax) && $enable) {
-				if ($cptCmd != 1) {
-					mg::messageT($logDebug, ". DESACTIVATION de la commande ".mg::toHuman('#'.$cmd.'#')." ($cmd) - last comm $lastComm mn - $pcEcart % ($valResume/$valCmd)");
-				}
+				mg::messageT($logDebug, ". DESACTIVATION de la commande ".mg::toHuman('#'.$cmd.'#')." ($cmd) - last comm $lastComm mn - $pcEcart % ($valResume/$valCmd)");
 				if ($cptCmd > 1) { $configuration['summary'][$cleResume][$number]['enable'] = 0; }
-				//else { mg::message ($logDebug, "*** ERRO R *** La première commande du Résumé ne peut pas être désactivée !!!");}
+				else { mg::message ($logDebug, "*** ERRO R *** La première commande du Résumé ne peut pas être désactivée !!!");}
 			} elseif ($lastComm <= $timeOut && $pcEcart <= $pcEcartMax && !$enable) {
 				mg::messageT($logDebug, ". REACTIVATION de la commande ".mg::toHuman('#'.$cmd.'#')." ($cmd) - last comm $lastComm mn - $pcEcart % ($valResume/$valCmd)");
 				$configuration['summary'][$cleResume][$number]['enable'] = 1;
