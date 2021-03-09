@@ -5,12 +5,11 @@ CH_Corrections - 196
 Activation / Désactivation des éléments de résumés selon :
 	L'ancienneté du 'valueDate' ('timeOutDown' pour la désactivation ou 'timeOutUp' pour la réactivation)
 	Et leurs écarts en % à la valeur moyenne du résumé selon le tableau ci dessous.
-NB : La première commande du résumé n'est JAMAIS désactivée par sécurité.
+NB : La dernière commande ACTIVE du résumé n'est JAMAIS désactivée par sécurité.
 NB : si pcEcartMax == 0, on ne lance pas la la gestion des résumés.
 
-Correction des offset des commandes si l'heure courante est un multiple de 'periodicite et la minute courante < au 'cron'
+Correction des offset des commandes si le mode courant depuis plus de 'periodicite' heure ET l'heure courante est un multiple de 'periodicite + 1 ET la minute courante < au 'cron'.
 NB : si 'periodicite' == 0, on ne lance pas la correction
-NB : Ne JAMAIS lancer le traitement à moins de 'periodicite' d'intervalle sinon cumul des corrections !!!!
 **********************************************************************************************************************/
 // Infos, Commandes et Equipements :
 
@@ -39,9 +38,9 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	if (!$equip) { continue; }
 
 	$cmdResume = mg::toID("#[$zone][Résumé][$nomResume]#");
-	$valResume = mg::getCmd($cmdResume);
-	$valResumeMoyenne = round(scenarioExpression::averageBetween($cmdResume, "$periodicite hour ago", 'now'), 1);
-	mg::messageT('', "! Traitement de $zone/$cleResume avec timeOuts : $timeOut - pcEcartMax : $pcEcartMax - TempMoyenneRef : $valResumeMoyenne (sur $periodicite heures)");
+	$tempResume = mg::getCmd($cmdResume);
+	$tempMoyenneResume = round(scenarioExpression::averageBetween($cmdResume, "$periodicite hour ago", 'now'), 1);
+	mg::messageT('', "! Traitement de $zone/$nomChauffage avec timeOuts : $timeOut - pcEcartMax : $pcEcartMax");
 
 	$mode = mg::toID("#[$zone][Températures][Consigne Chauffage]#");
 	$valMode = mg::getCmd($mode,  '', $collectDate, $valueDate);
@@ -49,46 +48,48 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	$cdMakeOffset = ($periodicite > 0 && mg::getTag('#heure#')%$periodicite == 1 && mg::getTag('#minute#') < $cron && $lastMode > $periodicite) ? 1 : 0;
 //	$cdMakeOffset = 1; // ************** POUR TEST **************
 
-	ControleResumes($zone, $cleResume, $timeOut, $pcEcartMax, $valResume, $valResumeMoyenne, $periodicite, $cdMakeOffset, $logDebug);
+	ControleResumes($zone, $nomChauffage, $cleResume, $timeOut, $pcEcartMax, $tempResume, $tempMoyenneResume, $periodicite, $cdMakeOffset, $logDebug);
 }
 
 // *******************************************************************************************************************/
 // ************************************************ CONTROLE DU RESUME ***********************************************/
-function ControleResumes($zone, $cleResume, $timeOut, $pcEcartMax, $valResume, $valResumeMoyenne, $periodicite, $cdMakeOffset, $logDebug) {
+function ControleResumes($zone, $nomChauffage, $cleResume, $timeOut, $pcEcartMax, $tempResume, $tempMoyenneResume, $periodicite, $cdMakeOffset, $logDebug) {
 	// Extraction SQL de la configuration de l'objet
 	$values = array();
 	$sql  = "SELECT `configuration` FROM `object` WHERE `name` = '$zone'";
 	$resultSql = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
 	$configuration = json_decode($resultSql[0]['configuration'], true);
+	$resultTypes = $configuration['summary'][$cleResume];
+
+	// Décompte des capteurs actifs
+	$nbEnabledOK = 0;
+	foreach ($resultTypes as $number => $details) {
+			if ($details['enable']) { $nbEnabledOK++; }
+		}
 
 	// Parcours des cmd pour activation / désactivation dans le résumé
-	$resultTypes = $configuration['summary'][$cleResume];
-	$cptCmd = 0;
 	foreach ($resultTypes as $number => $details) {
-		$cptCmd++;
 		$cmd = trim($details['cmd'], '#');
-
-/////////////////////////////////////////////////////////////////
-/*	if ($cptCmd == 1) {
-		$valResumeMoyenne = round(scenarioExpression::averageBetween($cmd, "$periodicite hour ago", 'now'), 1);
-		$valResume = mg::getCmd($cmd);
-	}*/
-/////////////////////////////////////////////////////////////////
-
 		if ($pcEcartMax > 0) {
 			$enable = $details['enable'];
-			cmdIsOK($cmd, $valResume, $lastComm, $pcEcart, $valCmd, $enable);
-			if ($valResume == 0 || $valCmd == 0) {
-				mg::message($logDebug, "*** ERROR *** ".mg::toHuman('#'.$cmd.'#')." sur la/les Températures ref/Comd : $valResume/$valCmd");
+			cmdIsOK($cmd, $tempResume, $lastComm, $pcEcart, $valCmd, $enable);
+			if ($tempResume == 0 || $valCmd == 0) {
+				mg::message($logDebug, "*** ERROR *** ".mg::toHuman('#'.$cmd.'#')." sur la/les Températures ref/Comd : $tempResume/$valCmd");
 				continue;
 			}
 			if (($lastComm > $timeOut || $pcEcart > $pcEcartMax) && $enable) {
-				mg::messageT($logDebug, ". DESACTIVATION de la commande ".mg::toHuman('#'.$cmd.'#')." ($cmd) - last comm $lastComm mn - $pcEcart % ($valResume/$valCmd)");
-				if ($cptCmd > 1) { $configuration['summary'][$cleResume][$number]['enable'] = 0; }
-				else { mg::message ($logDebug, "*** ERRO R *** La première commande du Résumé ne peut pas être désactivée !!!");}
+				if ($nbEnabledOK > 1) {
+					mg::messageT($logDebug, ". DESACTIVATION de la commande ".mg::toHuman('#'.$cmd.'#')." ($cmd) - last comm $lastComm mn - $pcEcart % ($tempResume/$valCmd)");
+					$configuration['summary'][$cleResume][$number]['enable'] = 0;
+					$nbEnabledOK--;
+				} else {
+					mg::message ('', "*** ERRO R *** La dernière commande active du Résumé ne peut pas être désactivée !!!");
+				}
+
 			} elseif ($lastComm <= $timeOut && $pcEcart <= $pcEcartMax && !$enable) {
-				mg::messageT($logDebug, ". REACTIVATION de la commande ".mg::toHuman('#'.$cmd.'#')." ($cmd) - last comm $lastComm mn - $pcEcart % ($valResume/$valCmd)");
+				mg::messageT($logDebug, ". REACTIVATION de la commande ".mg::toHuman('#'.$cmd.'#')." ($cmd) - last comm $lastComm mn - $pcEcart % ($tempResume/$valCmd)");
 				$configuration['summary'][$cleResume][$number]['enable'] = 1;
+				$nbEnabledOK++;
 			}
 		}
 
@@ -114,7 +115,7 @@ function ControleResumes($zone, $cleResume, $timeOut, $pcEcartMax, $valResume, $
 					$eqLogicCmd = $allCmd->getId();
 					if ($eqLogicCmd == $cmd) {
 						$valueOffset = $allCmd->getConfiguration('calculValueOffset');
-						makeOffset($cmd, $allCmd, $valResumeMoyenne, $valueOffset, $periodicite, $logDebug);
+						makeOffset($cmd, $allCmd, $tempMoyenneResume, $valueOffset, $periodicite, $logDebug);
 						$break = 1;
 					}
 					if ($break) { break; }
@@ -124,14 +125,16 @@ function ControleResumes($zone, $cleResume, $timeOut, $pcEcartMax, $valResume, $
 		}
 		// ************************************** FIN MODIFICATION DES OFFSETS ***************************************/
 		// ***********************************************************************************************************/
+
 	}
+	mg::messageT('', "! Fin de Traitement de $zone/$nomChauffage - Nb de commandes actives : $nbEnabledOK - TempMoyenne : $tempResume");
 }
 
 // *******************************************************************************************************************/
 // ************************************************* MAKE DE L'OFFSET ************************************************/
 // *******************************************************************************************************************/
 // Make la nouvelle valeur d'offset de la commande
-function makeOffset($cmd, $allCmd, $valResumeMoyenne, $valueOffset, $periodicite, $logDebug) {
+function makeOffset($cmd, $allCmd, $tempMoyenneResume, $valueOffset, $periodicite, $logDebug) {
 	$periodicite = $periodicite-1;
 	$temperatureMoyenneCmd = round(scenarioExpression::averageBetween($cmd, "$periodicite hour ago", 'now'), 1);
 
@@ -154,18 +157,18 @@ function makeOffset($cmd, $allCmd, $valResumeMoyenne, $valueOffset, $periodicite
 
 	// Calcul de la nouvelle correction à appliquer
 	// On sort en cas d'anomalie
-	if ($valResumeMoyenne == 0 || $temperatureMoyenneCmd == 0) {
-		mg::message($logDebug, "*** ERRO R *** ".mg::toHuman('#'.$cmd.'#')." sur la/les Températures moyennes ref/Comd : $valResumeMoyenne/$temperatureMoyenneCmd");
+	if ($tempMoyenneResume == 0 || $temperatureMoyenneCmd == 0) {
+		mg::message($logDebug, "*** ERRO R *** ".mg::toHuman('#'.$cmd.'#')." sur la/les Températures moyennes ref/Comd : $tempMoyenneResume/$temperatureMoyenneCmd");
 		return;
 	}
-	$newCorrection = round($oldCorrection + ($valResumeMoyenne - $temperatureMoyenneCmd), 2);
+	$newCorrection = round($oldCorrection + ($tempMoyenneResume - $temperatureMoyenneCmd), 2);
 	if ( $newCorrection >= 0) { $newCorrection = "+$newCorrection"; }
 	elseif ($newCorrection == 0) { $newCorrection = "+0.0"; }
 
 	//  Recalcul de la chaine 'ValueOffset'
 	$newValueOffset = "$baseValueOffset$newCorrection";
 
-	mg::message($logDebug, mg::toHuman("#$cmd#")." - tempRef/tempCmd : $valResumeMoyenne/$temperatureMoyenneCmd - old/New Correction : $oldCorrection/$newCorrection - ValueOffset : $newValueOffset");
+	mg::message($logDebug, mg::toHuman("#$cmd#")." - tempRef/tempCmd : $tempMoyenneResume/$temperatureMoyenneCmd (sur $periodicite heures) - old/New Correction : $oldCorrection/$newCorrection - ValueOffset : $newValueOffset");
 
 	// **************************************
 	// BIEN CONTROLER LE LOG AVANT D'ENLEVER LES REM.)
@@ -178,14 +181,14 @@ function makeOffset($cmd, $allCmd, $valResumeMoyenne, $valueOffset, $periodicite
 // *******************************************************************************************************************/
 // ********************** Lit la dernière valeur et les dates associées de la commande du résumé *********************/
 // *******************************************************************************************************************/
-function cmdIsOK($cmd, $valResume, &$lastComm, &$pcEcart, &$valCmd, $enable) {
+function cmdIsOK($cmd, $tempResume, &$lastComm, &$pcEcart, &$valCmd, $enable) {
 //	mg::debug(0);
 	$valCmd = mg::getCmd($cmd, '', $collectDate, $valueDate);
 	$lastComm = round(((time() - $collectDate)/60));
 
-	$pcEcart = abs(round(($valResume-$valCmd)/$valResume*100, 1));
+	$pcEcart = abs(round(($tempResume-$valCmd)/$tempResume*100, 1));
 //	mg::debug();
-	mg::message('', "Last comm $lastComm mn - $pcEcart % ($valResume/$valCmd) - enabled : $enable");
+	mg::message('', "Last comm $lastComm mn - $pcEcart % ($tempResume/$valCmd) - enabled : $enable");
 }
 
 ?>
