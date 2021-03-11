@@ -121,7 +121,7 @@ $message = MsgMeteoLocale();
 	self::wait ("$infVolSonos == $reveilVolumeRadio", 5);
 	mg::setCmd($equipSonos, 'Jouer une radio', '.', $reveilStationRadio);
 		
-	mg::setCron('', $heure_Reveil + 1.5*3600);
+	mg::setCron('', $heure_Reveil + 2.0*3600);
 	mg::setVar('_ReveilOnLine', 4);
 	
 } elseif ($reveilOnLine == 4) {
