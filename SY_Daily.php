@@ -18,8 +18,8 @@ Si flaggé et lancé par EndBackup :
 
 //N° des scénarios à lancer à chaque éxécution:
 	$tab_Scenario = array(
-							'137',						// Init Paramètrages
-							'127'						// EDF Conso
+//							'137',						// Init Paramètrages
+//							'127'						// EDF Conso
 	);
 
 //Variables :
