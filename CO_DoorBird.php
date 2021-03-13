@@ -22,11 +22,12 @@ Gestion de DoorBird
 	$jingleMvmt = 'jingle_07.mp3';
 	$volumeMvmt = 10;
 	$timerRetour = 1;						// Timer mn avant retour au design principal
+	$timer = 15;							// Timer mn normal du cron
 
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-mg::setCron('', time() + $timerRetour*60);
+mg::setCron('', time() + $timer*60);
 $declencheur = mg::getTag('#trigger#');
 
 // Rétablissement de l'IP dans les param de Doorbird et de Caméra
@@ -59,6 +60,7 @@ if ($declencheur == 'user' || $declencheur == 'schedule') {
 	if (mg::getVar('_designActif') != $designCam) {
 		mg::JPI('DESIGN', $designCam);
 		mg::setVar('_designActif', $designCam);
+		mg::setCron('', time() + $timerRetour*60);
 	}
 }
 

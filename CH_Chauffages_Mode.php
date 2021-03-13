@@ -261,7 +261,7 @@ function CalculRatio() {
 	if ($tempZone >= $tempConfort || $tabChauffages_[$nomChauffage]['timeDeb'] < time()-6*3600) {
 		$deltaTemp = abs($tempZone - $tabChauffages_[$nomChauffage]['tempDeb']);
 		$deltaTime = time() - $tabChauffages_[$nomChauffage]['timeDeb'];
-		if ($deltaTime > 900 && $deltaTemp > 0.5) {
+		if ($deltaTime > 1800 && $deltaTemp > 0.5) {
 			$ratio = round($deltaTemp / ($deltaTime / 3600), 2);
 			$moyenne = getMoyenne($ratio);
 
