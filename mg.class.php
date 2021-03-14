@@ -1927,6 +1927,45 @@ function lastMvmt($infNbMvmt, &$nbMvmt) {
 }
 
 /************************************************************************************************************************
+* Util														FRAME TV													*
+*************************************************************************************************************************
+* Gère frame TV, nécessite les plugins SmartThings et TvDomSamsung ainsi qu'un équipement On/Off avec des équipements 	*
+	préfixé en conséquence (cf le code plus bas) 																		*
+* Paramétres :																											*
+*	$nom : Racine du nom des équipements 'Frame TV'																		*
+*	$zone : Zone des équipements 'Salon'																				*
+*	$action : Action à effectuée : oof, on, hdmi, art																	*
+************************************************************************************************************************/
+function frameTV($nom, $zone, $action) {
+	$equipSmartThings = "#[$zone][$nom"."_SmartThings]#";
+	$equipTvDomSamsung = "#[$zone][$nom"."_TvDomSamsung]#";
+	$equipOnOff = "#[$zone][$nom"."_OnOff]#";
+
+	// OFF
+	if ($action == 'off') {
+		mg::setCmd($equipSmartThings, 'Eteindre');
+		sleep(2);
+		mg::setCmd($equipOnOff, 'off');
+	// ON ++
+	} else {
+		mg::setCmd($equipOnOff, 'on');
+		sleep(2);
+		mg::wakeOnLan($nom);
+		mg::setCmd($equipSmartThings, 'Allumer');
+		// HDMI
+		if ($action == 'art') {
+			mg::setCmd($equipTvDomSamsung, 'Sendkey', 'KEY_POWER');
+		}
+		// ART
+		elseif ($action == 'hdmi') {
+			mg::setCmd($equipSmartThings, 'Changer de source dentrée', 'HDMI1');
+		}
+	}
+	self::message('', self::$__log_SP . __FUNCTION__ . " : $nom de $zone est à '$action'");
+
+}
+
+/************************************************************************************************************************
 * Util														DEBUG														*
 *************************************************************************************************************************
 * Change le niveau de l'affichage du log debug (1-4), par defaut 4 - tout les logs										*
@@ -1934,7 +1973,7 @@ function lastMvmt($infNbMvmt, &$nbMvmt) {
 	function debug($debug=4) {
 		global $scenario;
 		self::$__debug = $debug;
-		$message = ($debug==0) ? 'Aucun log' : '';
+		$message = ($debug<=0) ? 'Aucun log' : '';
 		$message .= ($debug>=1) ? ' + INFO' : '';
 		$message .= ($debug>=2) ? ' + ER_ROR': ''; // Le '_' pour éviter le feedback avec la surveillance des logs
 		$message .= ($debug>=3) ? ' +  WARNING' : '';
@@ -1942,7 +1981,7 @@ function lastMvmt($infNbMvmt, &$nbMvmt) {
 		$message = " CLASS MG - AVEC debug $debug : log => $message.";
 //		$message = " CLASS MG - AVEC $log ";
 		$message = str_repeat("=", (138-strlen($message))/2).$message.str_repeat("=", (138-strlen($message))/2);
-		$scenario->setlog($message);
+		if ($debug > 1) { $scenario->setlog($message); }
 	}
 
 /************************************************************************************************************************

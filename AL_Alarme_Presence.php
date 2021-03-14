@@ -10,7 +10,7 @@ Si le lancement est effectué par le sheduler et par les déclencheurs de proxim
 	si lancement par sheduler :
 	2 - si pas Connecté parcours la table ARP
 	3 - si pas Connecté Ping l'équipement 
-	4 - si pas Connecté recherche dans le routeur le premier user de même nom connecté et le marque comme présent
+	4 - si pas Connecté recherche dans le routeur le premier équipement connecté COMPORTANT le nom du user et le marque comme présent
 	3 - si pas Connecté teste le BLEA
 
 	Lorsque'un équipement est connecté, met à jour l'IP et le MAC dans Tab_User si le MAC correspond.
@@ -21,6 +21,7 @@ Si le lancement n'est pas effectué par 'schedule', ne teste QUE les users et so
 Gère le lancement de l'alarme
 Met à jour le tableau HTML des users.
 ************************************************************************************************************************/
+global $debug;
 
 // Infos, Commandes et Equipements :
 	// $infNbMvmtSalon, $infTabReseau_Aff
@@ -91,12 +92,12 @@ foreach ($tabUser as $user => $detailsUser) {
 	$cmd_id = trim(mg::toID($equipUser, 'Présence'), '#');
 
 	$OK = null;
+	mg::debug(-1);
 
 	// ******** On saute si pas 'schedule' et (pas user ********
 	if ($declencheur != 'schedule' && $declencheur != 'user' && $type != 'user') continue; 
 	// Scan du réseau sinon
 	else ScanReseau($interfaceReseau, $scanReseau); 
-	
 	// ------------------------------------------------------------------------------------------------------------------
 	// ------------------------------------------------------------------------------------------------------------------
 	// Test de localisation
@@ -129,17 +130,17 @@ foreach ($tabUser as $user => $detailsUser) {
 		foreach($eqLogics as $eqLogic) {
 			$name = $eqLogic->getName();
 			$typeName = $eqLogic->getEqType_name();
-			if ($typeName == $pluginRouteur && $name == $user) {
-				mg::debug(0);
+			if ($typeName == $pluginRouteur && strpos($name, $user) !== false) {
 				$equipUser = $eqLogic->getHumanName();
 				$cmd_id = trim(mg::toID($equipUser, 'Présence'), '#');
 				$presence = mg::getCmd($cmd_id);
 				if ($presence) {
+			mg::message('', "*************** $name == $user *************");
 					$IP = mg::getCmd($equipUser, 'Adresse IP') ? mg::getCmd($equipUser, 'Adresse IP') : $IP;
 					$MAC = strtolower($eqLogic->getLogicalId());
 					$OK .= " - ROUTEUR";
+					continue;
 				}
-				mg::debug();
 			}
 		}
 	}
@@ -175,6 +176,7 @@ foreach ($tabUser as $user => $detailsUser) {
 	if ($type == 'user' && $OK) { $nbPresences++; }
 
 	// ================================================================================================================
+	mg::debug(1);
 	mg::message('', ". $user " . ($OK ? "PRESENT" : "***ABSENT***)") . " Depuis le " . date('d\/m \à H\hi\m\n', (abs($tabUserTmp[$user]['OK']))) . " sec. ($OK) - ($IP / $MAC)");
 	// ================================================================================================================
 

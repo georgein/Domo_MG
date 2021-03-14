@@ -28,23 +28,13 @@ Sinon Relance le PC-MG et la FrameTV.
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-
-// test
-//	mg::eventGhost('Veille', 'PC-MG'); // Veille, Veille_Prolongee
-//sleep(10);
-//	mg::WakeOnLan('PC-MG');
-//return;
-
-
-
-
 if ($timingExtinctionPC <= 0) { return; }
 
 if ($alarme || ( $puissancePcMg > 8 && $nuitSalon == 2 && !$etatCinema && $lastMvmt > $timingExtinctionPC )) {
 	// ------------------------------------------------------------------------------------------------------------
 	mg::messageT('', "! ARRET INFORMATIQUE");
 	// ------------------------------------------------------------------------------------------------------------
-	mg::eventGhost('Veille', 'PC-MG'); // Veille, Veille_Prolongee
+	mg::eventGhost('Veille_Prolongee', 'PC-MG'); // Veille, Veille_Prolongee
 	if (mg::getCmd($equipSmartThings, 'Sous tension')) { mg::setCmd($equipSmartThings, 'Éteindre'); }
 	sleep(5);
 	if (mg::getCmd($equipFrameTV, 'Etat')) { mg::setCmd($equipFrameTV, 'Off'); }

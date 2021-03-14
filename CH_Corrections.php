@@ -20,7 +20,7 @@ NB : si 'periodicite' == 0, on ne lance pas la correction
 
 	// Paramètres :
 	$cron = 5;
-	$logDebug = 'Log:/_DEBUG'; 
+	$logDebug = ''; //'Log:/_DEBUG'; 
 	$timeLine = mg::getParam('Log', 'timeLine');
 
 // ********************************************************************************************************************
@@ -174,8 +174,8 @@ function makeOffset($cmd, $allCmd, $tempMoyenneResume, $valueOffset, $periodicit
 	// **************************************
 	// BIEN CONTROLER LE LOG AVANT D'ENLEVER LES REM.)
 	// **************************************
-/*	// Enregistrement des nouveaux offsets
-*/	$allCmd->setConfiguration('calculValueOffset', $newValueOffset);
+/*	// Enregistrement des nouveaux offsets */
+	$allCmd->setConfiguration('calculValueOffset', $newValueOffset);
 	$allCmd->save();
 }
 

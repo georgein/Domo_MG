@@ -6,8 +6,8 @@ Cinema - 160
 **********************************************************************************************************************/
 
 // Infos, Commandes et Equipements :
-	// $infCinemaEtat, $infTV_Sendkey
-	// $equipEcl, $equipSmartThings
+	// $infCinemaEtat
+	// $equipEcl
 
 // N° des scénarios :
 	$scenLuminositeSalon = 59;
@@ -32,13 +32,7 @@ if (mg::getCmd($infCinemaEtat)) {
 	mg::MessageT('', "! MISE EN ROUTE DU CINEMA");
 	//=================================================================================================================
 	// Allumage TV
-	mg::WakeOnLan('Frame TV');
-	sleep(5);
-	mg::setCmd($equipSmartThings, 'Allumer');
-	sleep(3);
-	
-	// Choix du mode
-	mg::setCmd($equipSmartThings, 'Changer de source dentrée', 'HDMI1');
+	mg::frameTV('Frame TV', 'Salon', 'hdmi');
 
 	// Fermeture volets
 	mg::setScenario($scenVoletsJourNuit, 'deactivate');
@@ -67,12 +61,8 @@ if (mg::getCmd($infCinemaEtat)) {
 	mg::setCmd($equipEcl, 'Lampe Ambiance Slider', 1);
 	mg::wait("scenario($scenAllumageSalon) == 0", 180);	
 
-	// On repasse en mode 'Art'
-	mg::setCmd($infTV_Sendkey, '', 'KEY_POWER');
-	sleep(10);
-	
-	// On éteint la TV si nécessaire
-	mg::setCmd($equipSmartThings, 'Éteindre');
+	// On passe en mode 'Art'
+mg::frameTV('Frame TV', 'Salon', 'art');
 
 	if (!$nuitExt && time() < strtotime($timeVoletsNuit)) {
 		mg::VoletsGeneral( 'Salon', 'M', 1);
