@@ -4,12 +4,11 @@ Veille PC_MG - 126
 
 Si NuitSalon == 2 et Cinéma arrété et Paramètrages OK :
 	Met en veille le PC de MG.
-	Coupe l'alimentation de la Frame TV.
-Sinon Relance le PC-MG et la FrameTV.
+Sinon Relance le PC-MG.
 **********************************************************************************************************************/
 
 // Infos, Commandes et Equipements :
-// $infNbMvmtSalon, $equipSmartThings, $infCinemaEtat, $equipPcMg, $equipFrameTV
+// $infNbMvmtSalon, $infCinemaEtat, $equipPcMg
 
 // N° des scénarios :
 
@@ -23,34 +22,28 @@ Sinon Relance le PC-MG et la FrameTV.
 
 // Paramètres :
 	$logTimeLine = mg::getParam('Log', 'timeLine');
-	$timingExtinctionPC = mg::getParam('Confort', 'timingExtinctionPC');	// Temps sans mouvement (en mn)  avant extinction 
-	
+	$timingExtinctionPC = mg::getParam('Confort', 'timingExtinctionPC');	// Temps sans mouvement (en mn)  avant extinction
+
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 if ($timingExtinctionPC <= 0) { return; }
+mg::setCron('', time() + $timingExtinctionPC*60);
+//mg::setCron('', "*/$timingExtinctionPC * * * *");
 
-if ($alarme || ( $puissancePcMg > 8 && $nuitSalon == 2 && !$etatCinema && $lastMvmt > $timingExtinctionPC )) {
+if ($alarme || ( $puissancePcMg > 10 && $nuitSalon == 2 && !$etatCinema && $lastMvmt >= $timingExtinctionPC )) {
 	// ------------------------------------------------------------------------------------------------------------
 	mg::messageT('', "! ARRET INFORMATIQUE");
 	// ------------------------------------------------------------------------------------------------------------
-	mg::eventGhost('Veille_Prolongee', 'PC-MG'); // Veille, Veille_Prolongee
-	if (mg::getCmd($equipSmartThings, 'Sous tension')) { mg::setCmd($equipSmartThings, 'Éteindre'); }
-	sleep(5);
-	if (mg::getCmd($equipFrameTV, 'Etat')) { mg::setCmd($equipFrameTV, 'Off'); }
-	mg::Message($logTimeLine, "Informatique - Arrèt.");
+	mg::eventGhost('Veille_Prolongee', 'PC-MG');
 
-} elseif (!$alarme && $puissancePcMg < 8 && $nuitSalon != 2 && Time() >= ($heureReveil - 1800) && $lastMvmt < $timingExtinctionPC && $nbMvmt > 1) {
+} elseif (!$alarme && $puissancePcMg < 10 && $nuitSalon != 2 && Time() >= ($heureReveil - 1800) && $nbMvmt) {
 	// ------------------------------------------------------------------------------------------------------------
 	mg::messageT('', "! REMISE EN ROUTE INFORMATIQUE");
 	// ------------------------------------------------------------------------------------------------------------
 	// Réveil PC
 	mg::WakeOnLan('PC-MG');
-//	if (!mg::getCmd($equipFrameTV, 'Etat')) { mg::setCmd($equipFrameTV, 'On'); }
-//	sleep(5);
-//	mg::WakeOnLan('Frame TV');
-//	if (!mg::getCmd($equipSmartThings, 'Sous tension')) { mg::setCmd($equipSmartThings, 'Allumer'); }
 	mg::Message($logTimeLine, "Informatique - Remise en route.");
-} 
+}
 
 ?>

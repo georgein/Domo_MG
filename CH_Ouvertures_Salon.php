@@ -20,7 +20,8 @@ Enchaîne au final le scénario ChauffageMode
 	$nuitExt = mg::getVar('NuitExt');
 	$heure_Reveil = mg::getVar('_Heure_Reveil');
 	$destinataires = mg::getParam('Chauffages','destinatairesPortes');				// Destinataire du message d'annonce
-
+	$timerPortes = 5;
+	
 // Paramètres :
 	$tempSeuilPorte = mg::getParam('Chauffages','tempSeuilPorte');				// Différence de température maximum pour signal lumineux d'ouverture/fermeture de portes
 	$intensiteSignalPorte = mg::getParam('Chauffages','intensiteSignalPorte');	// Intensité de la lampe couleur
@@ -30,21 +31,21 @@ Enchaîne au final le scénario ChauffageMode
 /*********************************************************************************************************************/
 // Pause pour éviter les faux signaux en cas d'ouverture/fermeture ponctuelle
 $declencheur = mg::getTag('#trigger#');
-if (strpos($declencheur, 'NbPortes') !== false) { sleep(30); }
+if (strpos($declencheur, 'NbPortes') !== false) { 
+	sleep(30); 
+	mg::setCron('', time() + $timerPortes*60);
+}
 
 $demandeFaite = mg::getVar('_DemandeFaite');
 
 // Sortie si NuitExt ou NuitSalon == 2 ou en alarme
 if ( $nuitSalon == 2 || $alarme) {
 		mg::LampeCouleur($equipLampeCouleur, 0);
-//		mg::unsetVar('_DemandeFaite');
 		return;
 	}
 
 $nbPortesSalon = mg::getCmd($infNbPortesSalon);
-//$tempSalonConfort = $consigne = $tabChauffages_['Salon']["tempConfort"];
 $tempSalon = mg::getCmd($infTempSalon);
-//$tempSalon = $saison == 'HIVER' ? max($tempSalonConfort, $tempSalon) : min($tempSalonConfort, $tempSalon);
 $tempExt = mg::getCmd($infTempExt);
 $difference = $tempSalon - $tempExt;
 

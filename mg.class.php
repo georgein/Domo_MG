@@ -986,7 +986,8 @@ mg::minuterie($equipEcl, $infNbMvmt, $timer, $cdExtinction, $cdAllumage);							
 *-----------------------------------------------------------------------------------------------------------------------*
 ************************************************************************************************************************/
 function minuterie($equipEcl, $infNbMvmt, $timer=2, $cdExtinction, $cdAllumage, $actionEtat='Etat') {
-	mg::setCron('', "*/$timer * * * *");
+//	mg::setCron('', "*/$timer * * * *");
+	mg::setCron('', time() + $timer*60);
 
 	$lastMvmt = round(mg::lastMvmt($infNbMvmt, $nbMvmt)/60);
 	self::message('', "cdExtinction : $cdExtinction - nbMvmt - $nbMvmt - lastMvmt : $lastMvmt");
@@ -1936,7 +1937,7 @@ function lastMvmt($infNbMvmt, &$nbMvmt) {
 *	$zone : Zone des équipements 'Salon'																				*
 *	$action : Action à effectuée : oof, on, hdmi, art																	*
 ************************************************************************************************************************/
-function frameTV($nom, $zone, $action) {
+function frameTV($nom, $zone, $action='on') {
 	$equipSmartThings = "#[$zone][$nom"."_SmartThings]#";
 	$equipTvDomSamsung = "#[$zone][$nom"."_TvDomSamsung]#";
 	$equipOnOff = "#[$zone][$nom"."_OnOff]#";
@@ -1946,18 +1947,24 @@ function frameTV($nom, $zone, $action) {
 		mg::setCmd($equipSmartThings, 'Eteindre');
 		sleep(2);
 		mg::setCmd($equipOnOff, 'off');
+		return;
 	// ON ++
 	} else {
-		mg::setCmd($equipOnOff, 'on');
-		sleep(2);
-		mg::wakeOnLan($nom);
-		mg::setCmd($equipSmartThings, 'Allumer');
-		// HDMI
+		if (!mg::getCmd($equipOnOff, 'Etat')) { 
+			mg::setCmd($equipOnOff, 'on'); 
+			sleep(2);
+		}
+//		while (mg::getCmd($equipSmartThings, 'Santé') == 'Hors ligne' || !mg::getCmd($equipSmartThings, 'Sous tension')) {
+			mg::wakeOnLan($nom);
+			mg::setCmd($equipSmartThings, 'Allumer');
+			mg::setCmd($equipSmartThings, 'Rafraîchir');
+			sleep(2);
+//		}
+		// ART
 		if ($action == 'art') {
 			mg::setCmd($equipTvDomSamsung, 'Sendkey', 'KEY_POWER');
-		}
-		// ART
-		elseif ($action == 'hdmi') {
+		// HDMI
+		} elseif ($action == 'hdmi') {
 			mg::setCmd($equipSmartThings, 'Changer de source dentrée', 'HDMI1');
 		}
 	}

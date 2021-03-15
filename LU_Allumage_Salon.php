@@ -20,6 +20,7 @@ Le retour état du Stop dans le widget est à régler à TimeOut + 5 au minimum 
 //Variables :
 	$alarme = mg::getVar('Alarme');
 	$nuitSalon = mg::getVar('NuitSalon');
+	$lastMvmt = round(mg::lastMvmt($infNbMvmtSalon, $nbMvmt)/60);
 
 	$memoEtat = mg::getCmd($equipEcl, 'Memo Etat');
 	$newIntensite = mg::getCmd($equipEcl, 'Lampe Générale Etat');
@@ -38,7 +39,7 @@ Le retour état du Stop dans le widget est à régler à TimeOut + 5 au minimum 
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-	$lastMvmt = round(mg::lastMvmt($infNbMvmtSalon, $nbMvmt)/60);
+mg::setCron('', time() + $timeOutSalon*60);
 
 //$nuitSalon = 1; ***** POUR DEBUG *****
 $nomDeclencheur = mg::ExtractPartCmd(mg::getTag('#trigger#'), 3);

@@ -39,6 +39,7 @@ Le booster se déclenche si la température du salon est inférieur à (consigne
 $declencheur = mg::getTag('#trigger#');
 // Si appel par variable _InfPorte on récupère le déclencheur d'origine de mouvement de porte/fenetre
 if (strpos($declencheur, '_InfPorte') > 0) { $declencheur = $_InfPorte; }
+$zone = mg::extractPartCmd($declencheur, 1);
 
 // ****************************************** RELANCE DE BROADLINK SI OFFLINE *****************************************
 if (!mg::getCmd($infRouteurBroadlink) || !mg::getCmd($equipDaemon, 'Démon Broadlink')) {
@@ -48,7 +49,7 @@ if (!mg::getCmd($infRouteurBroadlink) || !mg::getCmd($equipDaemon, 'Démon Broad
 
 // Boucle des chauffages
 foreach ($tabChauffages as $nomChauffage => $details_Chauffage) {
-	if (!$nomChauffage) {continue; }
+	if ($zone != $nomChauffage) {continue; }
 	//=================================================================================================================
 	mg::messageT('', "! $nomChauffage");
 	//=================================================================================================================
