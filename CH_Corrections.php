@@ -36,18 +36,26 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	$timeOut = $detailsZone['timeOut'];
 	$pcEcartMax = $detailsZone['pcEcartMax'];
 	$periodicite = $detailsZone['periodicite'];
+	$correction = $detailsZone['correction'];
 	if (!$equip) { continue; }
 
 	$cmdResume = mg::toID("#[$zone][Résumé][$nomResume]#");
 	$tempResume = mg::getCmd($cmdResume);
-	$tempMoyenneResume = round(scenarioExpression::averageBetween($cmdResume, "$periodicite hour ago", 'now'), 1);
+	$tempMoyenneResume = round(scenarioExpression::averageBetween($cmdResume, "$periodicite hour ago", 'now'), 2) + $correction;
 	mg::messageT('', "! Traitement de $zone/$nomChauffage avec timeOuts : $timeOut - pcEcartMax : $pcEcartMax");
 
-	$mode = mg::toID("#[$zone][Températures][Consigne Chauffage]#");
-	$valMode = mg::getCmd($mode,  '', $collectDate, $valueDate);
-	$lastMode = round(((time() - $valueDate)/3600), 1);
-	$cdMakeOffset = ($periodicite > 0 && mg::getTag('#heure#')%$periodicite == 1 && mg::getTag('#minute#') < $cron && $lastMode > $periodicite) ? 1 : 0;
-//	$cdMakeOffset = 1; // ************** POUR TEST **************
+	// Planification de la prochaine 'correction' à 'periodicité' + 1 heure du dernier changement de mode
+	$infMode = mg::toID("#[$zone][Températures][Consigne Chauffage]#");
+	$valMode = mg::getCmd($infMode,  '', $collectDate, $valueDate);
+	$lastMode = round((time() - $valueDate)/3600, 2) - 1;
+	if ($periodicite > 0 && $lastMode > $periodicite) {
+		$cdMakeOffset = 1;
+		mg::setInf($infMode,  '', 'Correction');
+	} else { $cdMakeOffset = 0; }
+	
+mg::message('', "**************** $valMode - $lastMode > $periodicite ************");
+
+//$cdMakeOffset = 1; ///////////////////////////////
 
 	ControleResumes($zone, $nomChauffage, $cleResume, $timeOut, $pcEcartMax, $tempResume, $tempMoyenneResume, $periodicite, $cdMakeOffset, $logDebug, $timeLine);
 }
@@ -137,7 +145,7 @@ function ControleResumes($zone, $nomChauffage, $cleResume, $timeOut, $pcEcartMax
 // Make la nouvelle valeur d'offset de la commande
 function makeOffset($cmd, $allCmd, $tempMoyenneResume, $valueOffset, $periodicite, $logDebug, $timeLine) {
 	$periodicite = $periodicite-1;
-	$temperatureMoyenneCmd = round(scenarioExpression::averageBetween($cmd, "$periodicite hour ago", 'now'), 1);
+	$temperatureMoyenneCmd = round(scenarioExpression::averageBetween($cmd, "$periodicite hour ago", 'now'), 2);
 
 	// Lecture de la correction actuelle
 	$oldCorrection = '+0.0';
@@ -162,7 +170,7 @@ function makeOffset($cmd, $allCmd, $tempMoyenneResume, $valueOffset, $periodicit
 		mg::message($logDebug, "*** ERRO R *** ".mg::toHuman('#'.$cmd.'#')." sur la/les Températures moyennes ref/Comd : $tempMoyenneResume/$temperatureMoyenneCmd");
 		return;
 	}
-	$newCorrection = round($oldCorrection + ($tempMoyenneResume - $temperatureMoyenneCmd), 2);
+	$newCorrection = round(/*$oldCorrection +*/ ($tempMoyenneResume - $temperatureMoyenneCmd), 2);
 	if ( $newCorrection >= 0) { $newCorrection = "+$newCorrection"; }
 	elseif ($newCorrection == 0) { $newCorrection = "+0.0"; }
 

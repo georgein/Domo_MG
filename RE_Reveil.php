@@ -121,6 +121,7 @@ $message = MsgMeteoLocale();
 	self::wait ("$infVolSonos == $reveilVolumeRadio", 5);
 	mg::setCmd($equipSonos, 'Jouer une radio', '.', $reveilStationRadio);
 		
+	shell_exec("sudo rm -f /var/www/html/log/scenarioLog/scenario48.log"); // Pour éviter les "error" de monitoring
 	mg::setCron('', $heure_Reveil + 2.0*3600);
 	mg::setVar('_ReveilOnLine', 4);
 	
@@ -135,7 +136,6 @@ $message = MsgMeteoLocale();
 	
 	mg::unsetVar('_ReveilOnLine');
 	mg::setCron('', time()-60);
-		shell_exec("sudo rm -f /var/www/html/log/scenarioLog/scenario48.log"); // Pour éviter les "error" de monitoring
 }
 
 /**********************************************************************************************************************
