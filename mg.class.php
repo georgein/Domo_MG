@@ -4,7 +4,7 @@
 *												class mg pour Jeedom													*
 *																														*
 *	Déclaration dans les scénarios	:																					*
-*					include_once getRootPath() . "pathRef/mg.class.php"; mg::init();										*
+*					include_once getRootPath() . "pathRef/mg.class.php"; mg::init();									*
 *																														*
 * Partiellement inspiré par : http://rulistaff.free.fr/sc/sc_framework.zip												*
 *																														*
@@ -35,7 +35,7 @@ class mg {
 	static $__log_WARNING = '--- WARNING --- ';
 	static $__log_INFO = 'INFO : ';
 
-	private static $__debug = 4;
+	private static $__debug = 3;
 	private static $__wait_cmd = true;
 	private static $__stop_exception = 'Arrêt forcé du scénario';
 
@@ -49,11 +49,7 @@ class mg {
 		global $scenario, $tabParams, $scenarioVoletManuel;
 		$tabParams = self::getVar('tabParams');
 		$scenarioVoletManuel = 107;
-
-		// Passe $debug à false si log == Aucun dans le scénario pour supprimer tous les appels du 'Log' standard.
-		if ($scenario->getConfiguration('logmode', 'default') != 'none') {
-			self::debug();
-		}
+		self::debug();
 	}
 
 /************************************************************************************************************************
@@ -442,7 +438,7 @@ mg::message('', $requete);
 /************************************************************************************************************************
 * DOMO														VOICE_RSS													*
 *************************************************************************************************************************
-*	Génération TTS via VoiceRSS																							*
+*	Génération TTS via VoiceRSS : http://www.voicerss.org/api/															*
 *	Paramètres :																										*
 *		nom_File_TTS : Nom du fichier à générer dans le rep 'SonosPathMedia' de Jeedom									*
 *		message : Message à transposer																					*
@@ -550,7 +546,7 @@ mg::message('', $requete);
 				}
 // ???????????????????????????????????????????????????????????????????????????????????????????????????
 
-				mg::debug(0);
+				mg::debug(-1);
 				self::VoletRoulant($zone, $cmd, 'Slider', $slider);
 				self::wait("scenario($scenarioVoletManuel) == 0", 180);
 			}
@@ -1624,6 +1620,7 @@ function getPingIP($IP, $user='', $nbTentatives=2, $delay=200) {
 * self::$__debug == 0 pas de log, 1 TOUS les logs, 2 logs infos et +, 3 log warning et +, 4 log error et +				*
 ************************************************************************************************************************/
 	function message($type, $contenu = '', $titre = 'INFO') {
+		if (self::$__debug <= 0 ) { return; }
 		global $scenario;
 
 		if ($contenu == '') {
@@ -1919,10 +1916,8 @@ function getPingIP($IP, $user='', $nbTentatives=2, $delay=200) {
 *	$nbMvmt : Retourne le nbMvmt de la commande																			*
 ************************************************************************************************************************/
 function lastMvmt($infNbMvmt, &$nbMvmt) {
-	self::debug(0);
 	$nbMvmt = mg::getCmd($infNbMvmt);
 	$lastMvmt = mg::getCond("lastChangeStateDuration($infNbMvmt, 0)");
-	self::debug();
 	self::message('', self::$__log_SP . __FUNCTION__ . " : LastMvmt : '".round($lastMvmt/60)."' mn - nbMvmt : '$nbMvmt'");
 	return ($nbMvmt > 0) ? 0 : $lastMvmt;
 }
@@ -1975,18 +1970,26 @@ function frameTV($nom, $zone, $action='on') {
 /************************************************************************************************************************
 * Util														DEBUG														*
 *************************************************************************************************************************
-* Change le niveau de l'affichage du log debug (1-4), par defaut 4 - tout les logs										*
+* Change le niveau de l'affichage du log debug (1-4), par defaut 3														*
 ************************************************************************************************************************/
-	function debug($debug=4) {
+	function debug($debug='') {
 		global $scenario;
+
+		$mode = $scenario->getConfiguration('logmode'/*, 'default'*/);
+		if (!$debug) {
+			// Passe $debug selon le 'mode' du scénario.
+			if ($mode == 'realtime') { $debug = 4; }
+			elseif ($mode == 'default') { $debug = 3; }
+			else { $debug = -1; }
+		}
+		
 		self::$__debug = $debug;
 		$message = ($debug<=0) ? 'Aucun log' : '';
 		$message .= ($debug>=1) ? ' + INFO' : '';
 		$message .= ($debug>=2) ? ' + ER_ROR': ''; // Le '_' pour éviter le feedback avec la surveillance des logs
 		$message .= ($debug>=3) ? ' +  WARNING' : '';
 		$message .= ($debug>=4) ? ' + SP': '';
-		$message = " CLASS MG - AVEC debug $debug : log => $message.";
-//		$message = " CLASS MG - AVEC $log ";
+		$message = " CLASS MG - Mode $mode - AVEC debug ($debug) : log => $message.";
 		$message = str_repeat("=", (138-strlen($message))/2).$message.str_repeat("=", (138-strlen($message))/2);
 		if ($debug > 1) { $scenario->setlog($message); }
 	}

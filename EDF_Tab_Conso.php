@@ -54,7 +54,6 @@ $tabNomCol = array('Nom', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,'Mois courant', 
 $tabAff = array_fill(0, count($tabConso)+2, array_fill_keys($tabNomCol, ''));
 
 // ================================ Boucle de lecture des équipements des 12 derniers mois ============================
-//mg::debug(0);
 
 $cpt_Mois = 1;
 $annee = date("Y")-1;
@@ -108,7 +107,6 @@ foreach ($tabConso as $equipement => $detailsConso) {
 
 	// ============================= Mémo N° des Cmd conso et puissance  pour les boutons =============================
 	if ($detail_Lignes != 2) {
-		$tabAff[$numLigne]['EquiConso'] = (mg::existCmd($equipement, 'Consommation') ? trim(mg::toID($equipement, 'Consommation'), '#') : '');
 		$tabAff[$numLigne]['EquiConso'] = (mg::existCmd($equipement, 'Consommation') ? trim(mg::toID($equipement, 'Consommation'), '#') : '');
 		$tabAff[$numLigne]['EquiPuis'] = (mg::existCmd($equipement, 'Puissance') ? trim(mg::toID($equipement, 'Puissance'), '#') : '');
 
@@ -180,9 +178,10 @@ function ExtraitConsoMois($mois, $annee, $detail_Lignes, $cpt_Mois, &$numLigne, 
 			$infCmdConsommation = mg::toID($equipement, 'Consommation');
 			$consoMois = mg::StatsHisto('#'.$infCmdConsommation.'#', $typeResult, 'M', date("m") - $mois + (date("Y") - $annee)*12, 1);
 
-			// Si ENEDIS Correction du décalage horaire de la mesure (la veille à 23:55)
-			if ($typeResult == 'E') {
-				$consoMois = $consoMois + ($consoMois / date('d') / 24 * date('G')); 
+			// Si ENEDIS Correction du décalage horaire de la mesure via valueDate pour le mois courant
+			if ($typeResult == 'E' && date("m") == $mois) {
+				mg::getCmd($infCmdConsommation, '', $collectDate, $valueDate);
+				$consoMois = $consoMois / (date('d', $valueDate) *24) * (((date('d')+1) * 24));
 			}
 
 		// Mémo Nom, Puissance et Consommation

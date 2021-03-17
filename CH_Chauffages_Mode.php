@@ -191,9 +191,8 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 //=====================================================================================================================
 mg::messageT('', ". FIN");
 //=====================================================================================================================
-mg::messageT('', "! N° du jour pour les moyennes ".mg::getTag('#jour#'));
 mg::setVar('_tabChauffages', $tabChauffages_);
-mg::message('', print_r($tabChauffages_, true));
+//mg::message('', print_r($tabChauffages_, true));
 
 /**********************************************************************************************************************
 													SOUS PROGRAMMES

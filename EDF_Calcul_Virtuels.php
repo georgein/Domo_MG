@@ -41,7 +41,6 @@ foreach ($tabConso as $equipement => $detailsConso) {
 		$min = max(round($consommation-5), 0);
 		$max = round($consommation+$consoDay*1.5+5, 0);
 		mg::setMinMaxCmd($equipement, 'Consommation', $min, $max);
-		mg::messageT('', ". Min / Max consommation : $min / $max");
 	}
 	
 	if (!$recalculConso) { $tabConso[$equipement]['consoCalculee'] = ''; }

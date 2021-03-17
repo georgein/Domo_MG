@@ -59,7 +59,7 @@ $nbPresences = 0;
 // Gestion MàJ du widget (action à "JAMAIS REPETER")
 if (strpos($declencheur, 'Maj_Aff') !== false && mg::getCmd($equipTabReseau, 'Maj_Aff')) {
 	mg::messageT('', "! MàJ de l'affichage");
-//	mg::debug(0);
+//	mg::debug();
 	$HTML = mg::getCmd($equipTabReseau, 'TabReseau_Aff');
 	mg::setInf($equipTabReseau, 'TabReseau_Aff', $HTML.' ');
 	mg::setInf($equipTabReseau, 'Maj_Aff', 0);
@@ -90,9 +90,7 @@ foreach ($tabUser as $user => $detailsUser) {
 
 	$equipUser = "[$equipVirtuel][$user]";
 	$cmd_id = trim(mg::toID($equipUser, 'Présence'), '#');
-
 	$OK = null;
-	mg::debug(-1);
 
 	// ******** On saute si pas 'schedule' et (pas user ********
 	if ($declencheur != 'schedule' && $declencheur != 'user' && $type != 'user') continue; 
@@ -135,7 +133,6 @@ foreach ($tabUser as $user => $detailsUser) {
 				$cmd_id = trim(mg::toID($equipUser, 'Présence'), '#');
 				$presence = mg::getCmd($cmd_id);
 				if ($presence) {
-			mg::message('', "*************** $name == $user *************");
 					$IP = mg::getCmd($equipUser, 'Adresse IP') ? mg::getCmd($equipUser, 'Adresse IP') : $IP;
 					$MAC = strtolower($eqLogic->getLogicalId());
 					$OK .= " - ROUTEUR";
@@ -176,8 +173,7 @@ foreach ($tabUser as $user => $detailsUser) {
 	if ($type == 'user' && $OK) { $nbPresences++; }
 
 	// ================================================================================================================
-	mg::debug(1);
-	mg::message('', ". $user " . ($OK ? "PRESENT" : "***ABSENT***)") . " Depuis le " . date('d\/m \à H\hi\m\n', (abs($tabUserTmp[$user]['OK']))) . " sec. ($OK) - ($IP / $MAC)");
+	mg::message('', "$user " . ($OK ? "PRESENT" : "***ABSENT***)") . " Depuis le " . date('d\/m \à H\hi\m\n', (abs($tabUserTmp[$user]['OK']))) . " sec. ($OK) - ($IP / $MAC)");
 	// ================================================================================================================
 
 	$tabUserTmp[$user]['equipStat'] = $cmd_id;

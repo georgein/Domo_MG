@@ -117,7 +117,7 @@ foreach ($tabUserGeofence as $user => $detailsUser) {
 //	******************************************* ECRITURE DU FICHIER HTML **********************************************
 	mg::messageT('', "! GENERATION HTML ET ENREGISTREMENT DE GEOFENCE");
 	mg::setVar('tabGeofence', $tabGeofence);
-	mg::message('', print_r($tabGeofence, true));
+	//mg::message('', print_r($tabGeofence, true));
 
 	if (!$userActif) { $userActif = $user; }
 	file_put_contents($fileExport, HTML($tabGeofence, $userActif, $latLng_Home, $refresh, $layerDefaut, $marqueurSize, $distanceSleep, $pauseMin, $epaisseur, $colorMG, $colorNR, $colorPause, $colorEntrainement, $colorVoiture, $pathRef));
