@@ -29,11 +29,11 @@ class mg {
 	const	CYAN	= '#00FFFF';
 	const	ORANGE	= '#CC5500';
 
-	static $__log_Type = 'Log';
-	static $__log_SP = 'SP : ';
-	static $__log_ERROR = '*** ERROR *** ';
-	static $__log_WARNING = '--- WARNING --- ';
-	static $__log_INFO = 'INFO : ';
+	static $__log_INFO = 'INFO : ';				// Affichage des messages user
+	static $__log_ERROR = '*** ERROR *** ';		// Affichage des messages d'erreurs
+	static $__log_WARNING = '--- WARNING --- ';	// Affichage des messages d'alarme
+	static $__log_INF2 = 'INF2 : ';				// Affichage des messages info des routines de type getParam ou setXxxx
+	static $__log_SP = 'SP : ';					// Affichage des messages résultats des routines
 
 	private static $__debug = 3;
 	private static $__wait_cmd = true;
@@ -487,7 +487,7 @@ mg::message('', $requete);
 
 		// Abandon si déja en position
 		if (!$force && $sensDemandé == self::getVar('_VoletGeneral')) {
-		self::message('', self::$__log_SP . __FUNCTION__ . " - Volets déja en position, Annulation de la demande ...");
+		self::Message('', self::$__log_SP . __FUNCTION__ . " - Volets déja en position, Annulation de la demande ...");
 			return;
 		}
 
@@ -640,12 +640,12 @@ mg::message('', $requete);
 		if ($slider > $volet_Aff && $volet_Aff < 99) {
 			$etat = 1;
 			if ($debugVolet == false) { self::setCmd($equipVolet, 'Monter'); }
-			self::message('', self::$__log_SP . __FUNCTION__ . " *** Montée via slider - Etat = $etat");
+			self::message('', self::$__log_INF2 . __FUNCTION__ . " *** Montée via slider - Etat = $etat");
 		}
 		if ($slider < $volet_Aff && $volet_Aff > 0.1) {
 			$etat = -1;
 			if ($debugVolet == false) { self::setCmd($equipVolet, 'Descendre'); }
-			self::message('', self::$__log_SP . __FUNCTION__ . " *** Descente via slider - Etat = $etat");
+			self::message('', self::$__log_INF2 . __FUNCTION__ . " *** Descente via slider - Etat = $etat");
 		}
 
 
@@ -897,7 +897,7 @@ function FONCTIONS_UTILITAIRES(){}
 				self::setVar('tabParams', $tabParams);
 				$tmp = '*** par defaut *** Paramétre ajouté à la BdD !!!';
 			}
-			self::message('', self::$__log_SP . __FUNCTION__ . " : Paramètre : ('tabParams' / $section / $name) == '$value' $tmp");
+			self::message('', self::$__log_INF2 . __FUNCTION__ . " : Paramètre : ('tabParams' / $section / $name) == '$value' $tmp");
 			return trim($value);
 		}
 	}
@@ -923,7 +923,7 @@ function FONCTIONS_UTILITAIRES(){}
 				preg_match("/$regex/ui", $IP, $found);
 				$IP = $found[0].'255';
 				$wol = "wakeonlan -i $IP -p 7 $MAC";
-				self::message('', self::$__log_SP . __FUNCTION__ . " : Wol : $wol");
+				self::message('', self::$__log_INF2 . __FUNCTION__ . " : Wol : $wol");
 				shell_exec($wol);
 			}
 		}
@@ -946,7 +946,7 @@ function FONCTIONS_UTILITAIRES(){}
 			$IP_Station = $tabUser[$nomStation]['IP'];
 			if ($IP_Station) {
 				$requete = "http://$IP_Station". ":$portEventGhost/?HTTP.$cmd";
-				self::message('', self::$__log_SP . __FUNCTION__ . " : Cmd : $cmd  - $requete");
+				self::message('', self::$__log_INF2 . __FUNCTION__ . " : Cmd : $cmd  - $requete");
 				@file_get_contents("$requete");
 			}
 		}
@@ -1340,7 +1340,7 @@ function dateIntervalle($depuis, $jusque='now', $nbVal =2, &$diff=0) {
 			$result = (($time >= $start) || ($time < $end)) ? 1 : 0;
 		}
 
-		self::message('', self::$__log_SP . __FUNCTION__ . " : ($start <= $time <= $end) => ($result)");
+		self::message('', self::$__log_INF2 . __FUNCTION__ . " : ($start <= $time <= $end) => ($result)");
 		return $result;
 	}
 
@@ -1629,7 +1629,7 @@ function getPingIP($IP, $user='', $nbTentatives=2, $delay=200) {
 		}
 
 		// Pose du $type par defaut pour le log si absent
-		$type = ((trim($type) == ''	 || strpos(strtoupper($type), 'LOG:') === false) ? self::$__log_Type.':x/,' : '') . $type;
+		$type = ((trim($type) == ''	 || strpos(strtoupper($type), 'LOG:') === false) ? 'log:x/,' : '') . $type;
 
 		if (strstr($type, ',') == false) { $type .= ','; }
 //		 *************** Boucle des Destinations séparé par des ',' ***************
@@ -1663,20 +1663,21 @@ function getPingIP($IP, $user='', $nbTentatives=2, $delay=200) {
 							// Calcul de l'en tête du log à INFO si absent
 							if (!strstr($contenu, self::$__log_SP)
 								&& !strstr($contenu, self::$__log_ERROR)
-									&& !strstr($contenu, self::$__log_WARNING)
-										&& !strstr($contenu, self::$__log_INFO)) {
+								&& !strstr($contenu, self::$__log_WARNING)
+								&& !strstr($contenu, self::$__log_INF2)
+								&& !strstr($contenu, self::$__log_INFO)) {
 								$contenuLog = self::$__log_INFO . $contenu;
 							}	else {
 								$contenuLog = $contenu;
 							}
 
 							// Filtrage selon niveau d'affichage des logs
-							// self::$__debug == 0 pas de log, 1 (INFO), 2 (INFO + ERROR), 3 (INFO + WARNING + ERROR), 4 (TOUT, par defaut)
 							$OK = 0;
 							if	   (self::$__debug >=1 && strstr($contenuLog, self::$__log_INFO)) { $OK++; }
 							elseif (self::$__debug >=2 && strstr($contenuLog, self::$__log_ERROR)) { $OK++; }
 							elseif (self::$__debug >=3 && strstr($contenuLog, self::$__log_WARNING)) { $OK++; }
-							elseif (self::$__debug >=4 && strstr($contenuLog, self::$__log_SP)) { $OK++; }
+							elseif (self::$__debug >=4 && strstr($contenuLog, self::$__log_INF2)) { $OK++; }
+							elseif (self::$__debug >=5 && strstr($contenuLog, self::$__log_SP)) { $OK++; }
 							if ($OK == 0) { return; }
 
 							if ($destinataire == 'x') {
@@ -1872,42 +1873,6 @@ function getPingIP($IP, $user='', $nbTentatives=2, $delay=200) {
 		}
 
 /************************************************************************************************************************
-* UTIL												MOYENNE VERIFIEE													*
-*************************************************************************************************************************
-* Calcul la moyenne des capteurs considérés comme valide si ils ont renvoyés une info il y a moins						*
-* de $timing minutes. Renvoie -1 si aucun capteur actif.																*
-*	Paramètres:																											*
-*		$tab_Capteurs : Tableau des capteurs à moyenner																	*
-*		$timing : Temps au dela duquel si il n'a pas envoyé d'info, le capteurs n'es pas pris en compte					*
-************************************************************************************************************************/
-	function moyenneVerifiee($tab_Capteurs, $timing) {
-		$Somme = 0;
-		$SommeDifferences = 0;
-		$Nb = 0;
-
-		// Pour chaque capteur on vérifie qu'il à bien envoyé une mesure il y a moins de $timing minutes
-		for ($i = 0; $i < count($tab_Capteurs); $i++) {
-			$difference = (time() - strtotime(self::getExp('collectDate(' . trim($tab_Capteurs[$i]) . ')'))) / 60;
-			if ($timing > $difference) {
-				$Somme += self::getCmd(trim($tab_Capteurs[$i]));
-				$SommeDifferences += $difference;
-				$Nb++;
-			} else {
-				self::message('Log, Message', self::$__log_SP . __FUNCTION__ . " : ATTENTION, Dernière mise à jour du capteur : " . substr(self::toHuman(trim($tab_Capteurs[$i])), 1, -1) . " il y a " . round($difference, 1) . " min.");
-			}
-		}
-
-		// Enregistrement du résultat dans la variable
-		if ($Nb > 0) {
-			self::message('', self::$__log_SP . __FUNCTION__ . " : Moyenne calculée de " . round($Somme / $Nb, 1) . " pour $Nb capteur(s), il y a en moyenne " . round($SommeDifferences / $Nb, 1) . " mn.");
-			return round($Somme / $Nb, 1);
-		} else {
-			self::message('', self::$__log_SP . __FUNCTION__ . " : ******** AUCUN CAPTEUR ACTIF ********");
-			return -1;
-		}
-	}
-
-/************************************************************************************************************************
 * Util													Last MOUVEMENT													*
 *************************************************************************************************************************
 * renvoie la durée depuis le dernier mouvement																			*
@@ -1918,8 +1883,9 @@ function getPingIP($IP, $user='', $nbTentatives=2, $delay=200) {
 function lastMvmt($infNbMvmt, &$nbMvmt) {
 	$nbMvmt = mg::getCmd($infNbMvmt);
 	$lastMvmt = mg::getCond("lastChangeStateDuration($infNbMvmt, 0)");
-	self::message('', self::$__log_SP . __FUNCTION__ . " : LastMvmt : '".round($lastMvmt/60)."' mn - nbMvmt : '$nbMvmt'");
-	return ($nbMvmt > 0) ? 0 : $lastMvmt;
+	$lastMvmt = ($nbMvmt > 0) ? 0 : $lastMvmt;
+	self::message('', self::$__log_INF2 . __FUNCTION__ . " : LastMvmt : '".round($lastMvmt/60)."' mn - nbMvmt : '$nbMvmt'");
+	return $lastMvmt;
 }
 
 /************************************************************************************************************************
@@ -1978,8 +1944,8 @@ function frameTV($nom, $zone, $action='on') {
 		$mode = $scenario->getConfiguration('logmode'/*, 'default'*/);
 		if (!$debug) {
 			// Passe $debug selon le 'mode' du scénario.
-			if ($mode == 'realtime') { $debug = 4; }
-			elseif ($mode == 'default') { $debug = 3; }
+			if ($mode == 'realtime') { $debug = 5; }
+			elseif ($mode == 'default') { $debug = 4; }
 			else { $debug = -1; }
 		}
 		
@@ -1988,7 +1954,8 @@ function frameTV($nom, $zone, $action='on') {
 		$message .= ($debug>=1) ? ' + INFO' : '';
 		$message .= ($debug>=2) ? ' + ER_ROR': ''; // Le '_' pour éviter le feedback avec la surveillance des logs
 		$message .= ($debug>=3) ? ' +  WARNING' : '';
-		$message .= ($debug>=4) ? ' + SP': '';
+		$message .= ($debug>=4) ? ' +  INF2' : '';
+		$message .= ($debug>=5) ? ' + SP': '';
 		$message = " CLASS MG - Mode $mode - AVEC debug ($debug) : log => $message.";
 		$message = str_repeat("=", (138-strlen($message))/2).$message.str_repeat("=", (138-strlen($message))/2);
 		if ($debug > 1) { $scenario->setlog($message); }
@@ -2065,12 +2032,12 @@ function FONCTIONS_SCENARIOS(){}
 			}
 			$startAction = (substr($action, 0, 5) == 'start');
 
-			self::message('', self::$__log_SP . __FUNCTION__ . " : Scénario " . $actionScenario->getHumanName() . ' | Action = ' . $action .
+			self::message('', self::$__log_INF2 . __FUNCTION__ . " : Scénario " . $actionScenario->getHumanName() . ' | Action = ' . $action .
 							(($startAction && $tags) ? ' | Tags = ' . (is_array($tags) ? json_encode($tags) : $tags) : ''));
 
 			$return = self::__action('scenario', array("scenario_id" => $actionScenario->getId(), "action" => $action, "tags" => $tags));
 			if ($startAction) {
-				self::message('', self::$__log_SP . __FUNCTION__ . " : $return");
+				self::message('', self::$__log_INF2 . __FUNCTION__ . " : $return");
 				return $return;
 			}
 			else {
@@ -2151,7 +2118,7 @@ function FONCTIONS_JEEDOM(){}
 				self::message('', self::$__log_SP . __FUNCTION__ . " : Le cron du scénario $scenarioID à été positionné au " . date('d/m/Y \à H:i:00', $cron));
 			} else {
 				$scenarioClock->setSchedule($cron);
-			self::message('', self::$__log_SP . __FUNCTION__ . " : Le cron du scénario $scenarioID à été positionné sur $cron");
+			self::message('', self::$__log_INF2 . __FUNCTION__ . " : Le cron du scénario $scenarioID à été positionné sur $cron");
 			}
 			$scenarioClock->save();
 		}
@@ -2423,7 +2390,7 @@ function ConfigEquiLogic($typeName, $equipement, $name, $newValue='') {
 			self::message('', self::$__log_ERROR . __FUNCTION__ . " : L'action n'est pas valide (actions valides : " . implode(", ", $actions));
 			return false;
 		}
-		self::message('', self::$__log_SP . __FUNCTION__ . " : Equipement " . self::_tag($eqLogic_obj->getHumanName()) . " ==> $action");
+		self::message('', self::$__log_INF2 . __FUNCTION__ . " : Equipement " . self::_tag($eqLogic_obj->getHumanName()) . " ==> $action");
 		self::__action('equipement', array("eqLogic" => $eqLogic_obj->getId(), "action" => $action));
 	}
 
@@ -2449,13 +2416,13 @@ function ConfigEquiLogic($typeName, $equipement, $name, $newValue='') {
 			$cmd = (self::_isId($cmd)) ? self::_tag($cmd_obj->getHumanName()) : $cmd;
 			$objet = $cmd_obj->getType();
 			if ($objet != null) {
-//				self::message('', self::$__log_SP . __FUNCTION__ . " : La commande '$cmd' est de type '$objet'");
+				self::message('', self::$__log_SP . __FUNCTION__ . " : La commande '$cmd' est de type '$objet'");
 			$type = $objet;
 			return $cmd_obj->getId();
 			}
 		}else {
-//			self::message('', self::$__log_SP . __FUNCTION__ . " : La commande '$cmd' n'éxiste pas");
-//			$type = 'Introuvable';
+			self::message('', self::$__log_SP . __FUNCTION__ . " : La commande '$cmd' n'éxiste pas");
+			$type = 'Introuvable';
 			return;
 		}
 	}
@@ -2489,7 +2456,7 @@ function ConfigEquiLogic($typeName, $equipement, $name, $newValue='') {
 			return;
 		}
 		$valueAff = self::shorterMessage($value);
-		self::message('', self::$__log_SP . __FUNCTION__ . " : Forçage à '$valueAff' de la commande $cmd");
+		self::message('', self::$__log_INF2 . __FUNCTION__ . " : Forçage à '$valueAff' de la commande $cmd");
 		$cmd_obj->event(($value));
 	}
 
@@ -2562,7 +2529,7 @@ function ConfigEquiLogic($typeName, $equipement, $name, $newValue='') {
 				self::message('', self::$__log_ERROR . __FUNCTION__ . " : La commande '$cmd' est de type info, utiliser getCmd() pour récupérer sa valeur");
 				return false;
 			}
-			self::message('', self::$__log_SP . __FUNCTION__ . " : Exécution d'une commande $cmd".(self::_getCmdWait() ? "" : " (sans attendre), ")." de type $type");
+			self::message('', self::$__log_INF2 . __FUNCTION__ . " : Exécution d'une commande $cmd".(self::_getCmdWait() ? "" : " (sans attendre), ")." de type $type");
 
 			$type = $cmd_obj->getSubtype();
 			$options = array();
@@ -2571,7 +2538,7 @@ function ConfigEquiLogic($typeName, $equipement, $name, $newValue='') {
 			if ($type == 'slider') {
 				$options['slider'] = self::getExp($value, false);
 				if (!is_numeric($options['slider'])) {
-				  self::message('', self::$__log_SP . __FUNCTION__ . " : La valeur ".$options['slider']." n'est pas un nombre valide !");
+					//self::message('', self::$__log_ERROR . __FUNCTION__ . " : La valeur ".$options['slider']." n'est pas un nombre valide !");
 				}
 				$logOptions = '	 | options: ( [slider] => ' . $options['slider'] . ' )';
 
@@ -2680,7 +2647,7 @@ function ConfigEquiLogic($typeName, $equipement, $name, $newValue='') {
 
 		$cmd_obj->setDisplay('parameters', $param);
 		$cmd_obj->save();
-		self::message('', self::$__log_SP . __FUNCTION__ . " : Paramètres du widget de $cmd enregistrés");
+		self::message('', self::$__log_INF2 . __FUNCTION__ . " : Paramètres du widget de $cmd enregistrés");
 	}
 
 /************************************************************************************************************************
@@ -2757,7 +2724,7 @@ function isActive($eqLogic, $_log = true, $_logStyle = null) {
 			self::message('', self::$__log_WARNING . __FUNCTION__ . " : Le texte '$texte' passé en paramètre est vide !");
 			return "";
 		}
-		//self::message('', self::$__log_SP . __FUNCTION__ . " : Les occurences entouré de '#' ont été remplacées par leur noms.");
+		self::message('', self::$__log_SP . __FUNCTION__ . " : Les occurences entouré de '#' ont été remplacées par leur noms.");
 		return self::_expressionToHumanReadable($texte);
 	}
 
@@ -2997,7 +2964,7 @@ function FONCTIONS_VARIABLES(){}
 		}
 
 		$scenario->setData($varName, $value);
-		self::message('', self::$__log_SP . __FUNCTION__ . " : Variable $varName ==> " . $valueAff);
+		self::message('', self::$__log_INF2 . __FUNCTION__ . " : Variable $varName ==> " . $valueAff);
 	}
 
 /************************************************************************************************************************
@@ -3072,7 +3039,7 @@ function FONCTIONS_CONDITIONNELLES(){}
 		global $scenario;
 		$exp = trim($exp);
 		if ($exp === null || $exp === "") {
-			//self::message('', self::$__log_ERROR . __FUNCTION__ . " : Évaluation d'une expression vide (retourne null)");
+			self::message('', self::$__log_ERROR . __FUNCTION__ . " : Évaluation d'une expression vide (retourne null)");
 			return null;
 		}
 		$return = evaluate(scenarioExpression::setTags(self::_expressionToId($exp), $scenario));
@@ -3080,7 +3047,7 @@ function FONCTIONS_CONDITIONNELLES(){}
 		if ($return === $exp) {
 			self::message('', self::$__log_WARNING . __FUNCTION__ . " : L'évaluation de l'expression est égale à l'expression ( '$exp' => '$return' )");
 		} else {
-			// self::message('', self::$__log_SP . __FUNCTION__ . " : Résultat => '$return'");
+			self::message('', self::$__log_SP . __FUNCTION__ . " : Résultat => '$return'");
 		}
 		return $return;
 	}
@@ -3097,7 +3064,7 @@ function FONCTIONS_CONDITIONNELLES(){}
 		global $scenario;
 		$exp = trim($exp);
 		if ($exp === null || $exp === "") {
-			self::message('', self::$__log_ERROR . __FUNCTION__ . " : Évaluation d'une expression vide (retourne null)");
+			self::message('', self::$__log_WARNING . __FUNCTION__ . " : Évaluation d'une expression vide (retourne null)");
 			return false;
 		}
 //		self::message('', self::$__log_SP . __FUNCTION__ . " : Évaluation de la condition " . self::_expressionToId($exp));
@@ -3352,7 +3319,7 @@ function ZwaveBusy($timer = 0, $echo = '') {
 * Demande à Jeedom de s’éteindre
 ************************************************************************************************************************/
 	function jeedom_poweroff() {
-		self::message('', self::$__log_SP . __FUNCTION__ . " : Demande d'extinction de Jeedom");
+		self::message('', self::$__log_INF2 . __FUNCTION__ . " : Demande d'extinction de Jeedom");
 		self::__action('jeedom_poweroff');
 	}
 
@@ -3362,7 +3329,7 @@ function ZwaveBusy($timer = 0, $echo = '') {
 * Demande à Jeedom de redémarrer
 ************************************************************************************************************************/
 	function jeedom_reboot() {
-		self::message('', self::$__log_SP . __FUNCTION__ . " : Demande de redémarrage de Jeedom");
+		self::message('', self::$__log_INF2 . __FUNCTION__ . " : Demande de redémarrage de Jeedom");
 		self__action('jeedom_reboot');
 	}
 

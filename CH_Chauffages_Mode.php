@@ -269,6 +269,9 @@ function CalculRatio() {
 			// Enregistrement final du ratio
 			$tabChauffages_[$nomChauffage]['ratio'] = $moyenne;
 			mg::message($logChauffage . trim($logTimeLine, 'Log:'), "$nomChauffage : RATIO ==> Delta température : $deltaTemp - Durée : " . date('H\hi\m\n', $deltaTime - 3600). " ==> RatioJour : $ratio - NewratioMoyen : $moyenne (sur les 7 derniers jours)");
+			// Modif de valueDate pour script 'corrections'
+			$tabChauffages_[$nomChauffage]['mode'] = 'Confort_';
+			$tabChauffages_[$nomChauffage]['mode'] = 'Confort';
 		}
 
 		// RaZ après calcul

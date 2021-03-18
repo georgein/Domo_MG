@@ -41,13 +41,12 @@ foreach ($tabConso as $equipement => $detailsConso) {
 		$min = max(round($consommation-5), 0);
 		$max = round($consommation+$consoDay*1.5+5, 0);
 		mg::setMinMaxCmd($equipement, 'Consommation', $min, $max);
+		if (!$recalculConso) { $tabConso[$equipement]['consoCalculee'] = ''; }
+		if ($recalculPuissance || $recalculConso) {
+			mg::messageT('', "$nomAff");
+		}
 	}
 	
-	if (!$recalculConso) { $tabConso[$equipement]['consoCalculee'] = ''; }
-
-	if ($recalculPuissance || $recalculConso) {
-			mg::messageT('', "$nomAff");
-	}
 	// --------------------------------------------------- PUISSANCE --------------------------------------------------
 	$puissance = 0;
 	if ($recalculPuissance && mg::existCmd($equipement, 'Puissance')) {
