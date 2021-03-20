@@ -19,7 +19,7 @@ Gestion du mode des chauffages selon les heures et conditions.
 
 Le ratio de préchauffage (en °/h) est recalculé à chaque fois si > 0.1 et durée > 2mn.
 **********************************************************************************************************************/
-global $tabChauffages_, $saison, $logChauffage, $logTimeLine, $nomChauffage, $ScenRegulation, $tempZone, $tempConfort, $tempEco, $heureReveil;
+global $tabChauffages_, $saison, $logChauffage, $logTimeLine, $nomChauffage, $ScenRegulation, $tempZone, $tempConfort, $correction, $tempEco, $heureReveil;
 
 // Infos, Commandes et Equipements :
 	//	$infTempExt,
@@ -89,6 +89,7 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	$tempConfort = mg::getCmd("#[$nomChauffage][Températures][Consigne]#"); // issu du widget
 	$tempEco = mg::getParam('Temperatures', $nomChauffage . 'Eco');
 
+	$correction = $tabChauffages[$nomChauffage]['correction']; // Correction/Offset à aporter à la consigne
 	$tabChauffages_[$nomChauffage]["tempConfort"] = $tempConfort;
 
 /*	// init tableau secondaire
@@ -185,7 +186,6 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 
 	$chaufLib = "<font color='$colorCourante'>Mode $modeCourant ($ConsigneCourante °)</font><br><br>Confort :";
 	mg::setInf("#[$nomChauffage][Températures][Consigne Chauffage]#", '', $chaufLib);
-
 }
 
 //=====================================================================================================================
@@ -202,9 +202,9 @@ mg::setVar('_tabChauffages', $tabChauffages_);
 											CALCUL HEURE DE CONFORT PONDEREE EN HIVER
 ---------------------------------------------------------------------------------------------------------------------*/
 function HeureConfort($heureDebTheorique) {
-	global $saison, $logChauffage, $tabChauffages_, $nomChauffage, $tempZone, $tempConfort;
+	global $saison, $logChauffage, $tabChauffages_, $nomChauffage, $tempZone, $tempConfort, $correction;
 	// Calcul de l'heure de DebConfort pondérée
-	$deltaHeure = ($tabChauffages_[$nomChauffage]['ratio'] > 0.5) ? ($tempConfort - $tempZone) / $tabChauffages_[$nomChauffage]['ratio'] * 3600 : 0;
+	$deltaHeure = ($tabChauffages_[$nomChauffage]['ratio'] > 0.5) ? ($tempConfort + $correction - $tempZone) / $tabChauffages_[$nomChauffage]['ratio'] * 3600 : 0;
 	if ($deltaHeure < 0 || $saison != 'HIVER') { $deltaHeure = 0; }
 	$timeDebConfort = $heureDebTheorique - $deltaHeure;
 	return $timeDebConfort;
@@ -249,7 +249,7 @@ function LancementMode($timeDebConfort, $timeFinConfort) {
 												CALCUL DU RATIO
 ---------------------------------------------------------------------------------------------------------------------*/
 function CalculRatio() {
-	global $saison, $logChauffage, $logTimeLine, $tabChauffages_, $nomChauffage, $tempZone, $tempConfort;
+	global $saison, $logChauffage, $logTimeLine, $tabChauffages_, $nomChauffage, $tempZone, $tempConfort, $correction;
 		// init tableau secondaire
 		if (!isset($tabChauffages_[$nomChauffage]['ratio'])) { $tabChauffages_[$nomChauffage]['ratio'] = 1.0; }
 		if (!isset($tabChauffages_[$nomChauffage]['timeDeb'])) { $tabChauffages_[$nomChauffage]['timeDeb'] = 0; }
@@ -259,7 +259,7 @@ function CalculRatio() {
 	if ($tabChauffages_[$nomChauffage]['timeDeb'] == 0 || $saison != 'HIVER') { return; }
 
 	// Si température confort atteinte ou trop de temps passé, calcul/memo du ratio
-	if ($tempZone >= $tempConfort || $tabChauffages_[$nomChauffage]['timeDeb'] < time()-6*3600) {
+	if ($tempZone >= ($tempConfort + $correction) || $tabChauffages_[$nomChauffage]['timeDeb'] < time()-6*3600) {
 		$deltaTemp = abs($tempZone - $tabChauffages_[$nomChauffage]['tempDeb']);
 		$deltaTime = time() - $tabChauffages_[$nomChauffage]['timeDeb'];
 		if ($deltaTime > 1800 && $deltaTemp > 0.5) {
@@ -269,9 +269,6 @@ function CalculRatio() {
 			// Enregistrement final du ratio
 			$tabChauffages_[$nomChauffage]['ratio'] = $moyenne;
 			mg::message($logChauffage . trim($logTimeLine, 'Log:'), "$nomChauffage : RATIO ==> Delta température : $deltaTemp - Durée : " . date('H\hi\m\n', $deltaTime - 3600). " ==> RatioJour : $ratio - NewratioMoyen : $moyenne (sur les 7 derniers jours)");
-			// Modif de valueDate pour script 'corrections'
-			$tabChauffages_[$nomChauffage]['mode'] = 'Confort_';
-			$tabChauffages_[$nomChauffage]['mode'] = 'Confort';
 		}
 
 		// RaZ après calcul

@@ -17,6 +17,7 @@ NB : si 'periodicite' == 0, on ne lance pas la correction
 
 // Variables de Ctrl des équipements
 	$tabChauffages = (array)mg::getVar('tabChauffages');
+	$tabChauffages_ = mg::getVar('_tabChauffages');
 
 	// Paramètres :
 	$cron = 5;
@@ -36,25 +37,27 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	$timeOut = $detailsZone['timeOut'];
 	$pcEcartMax = $detailsZone['pcEcartMax'];
 	$periodicite = $detailsZone['periodicite'];
-	$correction = $detailsZone['correction'];
+	//$correction = $detailsZone['correction'];
 	if (!$equip) { continue; }
+
+	$mode = $tabChauffages_[$nomChauffage]['mode'];
 
 	$cmdResume = mg::toID("#[$zone][Résumé][$nomResume]#");
 	$tempResume = mg::getCmd($cmdResume);
 	// Température moyenne de reference sur la moyenne (dérive possible)
-	$tempMoyenneRef = round(scenarioExpression::averageBetween($cmdResume, "$periodicite hour ago", 'now'), 2) + $correction;
+	$tempMoyenneRef = round(scenarioExpression::averageBetween($cmdResume, "$periodicite hour ago", 'now'), 2);
 	mg::messageT('', "! Traitement de $zone/$nomChauffage avec timeOuts : $timeOut - pcEcartMax : $pcEcartMax");
 
-	// Planification de la prochaine 'correction' à 'periodicité' + 1 heure du dernier changement de mode
+	// Planification de la prochaine 'correction' à 'periodicité' + 1 heure du dernier changement de mode ET SI en mode 'Confort'
 	$infMode = mg::toID("#[$zone][Températures][Consigne Chauffage]#");
 	$valMode = mg::getCmd($infMode,  '', $collectDate, $valueDate);
 	$lastMode = round((time() - $valueDate)/3600, 2) + 1;
-	if ($periodicite > 0 && $lastMode > $periodicite) {
+	if ($periodicite > 0 && $lastMode > $periodicite && $mode == 'Confort') {
 		$cdMakeOffset = 1;
 		mg::setInf($infMode,  '', 'Correction');
 	} else { $cdMakeOffset = 0; }
 	
-mg::message('', "**************** $valMode - $lastMode > $periodicite ************");
+mg::message('', "**************** $valMode - $lastMode > $periodicite - mode : $mode - tempMoyenneRef : $tempMoyenneRef ************");
 
 //$cdMakeOffset = 1; ///////////////////////////////
 

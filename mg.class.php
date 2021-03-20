@@ -426,9 +426,11 @@ mg::message('', $requete);
 		}
 	}
 
+	/************************************************************************************************************************
+	/***********************************************************************************************************************/
 	function _GoogleCast($equipGoogleCast, $uuid, $command_string, $volume) {
 		$googlecast = googlecast::byLogicalId($uuid, 'googlecast');
-		if ( !is_object($googlecast) or $googlecast->getIsEnable()==false ) {
+		if ( !is_object($googlecast) || $googlecast->getIsEnable()==false ) {
 		} else {
 			if ($volume != self::getCmd($equipGoogleCast, 'volume')) { self::setCmd($equipGoogleCast, 'Volume niveau', $volume); }
 			$ret = googlecast::helperSendNotifandWait_static($uuid, $command_string, 300, 500);
@@ -3039,7 +3041,7 @@ function FONCTIONS_CONDITIONNELLES(){}
 		global $scenario;
 		$exp = trim($exp);
 		if ($exp === null || $exp === "") {
-			self::message('', self::$__log_ERROR . __FUNCTION__ . " : Évaluation d'une expression vide (retourne null)");
+			self::message('', self::$__log_WARNING . __FUNCTION__ . " : Évaluation d'une expression vide (retourne null)");
 			return null;
 		}
 		$return = evaluate(scenarioExpression::setTags(self::_expressionToId($exp), $scenario));

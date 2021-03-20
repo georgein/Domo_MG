@@ -56,7 +56,8 @@ foreach ($tabChauffages as $nomChauffage => $details_Chauffage) {
 	$chauffage = intval($details_Chauffage['chauffage']);
 	$clim =	 intval($details_Chauffage['clim']);
 	$equipChauf = trim($details_Chauffage['equip']);
-	$correction = $tabChauffages[$nomChauffage]['correction'];
+	$correction = $tabChauffages[$nomChauffage]['correction']; // Correction/Offset à aporter à la consigne
+	
 	// ON NE GERE LE CHAUFFAGE QUE SI NECESSAIRE
 	if ($saison == 'HIVER' && !$chauffage || $saison == 'ETE' && !$clim) { continue; }
 	if (!$equipChauf) { continue; }
@@ -73,7 +74,7 @@ foreach ($tabChauffages as $nomChauffage => $details_Chauffage) {
 	if ($mode == 'HG') {
 		$consigne = $tempHG;
 	} else {
-		$consigne = $tabChauffages_[$nomChauffage]["temp$mode"]+$correction;
+		$consigne = $tabChauffages_[$nomChauffage]["temp$mode"];
 	}
 	$boosterOK = ($equipBooster && $saison == 'HIVER') ? true : false;
 
@@ -104,12 +105,12 @@ $nbPassages = 0;
 	mg::messageT('', "! REGULATION - Mode : $mode - $tempZone => $consigne " . ($boosterOK ? "- Booster : $boosterOK" : ""));
 	//=================================================================================================================
 	if ($saison == 'HIVER') {
-		if ( ($consigne - $tempZone) >= $deltaTempChauf) {
+		if ( ($consigne + $correction - $tempZone) >= $deltaTempChauf) {
 			if(!mg::getCmd($equipChauf, 'Etat') || mg::getCmd($equipChauf, 'Puissance') < 50) {
 				if ($clim) { mg::setCmd($equipChauf, 'Chauffage'); }
 				else { mg::setCmd($equipChauf, 'On'); }
 			}
-			if ($boosterOK && ($consigne - $temp_Ext) >= $deltaBooster
+			if ($boosterOK && ($consigne + $correction - $temp_Ext) >= $deltaBooster
 						&& (!mg::getCmd($equipBooster, 'Etat') || mg::getCmd($equipBooster, 'Puissance') < 50)) { mg::setCmd($equipBooster, 'On'); }
 		} else {
 			if (mg::getCmd($equipChauf, 'Etat') || mg::getCmd($equipChauf, 'Puissance') > 50) { mg::setCmd($equipChauf, 'Off'); }
@@ -118,7 +119,7 @@ $nbPassages = 0;
 	}
 
 	else if ($saison == 'ETE' && $clim) {
-		if ( ($tempZone - $consigne) >= $deltaTempChauf ) {
+		if ( ($tempZone - $consigne) + $correction >= $deltaTempChauf ) {
 			if (!mg::getCmd($equipChauf, 'Etat') || mg::getCmd($equipChauf, 'Puissance') < 50) { mg::setCmd($equipChauf, 'Climatisation'); }
 		} else if (mg::getCmd($equipChauf, 'Etat') || mg::getCmd($equipChauf, 'Puissance') > 50) { mg::setCmd($equipChauf, 'Off'); }
 	}

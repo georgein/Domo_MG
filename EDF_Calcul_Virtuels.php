@@ -26,14 +26,13 @@ NB : Si vous désirez avoir un retour en temps réel sur le widget de l'équipem
 foreach ($tabConso as $equipement => $detailsConso) {
 	$nomAff = mg::ExtractPartCmd($equipement, 2);
 	$type = $detailsConso['type'];
-	$recalculConso = boolval($detailsConso['recalculConso']);
+	$recalculConso = $detailsConso['recalculConso'];
 	$consoCalculee = floatval($detailsConso['consoCalculee']);
-	$recalculPuissance = boolval($detailsConso['recalculPuissance']);
+	$recalculPuissance = $detailsConso['recalculPuissance'];
 	$puissanceEstimeeMax = floatval($detailsConso['puissanceEstimeeMax']);
-	$gestionMinMax = boolval($detailsConso['gestionMinMax']);
-
+	$gestionMinMax = $detailsConso['gestionMinMax'];
 	// ------------------------------------- GESTION DES MIN / MAX DE CONSOMMATION ------------------------------------
-	if ($gestionMinMax && mg::existCmd($equipement, 'Consommation')) {
+	if ($gestionMinMax == 'true' && mg::existCmd($equipement, 'Consommation')) {
 		$infConso = mg::mkCmd($equipement, 'Consommation');
 		$consommation = mg::getCmd($infConso);
 		$consoDay = intval(mg::getExp("minBetween($infConso,7 day ago, now)")); 
@@ -43,31 +42,29 @@ foreach ($tabConso as $equipement => $detailsConso) {
 		mg::setMinMaxCmd($equipement, 'Consommation', $min, $max);
 		if (!$recalculConso) { $tabConso[$equipement]['consoCalculee'] = ''; }
 		if ($recalculPuissance || $recalculConso) {
-			mg::messageT('', "$nomAff");
 		}
 	}
 	
 	// --------------------------------------------------- PUISSANCE --------------------------------------------------
-	$puissance = 0;
-	if ($recalculPuissance && mg::existCmd($equipement, 'Puissance')) {
+	if ($recalculPuissance == 'true' && mg::existCmd($equipement, 'Puissance')) {
 		$maxValue = max(mg::getMinMaxCmd($equipement, 'Etat', 'max'), 99);
 		$etat = mg::getCmd($equipement, 'Etat');
 		$puissance = $puissanceEstimeeMax * (($etat != 1) ? $etat/$maxValue : 1);
-		mg::setInf($equipement, 'Puissance', round($puissance,2));
-		if ($recalculConso) {
-			mg::messageT('', ". New puissance calculée : $puissance");
+		mg::setInf($equipement, 'Puissance', round($puissance,3));
+		if ($recalculConso && $puissance > 0) {
+			mg::messageT('', ". $nomAff : New puissance calculée : $puissance");
 		}
 	}
 	
 	// -------------------------------------------------- CONSOMMATION ------------------------------------------------
-	if ($puissance > 0 && $recalculConso && mg::existCmd($equipement, 'Consommation')) {
-		if (!$recalculPuissance && mg::existCmd($equipement, 'Puissance')) {
-			$puissance = mg::getCmd($equipement, 'Puissance');
+	if ($recalculConso == 'true' && mg::existCmd($equipement, 'Puissance')) {
+		$puissance = mg::getCmd($equipement, 'Puissance');
+		if ($puissance > 0) {
+			$consoCalculee += $puissance * $cron/60/1000;
+			$tabConso[$equipement]['consoCalculee'] = $consoCalculee;
+			mg::setInf($equipement, 'Consommation', $consoCalculee); 
+			mg::messageT('', ". $nomAff : old/New Consommation calculée : {$detailsConso['consoCalculee']} / $consoCalculee");
 		}
-		$consoCalculee += $puissance * $cron/60/1000;
-		$tabConso[$equipement]['consoCalculee'] = round($consoCalculee, 2);
-		mg::setInf($equipement, 'Consommation', round($consoCalculee, 2)); 
-		mg::messageT('', ". old/New Consommation calculée : {$detailsConso['consoCalculee']} / $consoCalculee");
 	}
 }
 mg::setVar('tabConso', $tabConso);
