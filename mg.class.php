@@ -523,6 +523,7 @@ mg::message('', $requete);
 			$zone = trim($details_Volet['zone']);
 			$duree =  intval(trim($details_Volet['duree']));
 			$groupe =  trim($details_Volet['groupe']);
+			
 			if (!$groupe || !$duree) { continue; }
 			$voletInverse =	 trim($details_Volet['inverse']);
 
@@ -536,19 +537,8 @@ mg::message('', $requete);
 				}
 				mg::debug();
 				self::Message('', "-------------- $sens ($sensDemandé) individuelle du volet : $cmd / $zone ($slider) --------------");
-
-// ???????????????????????????????????????????????????????????????????????????????????????????????????
-// *********************************** POUR PALIER PANNE VOLET SDB ***********************************
-				if ($cmd == 'Volet RdCSdB' && $sensDemandé == 'D') {
-					mg::message('', "****** Cmd : $cmd - Zone : $zone");
-					for ($ii=0; $ii<20; $ii++) {
-						mg::setCmd('#[RdCSdB][Volet RdCSdB][Descendre]#');
-						sleep(2);
-					}
-				}
-// ???????????????????????????????????????????????????????????????????????????????????????????????????
-
 				mg::debug(-1);
+				
 				self::VoletRoulant($zone, $cmd, 'Slider', $slider);
 				self::wait("scenario($scenarioVoletManuel) == 0", 180);
 			}
@@ -626,7 +616,6 @@ mg::message('', $requete);
 		} else { $volet_Aff = 0.1; }
 		if ($volet_Aff > 99) { $volet_Aff = round($volet_Aff - 100); }
 		if ($volet_Aff <= 1) { $volet_Aff = 0.1; }
-		if ($volet_Aff >= 98) { $volet_Aff = 99; }
 
 		// -------------------------------------- INIT DU VOLET (pour éviter les décalages) -----------------------------
 		self::message('', self::$__log_SP . __FUNCTION__ . " *** INITIALISATION - Trigger : '$trigger' - Equipement : $equipement - Type : $type - EquipVolet : $equipVolet - ( $volet_Aff ==> $slider)");
@@ -1883,7 +1872,7 @@ function getPingIP($IP, $user='', $nbTentatives=2, $delay=200) {
 *	$nbMvmt : Retourne le nbMvmt de la commande																			*
 ************************************************************************************************************************/
 function lastMvmt($infNbMvmt, &$nbMvmt) {
-	$nbMvmt = mg::getCmd($infNbMvmt);
+	$nbMvmt = max(0, mg::getCmd($infNbMvmt));
 	$lastMvmt = mg::getCond("lastChangeStateDuration($infNbMvmt, 0)");
 	$lastMvmt = ($nbMvmt > 0) ? 0 : $lastMvmt;
 	self::message('', self::$__log_INF2 . __FUNCTION__ . " : LastMvmt : '".round($lastMvmt/60)."' mn - nbMvmt : '$nbMvmt'");

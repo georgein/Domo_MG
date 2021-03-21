@@ -51,7 +51,7 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	// Planification de la prochaine 'correction' à 'periodicité' + 1 heure du dernier changement de mode ET SI en mode 'Confort'
 	$infMode = mg::toID("#[$zone][Températures][Consigne Chauffage]#");
 	$valMode = mg::getCmd($infMode,  '', $collectDate, $valueDate);
-	$lastMode = round((time() - $valueDate)/3600, 2) + 1;
+	$lastMode = round((time() - $valueDate)/3600, 2) - 1;
 	if ($periodicite > 0 && $lastMode > $periodicite && $mode == 'Confort') {
 		$cdMakeOffset = 1;
 		mg::setInf($infMode,  '', 'Correction');

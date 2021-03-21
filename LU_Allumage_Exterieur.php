@@ -28,18 +28,16 @@ $declencheur = mg::getTag('#trigger#');
 //mg::setCron('', "*/$timerLumExt * * * *");
 mg::setCron('', time() + $timerLumExt*60);
 
-$action = mg::getCmd($cmdEtatEclExt) ? 'On' : 'Off';
-
-if (strpos($declencheur, 'Eclairages') !== false) { goto suite; }
+if (strpos($declencheur, 'Eclairages') !== false) {
+	if (mg::getCmd($cmdEtatEclExt)) { $action = 'On'; } 
+	else { $action = 'Off'; }
+	goto suite; 
+}
 
 // ==================================================== EXTINCTION =====================================================
-if ( !$nuitExt || $ventFort || $lastMvmt >= ($timerLumExt)) {
-	$action = 'Off';
-}
+if ( !$nuitExt || $ventFort || $lastMvmt >= $timerLumExt) { $action = 'Off'; }
 // ===================================================== ALLUMAGE ======================================================
-elseif ($nuitExt && $nbMvmt > 0) {
-	$action = 'On';
-}
+elseif ($nuitExt && $nbMvmt > 0) { $action = 'On'; }
 
 // ================================================ MODIF LAMPE GENERALE ===============================================
 mg::setCmd(str_replace('Etat', $action, trim(mg::toHuman($cmdEtatEclExt), '#')));

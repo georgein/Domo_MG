@@ -36,7 +36,7 @@ if (mg::getCmd($infCinemaEtat)) {
 
 	// Fermeture volets
 	mg::setScenario($scenVoletsJourNuit, 'deactivate');
-	mg::unsetVar('_VoletGeneral');
+//	mg::unsetVar('_VoletGeneral');
 	mg::VoletsGeneral( 'Salon', 'D', 1);
 
 	// Ambiance lumière à 'Cinéma'

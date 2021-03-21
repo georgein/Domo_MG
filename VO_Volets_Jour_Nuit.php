@@ -91,7 +91,6 @@ mg::messageT('', ". ***************************** FERMETURE VOLETS EN ALARME OU 
 	if (mg::getVar('_VoletGeneral') != 'D') {
 		mg::Message($logTimeLine, "Volets - Fermeture générale, time > $timeVoletsNuit | Alarme | Aube.");
 		mg::VoletsGeneral('Salon, Chambre, Etage', 'D');
-//		sleep(120);
 	}
 }
 
@@ -100,7 +99,6 @@ mg::messageT('', ". ***************** OUVERTURE GENERALE SALON APRES LE REVEIL A
 	if (mg::getVar('_VoletGeneral') != 'M') {
 		mg::Message($logTimeLine, "Volets - Ouverture générale du matin.");
 		mg::VoletsGeneral('Salon', 'M');
-//		sleep(120);
 	}
 }
 
@@ -135,7 +133,7 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 	if ($duree > 0) {
 		$sliderCourant = mg::getCmd("#[$nomZone][Ouvertures][$cmd"." Etat]#");
 		if ($sliderCourant > 99) { $sliderCourant = $sliderCourant - 100; }
-//	}
+		
 		$slider =  $sliderCourant >= 99 ? 99 : $sliderCourant;
 		$slider = $sliderCourant <= 0.1 ? 0.1 : $sliderCourant;
 		$messageAff = "Rien faire - Courant = $sliderCourant";
@@ -172,7 +170,7 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 		{
 			$slider = $sliderSoleilGenant; $messageAff = "Soleil Génant";
 		}
-		elseif ($nuitSalon || !$cdSoleil) {
+		elseif ($nuitSalon || !$cdSoleil && !$cdOuvert) { ///////////////////////////////
 			$slider = 99; $messageAff = "Fin Soleil Génant";
 		}
 	}
