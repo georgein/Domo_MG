@@ -25,8 +25,6 @@
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 $declencheur = mg::getTag('#trigger#');
-//mg::setCron('', "*/$timerLumExt * * * *");
-mg::setCron('', time() + $timerLumExt*60);
 
 if (strpos($declencheur, 'Eclairages') !== false) {
 	if (mg::getCmd($cmdEtatEclExt)) { $action = 'On'; } 
@@ -50,5 +48,6 @@ for ($i = 0; $i < count($tab_EquipLampes); $i++) {
 		mg::setCmd(str_replace('Etat', $action, trim(mg::toHuman($tab_EquipLampes[$i]), '#')));
 	}
 }
+if ($action == 'On') { mg::setCron('', time() + $timerLumExt*60); }
 
 ?>

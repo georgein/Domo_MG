@@ -147,8 +147,8 @@ try {
 	$cpt++;
 	mg::message('', "****** Intensité : $intensité - reste à Faire : $resteAFaire - cpt : $cpt : Attente retour Zwave ....");
 	if ($resteAFaire > 0 && $cpt < $cptMax) {
-		//sleep(5);
 		mg::ZwaveBusy(1);
+		sleep(2);
 		goto reprise;
 	}
 	mg::setCmd($equipEcl, 'Lampe Générale Slider', $intensité);

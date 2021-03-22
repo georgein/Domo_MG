@@ -645,7 +645,6 @@ mg::message('', $requete);
 		$ratioDebMontee = 0.23;
 		$ratioVitesseMontee = 1.30;
 
-//		$dureeMouvementPonderee = $duree_Mouvement;
 		if ($etat == 0) {
 			$dureeMouvementPonderee = 0;
 
@@ -658,7 +657,8 @@ mg::message('', $requete);
 			$dureeMouvementPonderee = $duree_Mouvement * (1 - $ratioFinDescente);
 		}
 
-		$dureePause = intval(max(1, $dureeMouvementPonderee / $nbLamelles));
+		$dureePause = $dureeMouvementPonderee / $nbLamelles;
+		//mg::message('Log:/_DEBUG', "************ $duree_Mouvement / $dureeMouvementPonderee - $dureePause *******************");
 
 		//*************************************************************************************************************
 		self::message('', self::$__log_SP . __FUNCTION__ . " *** BOUCLE $volet_Aff = > $slider - Etat : $etat - Type : $type - Incrément : $increment - Duree du Mouvement : $duree_Mouvement - DureeMouvementPonderee : $dureeMouvementPonderee - Durée de pause : " . round($dureePause, 2));

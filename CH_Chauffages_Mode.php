@@ -103,13 +103,12 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	if ( $nomChauffage == 'Salon' ) {
 		if (!isset($tabChauffages_[$nomChauffage]['ratio'])) { $tabChauffages_[$nomChauffage]['ratio'] = 4.47; }
 		$timeDebConfort = HeureConfort($heureReveil);
-	if ($bypassPonderation) { $timeDebConfort = $heureReveil - 8*3600; } // Pour palier partiellement au disfonctionnement de la pompe à chaleur par grand froid
+		if ($bypassPonderation) { $timeDebConfort = $heureReveil - 8*3600; } // Pour palier partiellement au disfonctionnement de la pompe à chaleur par grand froid
 
-		if ($nuitSalon == 2 && time() < ($timeDebConfort - 900)) {
-			$timeFinConfort = time();			// Pour passer en mode Eco immédiatement
-		} else {
-			$timeFinConfort = time() + 900;		// Pour rester en mode Confort in eternam
-		}
+		// Pour passer en mode Eco immédiatement si réveil dans plus de 2 heures
+		if ($nuitSalon == 2 && time() < ($timeDebConfort - 2*3600)) { $timeFinConfort = time();	}
+		// Sinon on reste en mode Confort in eternam
+		else { $timeFinConfort = time() + 900; }
 		LancementMode($timeDebConfort, $timeFinConfort);
 	}
 	//-----------------------------------------------------------------------------------------------------------------
