@@ -32,14 +32,16 @@ Le booster se déclenche si la température du salon est inférieur à (consigne
 	$deltaBooster = mg::getParam('Chauffages','deltaBooster');			// Delta entre $tempSalon et $ConsigneSalon pour allumage du booster
 	$pcDeltaTempExt = mg::getParam('Chauffages','pcDeltaTempExt');		// % du delta Consigne-TempExt à ajouter à la consigne
 	$tempHG = mg::getParam('Temperatures', 'tempHG');
-
+	$climPuissanceMin = 15;												// Puissance minimum de la clim
+	
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-$declencheur = mg::getTag('#trigger#');
+$declencheur = mg::declencheur();
 // Si appel par variable _InfPorte on récupère le déclencheur d'origine de mouvement de porte/fenetre
-if (strpos($declencheur, '_InfPorte') > 0) { $declencheur = $_InfPorte; }
-$zone = mg::extractPartCmd($declencheur, 1);
+if (mg::declencheur('_InfPorte')) { $declencheur = $_InfPorte; }
+
+$zone = mg::declencheur('user') ? 'Salon' : mg::extractPartCmd($declencheur, 1);
 
 // ****************************************** RELANCE DE BROADLINK SI OFFLINE *****************************************
 if (!mg::getCmd($infRouteurBroadlink) || !mg::getCmd($equipDaemon, 'Démon Broadlink')) {
@@ -49,14 +51,14 @@ if (!mg::getCmd($infRouteurBroadlink) || !mg::getCmd($equipDaemon, 'Démon Broad
 
 // Boucle des chauffages
 foreach ($tabChauffages as $nomChauffage => $details_Chauffage) {
-	if ($zone != $nomChauffage) {continue; }
+	if (!mg::declencheur('schedule') && !mg::declencheur('user') && $zone != $nomChauffage) {continue; }
 	//=================================================================================================================
 	mg::messageT('', "! $nomChauffage");
 	//=================================================================================================================
 	$chauffage = intval($details_Chauffage['chauffage']);
 	$clim =	 intval($details_Chauffage['clim']);
 	$equipChauf = trim($details_Chauffage['equip']);
-	$correction = $tabChauffages[$nomChauffage]['correction']; // Correction/Offset à aporter à la consigne
+	//$correction = $tabChauffages[$nomChauffage]['correction']; // Correction/Offset à aporter à la consigne
 	
 	// ON NE GERE LE CHAUFFAGE QUE SI NECESSAIRE
 	if ($saison == 'HIVER' && !$chauffage || $saison == 'ETE' && !$clim) { continue; }
@@ -105,23 +107,23 @@ $nbPassages = 0;
 	mg::messageT('', "! REGULATION - Mode : $mode - $tempZone => $consigne " . ($boosterOK ? "- Booster : $boosterOK" : ""));
 	//=================================================================================================================
 	if ($saison == 'HIVER') {
-		if ( ($consigne + $correction - $tempZone) >= $deltaTempChauf) {
-			if(!mg::getCmd($equipChauf, 'Etat') || mg::getCmd($equipChauf, 'Puissance') < 50) {
+		if ( ($consigne /*+ $correction*/ - $tempZone) >= $deltaTempChauf) {
+			if(!mg::getCmd($equipChauf, 'Etat') || mg::getCmd($equipChauf, 'Puissance') < $climPuissanceMin) {
 				if ($clim) { mg::setCmd($equipChauf, 'Chauffage'); }
 				else { mg::setCmd($equipChauf, 'On'); }
 			}
-			if ($boosterOK && ($consigne + $correction - $temp_Ext) >= $deltaBooster
-						&& (!mg::getCmd($equipBooster, 'Etat') || mg::getCmd($equipBooster, 'Puissance') < 50)) { mg::setCmd($equipBooster, 'On'); }
+			if ($boosterOK && ($consigne /*+ $correction*/ - $temp_Ext) >= $deltaBooster
+						&& (!mg::getCmd($equipBooster, 'Etat') || mg::getCmd($equipBooster, 'Puissance') < $climPuissanceMin)) { mg::setCmd($equipBooster, 'On'); }
 		} else {
-			if (mg::getCmd($equipChauf, 'Etat') || mg::getCmd($equipChauf, 'Puissance') > 50) { mg::setCmd($equipChauf, 'Off'); }
-			if ($boosterOK && (mg::getCmd($equipBooster, 'Etat') || mg::getCmd($equipBooster, 'Puissance') > 50)) { mg::setCmd($equipBooster, 'Off'); }
+			if (mg::getCmd($equipChauf, 'Etat') || mg::getCmd($equipChauf, 'Puissance') > $climPuissanceMin) { mg::setCmd($equipChauf, 'Off'); }
+			if ($boosterOK && (mg::getCmd($equipBooster, 'Etat') || mg::getCmd($equipBooster, 'Puissance') > $climPuissanceMin)) { mg::setCmd($equipBooster, 'Off'); }
 		}
 	}
 
 	else if ($saison == 'ETE' && $clim) {
-		if ( ($tempZone - $consigne) + $correction >= $deltaTempChauf ) {
-			if (!mg::getCmd($equipChauf, 'Etat') || mg::getCmd($equipChauf, 'Puissance') < 50) { mg::setCmd($equipChauf, 'Climatisation'); }
-		} else if (mg::getCmd($equipChauf, 'Etat') || mg::getCmd($equipChauf, 'Puissance') > 50) { mg::setCmd($equipChauf, 'Off'); }
+		if ( ($tempZone - $consigne) /*+ $correction*/ >= $deltaTempChauf ) {
+			if (!mg::getCmd($equipChauf, 'Etat') || mg::getCmd($equipChauf, 'Puissance') < $climPuissanceMin) { mg::setCmd($equipChauf, 'Climatisation'); }
+		} else if (mg::getCmd($equipChauf, 'Etat') || mg::getCmd($equipChauf, 'Puissance') > $climPuissanceMin) { mg::setCmd($equipChauf, 'Off'); }
 	}
 
 //=====================================================================================================================

@@ -37,7 +37,7 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	$timeOut = $detailsZone['timeOut'];
 	$pcEcartMax = $detailsZone['pcEcartMax'];
 	$periodicite = $detailsZone['periodicite'];
-	//$correction = $detailsZone['correction'];
+	$correction = $detailsZone['correction'];
 	if (!$equip) { continue; }
 
 	$mode = $tabChauffages_[$nomChauffage]['mode'];
@@ -45,8 +45,8 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	$cmdResume = mg::toID("#[$zone][Résumé][$nomResume]#");
 	$tempResume = mg::getCmd($cmdResume);
 	// Température moyenne de reference sur la moyenne (dérive possible)
-	$tempMoyenneRef = round(scenarioExpression::averageBetween($cmdResume, "$periodicite hour ago", 'now'), 2);
-	mg::messageT('', "! Traitement de $zone/$nomChauffage avec timeOuts : $timeOut - pcEcartMax : $pcEcartMax");
+	$tempMoyenneRef = round(scenarioExpression::averageBetween($cmdResume, "$periodicite hour ago", 'now'), 2) + $correction;
+//	mg::messageT('', "! Traitement de $zone/$nomChauffage avec timeOuts : $timeOut - pcEcartMax : $pcEcartMax - correction : $correction");
 
 	// Planification de la prochaine 'correction' à 'periodicité' + 1 heure du dernier changement de mode ET SI en mode 'Confort'
 	$infMode = mg::toID("#[$zone][Températures][Consigne Chauffage]#");
@@ -57,16 +57,17 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 		mg::setInf($infMode,  '', 'Correction');
 	} else { $cdMakeOffset = 0; }
 	
-mg::message('', "**************** $valMode - $lastMode > $periodicite - mode : $mode - tempMoyenneRef : $tempMoyenneRef ************");
+//mg::message('', "**************** $valMode - $lastMode > $periodicite - mode : $mode - tempMoyenneRef : $tempMoyenneRef ************");
+mg::messageT('', "! Traitement de $zone/$nomChauffage - periodicite : $periodicite - timeOuts : $timeOut - pcEcartMax : $pcEcartMax");
 
 //$cdMakeOffset = 1; ///////////////////////////////
 
-	ControleResumes($zone, $nomChauffage, $cleResume, $timeOut, $pcEcartMax, $tempResume, $tempMoyenneRef, $periodicite, $cdMakeOffset, $logDebug, $timeLine);
+	ControleResumes($zone, $nomChauffage, $cleResume, $timeOut, $pcEcartMax, $tempResume, $tempMoyenneRef, $correction, $periodicite, $cdMakeOffset, $logDebug, $timeLine);
 }
 
 // *******************************************************************************************************************/
 // ************************************************ CONTROLE DU RESUME ***********************************************/
-function ControleResumes($zone, $nomChauffage, $cleResume, $timeOut, $pcEcartMax, $tempResume, $tempMoyenneRef, $periodicite, $cdMakeOffset, $logDebug, $timeLine) {
+function ControleResumes($zone, $nomChauffage, $cleResume, $timeOut, $pcEcartMax, $tempResume, $tempMoyenneRef, $correction, $periodicite, $cdMakeOffset, $logDebug, $timeLine) {
 	// Extraction SQL de la configuration de l'objet
 	$values = array();
 	$sql  = "SELECT `configuration` FROM `object` WHERE `name` = '$zone'";
@@ -148,7 +149,7 @@ function ControleResumes($zone, $nomChauffage, $cleResume, $timeOut, $pcEcartMax
 		// ***********************************************************************************************************/
 
 	}
-	mg::messageT('', "! Fin de Traitement de $zone/$nomChauffage - Nb de commandes actives : $nbEnabledOK - TempMoyenne/Ref : $tempResume");
+	mg::messageT('', "! Fin de Traitement de $zone/$nomChauffage  - TempMoyenne/Ref : $tempResume (avec correction : $correction) - Nb de commandes actives : $nbEnabledOK");
 }
 
 // *******************************************************************************************************************/

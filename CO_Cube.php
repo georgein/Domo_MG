@@ -24,9 +24,7 @@ Allumage et extinction de la radio Sono, gestion du volumesonore, Allumage/Extin
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-$declencheur = mg::getTag('#trigger#');
-
-$mouvement = deconz_lumi_sensor_cube_data(mg::getCmd($declencheur));
+$mouvement = deconz_lumi_sensor_cube_data(mg::getCmd(mg::declencheur()));
 
 $sonosEnCours = mg::getCmd($equipSonos, 'Status');
 $sonosEnCours = mg::getCmd($equipSonos, 'Status') == 'Lecture' ;

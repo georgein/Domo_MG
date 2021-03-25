@@ -46,7 +46,6 @@ Parcours les équipements sur batterie et affiche :
 	// Paramètres :
 	$logTimeLine = mg::getParam('Log', 'timeLine');
 // ********************************************************************************************************************
-	$declencheur = mg::getTag('#trigger#');
 	$nomTab = trim(mg::getTag('nomTab'), '#');
 	$action = trim(mg::getTag('action'), '#');
 

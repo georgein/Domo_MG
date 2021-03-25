@@ -20,16 +20,15 @@ Une image de porte fenêtre est utilisé si un équipement d'ouverture/fermeture
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-$declencheur = mg::getTag('#trigger#');
-$zone = mg::ExtractPartCmd($declencheur, 1);
-if ( $alarme == 1) { return; }
-if ($declencheur =='user') { return; }
+if ( $alarme || mg::declencheur('user')) { return; }
+
+$zone = mg::declencheur('', 1);
 
 	// Calcul si appel par ouverture de la fenêtre
-if (strpos($declencheur, 'Ouverture]') !== false) {
-	mg::setVar('_InfPorte', $declencheur); // Pour stop des chauffages
+if (mg::declencheur('Ouverture]')) {
+	mg::setVar('_InfPorte', mg::declencheur()); // Pour stop des chauffages
 	$trigger = 'Ouverture';
-	$cmd = mg::ExtractPartCmd($declencheur, 2);
+	$cmd = mg::declencheur('', 2);
 	$cmd = str_ireplace(array('fenêtre', 'Porte'), 'Volet', $cmd);
 	$ValCmd = "";
 }
@@ -37,8 +36,8 @@ if (strpos($declencheur, 'Ouverture]') !== false) {
 // Calcul si appel par slider du volet
 else {
 	$trigger = 'Slider';
-	$ValCmd = mg::getCmd($declencheur);
-	$cmd = mg::ExtractPartCmd($declencheur, 3);
+	$ValCmd = mg::getCmd(mg::declencheur());
+	$cmd = mg::declencheur('', 3);
 	$cmd = str_replace(' Etat', '', $cmd);
 }
 mg::messageT('', "Trigger : $trigger - zone : $zone, cmd : $cmd - ValCmd : $ValCmd");

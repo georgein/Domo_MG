@@ -25,11 +25,10 @@ global $tabConso, $tabNomCol, $tabAff;
 
 /**********************************************************************************************************************
 **********************************************************************************************************************/
-$declencheur = mg::getTag('#trigger#');
 $traitementPartiel = false;
 
 // Gestion MàJ du widget (action à "JAMAIS REPETER")
-if (strpos($declencheur, 'Maj_Aff') !== false && mg::getCmd($equipEDF, 'Maj_Aff')) {
+if (mg::declencheur('Maj_Aff') && mg::getCmd($equipEDF, 'Maj_Aff')) {
 	mg::messageT('', "! MàJ de l'affichage");
 	mg::setInf($equipEDF, 'Maj_Aff', 0);
 	goto maj;
@@ -39,7 +38,7 @@ mg::setInf($equipEDF, 'Maj_Aff', 0);
 
 // Traitement normal
 if ($detail_Lignes == 3 && mg::getTag('#minute# ') % $periode != 0) { $traitementPartiel = true; }
-elseif (strpos($declencheur, 'schedule') !== false) { $traitementPartiel = false; }
+elseif (mg::declencheur('schedule')) { $traitementPartiel = false; }
 maj:
 if ($traitementPartiel) {
 	$tabAff = mg::getVar('_consoEDF_TabAff');

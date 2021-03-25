@@ -51,13 +51,11 @@ global $debug;
 /***********************************************************************************************************************/
 /***********************************************************************************************************************/
 /***********************************************************************************************************************/
-$declencheur = mg::getTag('#trigger#');
-
 $nbTentatives = 0;
 $nbPresences = 0;
 
 // Gestion MàJ du widget (action à "JAMAIS REPETER")
-if (strpos($declencheur, 'Maj_Aff') !== false && mg::getCmd($equipTabReseau, 'Maj_Aff')) {
+if (mg::declencheur('Maj_Aff')&& mg::getCmd($equipTabReseau, 'Maj_Aff')) {
 	mg::messageT('', "! MàJ de l'affichage");
 //	mg::debug();
 	$HTML = mg::getCmd($equipTabReseau, 'TabReseau_Aff');
@@ -68,7 +66,7 @@ if (strpos($declencheur, 'Maj_Aff') !== false && mg::getCmd($equipTabReseau, 'Ma
 mg::setInf($equipTabReseau, 'Maj_Aff', 0);
 
 // Scan du réseau
-if ($declencheur == 'schedule' || $declencheur == 'user') { 
+if (mg::declencheur('schedule') || mg::declencheur('user')) { 
 	ScanReseau($interfaceReseau, $scanReseau);
 }
 
@@ -93,7 +91,7 @@ foreach ($tabUser as $user => $detailsUser) {
 	$OK = null;
 
 	// ******** On saute si pas 'schedule' et (pas user ********
-	if ($declencheur != 'schedule' && $declencheur != 'user' && $type != 'user') continue; 
+	if (!mg::declencheur('schedule') && !mg::declencheur('user') && $type != 'user') continue; 
 	// Scan du réseau sinon
 	else ScanReseau($interfaceReseau, $scanReseau); 
 	// ------------------------------------------------------------------------------------------------------------------

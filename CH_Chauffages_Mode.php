@@ -52,8 +52,7 @@ global $tabChauffages_, $saison, $logChauffage, $logTimeLine, $nomChauffage, $Sc
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-$declencheur = mg::getTag('#trigger#');
-$zone = mg::extractPartCmd($declencheur, 1);
+$zone = mg::declencheur('', 1);
 
 //=====================================================================================================================
 mg::messageT('', ". GESTION ETE/HIVER");
@@ -69,7 +68,7 @@ if ($saison != mg::getVar('Saison')) {
 mg::setVar('Saison', $saison);
 
 // Bypass du passage en eco la nuit par grand froid
-$bypassPonderation = (mg::getCmd($infTempExt) < $tempBypassPondertion ? 1 : 0);
+//$bypassPonderation = (mg::getCmd($infTempExt) < $tempBypassPondertion ? 1 : 0);
 
 // Correction HeureRéveil si dépassée de 1 heures30
 if (time() > $heureReveil+1.5*3600) {
@@ -80,7 +79,7 @@ if (time() > $heureReveil+1.5*3600) {
 //------------------------------------------- BOUCLE DES ZONES DE CHAUFFAGE -------------------------------------------
 //---------------------------------------------------------------------------------------------------------------------
 foreach ($tabChauffages as $nomChauffage => $detailsZone) {
-	if ($zone != $nomChauffage) {continue; }
+	if (!mg::declencheur('schedule') && !mg::declencheur('user') && $zone != $nomChauffage) {continue; }
 	if (!$nomChauffage || !$detailsZone['chauffage'] || !$detailsZone['equip']) { continue; }
 		//=============================================================================================================
 		mg::messageT('', "! $nomChauffage");
@@ -103,10 +102,10 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	if ( $nomChauffage == 'Salon' ) {
 		if (!isset($tabChauffages_[$nomChauffage]['ratio'])) { $tabChauffages_[$nomChauffage]['ratio'] = 4.47; }
 		$timeDebConfort = HeureConfort($heureReveil);
-		if ($bypassPonderation) { $timeDebConfort = $heureReveil - 8*3600; } // Pour palier partiellement au disfonctionnement de la pompe à chaleur par grand froid
+		//if ($bypassPonderation) { $timeDebConfort = $heureReveil - 8*3600; } // Pour palier partiellement au disfonctionnement de la pompe à chaleur par grand froid
 
-		// Pour passer en mode Eco immédiatement si réveil dans plus de 2 heures
-		if ($nuitSalon == 2 && time() < ($timeDebConfort - 2*3600)) { $timeFinConfort = time();	}
+		// Pour passer en mode Eco immédiatement si DebConfort dans plus de 15 mn
+		if ($nuitSalon == 2 && time() < ($timeDebConfort - 90)) { $timeFinConfort = time(); }
 		// Sinon on reste en mode Confort in eternam
 		else { $timeFinConfort = time() + 900; }
 		LancementMode($timeDebConfort, $timeFinConfort);

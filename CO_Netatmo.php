@@ -50,9 +50,7 @@ http://debian-facile.org/doc:media:imagemagick
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-$declencheur = mg::getTag('#trigger#');
-
-$nomCamera = mg::ExtractPartCmd($declencheur, 2);
+$nomCamera = mg::declencheur('', 2);
 $detailsCamera = $tab_Cameras[$nomCamera];
 $infMvmtCam = trim($detailsCamera[1], '#');
 $mvmtCam = mg::getCmd($infMvmtCam);

@@ -19,12 +19,10 @@ Joue un son à l'ouverture de la porte.
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-$declencheur = mg::getTag('#trigger#');
-
-if( $declencheur == 'user') { return; }
+if(mg::declencheur('user')) { return; }
 
 // Ouverture
-if (mg::getCmd($declencheur) == 1) {
+if (mg::getCmd(mg::declencheur()) == 1) {
 	if ($nuitSalon) { mg::setCmd($equipEclCuisine, 'On'); }
 	mg::GoogleCast ('PLAY', $sonOuverture, $volOuverture);
 }

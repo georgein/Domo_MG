@@ -1,6 +1,6 @@
 <?php
 /**********************************************************************************************************************
-	Allumage Exterieur - 23+
+	Allumage Exterieur - 23
 	Allume les lampes extérieure SI il fait nuit en cas de mouvememnt détecté.
 	Programme l'extinction $timerLumExt mn plus tard si pas d'autres mouvements.
 **********************************************************************************************************************/
@@ -24,9 +24,10 @@
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-$declencheur = mg::getTag('#trigger#');
+mg::setCron('', "*/$timerLumExt * * * *");
+$action = 'Off'; 
 
-if (strpos($declencheur, 'Eclairages') !== false) {
+if (mg::declencheur('Eclairages')) {
 	if (mg::getCmd($cmdEtatEclExt)) { $action = 'On'; } 
 	else { $action = 'Off'; }
 	goto suite; 
@@ -45,9 +46,7 @@ suite:
 mg::MessageT('', ". PASSAGE à $action des lampes");
 for ($i = 0; $i < count($tab_EquipLampes); $i++) {
 	if ($action == 'Off' || mg::getCmd($tab_EquipLampes[$i]) != ($action=='On' ? 1 : 0)) {
-		mg::setCmd(str_replace('Etat', $action, trim(mg::toHuman($tab_EquipLampes[$i]), '#')));
+		mg::setCmd(str_replace(' Etat', " $action", trim(mg::toHuman($tab_EquipLampes[$i]), '#')));
 	}
 }
-if ($action == 'On') { mg::setCron('', time() + $timerLumExt*60); }
-
-?>
+//if ($action == 'On') { mg::setCron('', time() + $timerLumExt*60); }

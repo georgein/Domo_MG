@@ -42,7 +42,7 @@ Le retour état du Stop dans le widget est à régler à TimeOut + 5 au minimum 
 mg::setCron('', time() + $timeOutSalon*60);
 
 //$nuitSalon = 1; ***** POUR DEBUG *****
-$nomDeclencheur = mg::ExtractPartCmd(mg::getTag('#trigger#'), 3);
+$nomDeclencheur = mg::declencheur('', 3);
 
 // Extinction lampes
 if ($alarme != 0 || $nuitSalon == 0 || $lastMvmt >= $timeOutSalon || $boutonOnOff == 1004) {

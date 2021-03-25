@@ -31,16 +31,8 @@ IMPORTANT : Le script DOIT être lancé après 00:00, soit le jour du réveil, p
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 
-// Calcul du type de déclencheur : Set ou rien
-$declencheur = '';
-if (strpos(mg::getTag('#trigger#'), 'Heure_Reveil')) { $declencheur = 'Set'; }
-
-//=====================================================================================================================
 // Si Set manuel on positionne la variable '_ReveilManuel' pour ne pas faire la première demande de calcul automatique
-if ($declencheur == 'Set') { mg::setVar('_ReveilManuel', 1); }
-
-// Report du calcul Si en manuel et avant heure réveil on sort et supprime le flag manuel, au prochain RElancement : recalcul auto
-if ($declencheur != 'Set') {
+if (mg::declencheur('Heure_Reveil')) {
 	if ( mg::getVar('_ReveilManuel') == 1 && time() < mg::getVar('_Heure_Reveil') ) {
 		mg::unsetVar('_ReveilManuel');
 		return;
@@ -54,7 +46,7 @@ $jour = ($jour > 6) ? 0 : $jour;
 $detailsTabExceptions = explode(';', $tab_ReveilExceptions[$jour]);
 
 // Lecture des agendas, WE et tableau d'exceptions
-if ($declencheur != 'Set') {
+if (!mg::declencheur('Heure_Reveil')) {
 mg::Message('', "-------------------------------------- LECTURE AGENDAS --------------------------------------------");
 	$alarmTime = $reveilHeureNormale;
 

@@ -75,6 +75,7 @@ mg::frameTV('Frame TV', 'Salon', 'art');
 	mg::setScenario($scenLuminositeSalon, 'start');
 
 	// Rétablissement volets
+	mg::unsetVar('_VoletGeneral'); // Pour 'forcer' le prochain mouvement de voletsGeneral
 	mg::setScenario($scenVoletsJourNuit, 'activate');
 	mg::setScenario($scenVoletsJourNuit, 'start');
 

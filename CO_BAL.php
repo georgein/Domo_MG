@@ -24,10 +24,8 @@ mg::message('', "lastPorteEntree - $lastPorteEntree");
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-$declencheur = mg::getTag('#trigger#');
-
 // RàZ BAL par le cron
-if ($declencheur == 'schedule' || $declencheur == 'user') {
+if (mg::declencheur('schedule') || mg::declencheur('user')) {
 		mg::setInf($infBalAff, '', 0);
 }
 
@@ -35,7 +33,7 @@ if ($declencheur == 'schedule' || $declencheur == 'user') {
 if (mg::TimeBetween(strtotime($timeVoletsNuit), time(), $heureReveil)) { return; }
 
 // Si boite aux lettres ET porte entré > 2 mn on active le signalement
-if (strpos($declencheur, 'BAL') !== false && mg::getCmd($infBAL_Mvmt) && $lastPorteEntree > 2) {
+if (mg::declencheur('BAL') && mg::getCmd($infBAL_Mvmt) && $lastPorteEntree > 2) {
 	mg::message($destinataire, 'Il y a du courrier dans la boite aux lettres.');
 	mg::setInf($infBalAff, '', 1);
 	mg::setCron('', time() + 12*3600);

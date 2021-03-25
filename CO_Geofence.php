@@ -44,17 +44,19 @@ Signale l'approche d'un user
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-$declencheur = mg::getTag('#trigger#');
-$userAppel = mg::ExtractPartCmd($declencheur, 3);
+$userAppel = mg::declencheur('' , 3);
 
 $dateSQL = date('Y\-m\-d', time()); // Date du jour au format SQL
 
-$tabGeofence = array();
-$tabGeofence = mg::getVar('tabGeofence');
+//$tabGeofence = array();
+//$tabGeofence = mg::getVar('tabGeofence');
 $userActif = '';
 
 // ************************************************ PARCOURS DES USERS ************************************************
 foreach ($tabUserGeofence as $user => $detailsUser) {
+
+	if ($user != 'NR') { continue; } /////////////////////////////////////////////////////
+
 	if (trim($user == '')) { continue; }
 	$id = $detailsUser['ID'];
 	$infUser = mg::toHuman($id);
@@ -65,7 +67,7 @@ foreach ($tabUserGeofence as $user => $detailsUser) {
 			$tabGeofence[$user]['dateActive'] = $dateSQL;
 		}
 	}
-	makeLatLng($tabGeofence, $user, $id, $latLng_Home, $distanceSleep, $pauseMin, $coeffEcart, $coeffDeniveles, $destinatairesSOS, $timingSOS, $limiteEcart);
+	makeLatLng($tabGeofence, $user, $id, $distanceSleep, $pauseMin, $coeffEcart, $coeffDeniveles, $destinatairesSOS, $timingSOS, $limiteEcart);
 	mg::messageT('', "! User : $user - Présent : $userPresent - debTime : " . date('d\/m \à H\hi\m\n', $tabGeofence[$user]['debTime']) . " - Cloture : " . date('d\/m \à H\hi\m\n', $tabGeofence[$user]['cloture']));
 
 	// ******************************************* SIGNALEMENT DE LA PROXIMITE ****************************************
@@ -116,12 +118,14 @@ foreach ($tabUserGeofence as $user => $detailsUser) {
 
 //	******************************************* ECRITURE DU FICHIER HTML **********************************************
 	mg::messageT('', "! GENERATION HTML ET ENREGISTREMENT DE GEOFENCE");
-	mg::setVar('tabGeofence', $tabGeofence);
+	//mg::setVar('tabGeofence', $tabGeofence);
 	//mg::message('', print_r($tabGeofence, true));
 
 	if (!$userActif) { $userActif = $user; }
 	file_put_contents($fileExport, HTML($tabGeofence, $userActif, $latLng_Home, $refresh, $layerDefaut, $marqueurSize, $distanceSleep, $pauseMin, $epaisseur, $colorMG, $colorNR, $colorPause, $colorEntrainement, $colorVoiture, $pathRef));
 
+// ********************************************************************************************************************
+// ********************************************************************************************************************
 // ********************************************************************************************************************
 function HTML($tabGeofence, $userActif, $latLng_Home, $refresh, $layerDefaut, $marqueurSize, $distanceSleep, $pauseMin, $epaisseur, $colorMG, $colorNR, $colorPause, $colorEntrainement, $colorVoiture, $pathRef) {
 
@@ -245,17 +249,15 @@ foreach ($tabGeofence as $user => $detailsUser) {
 	$lastSSID = $detailsUser['lastSSID'];
 
 	$distanceTotale = round($detailsUser['distanceTotale'], 1);
-	$denivelePlus = round($detailsUser['denivelePlus'], 0);
-	$deniveleMoins = round($detailsUser['deniveleMoins'], 0);
 	$cloture = intval(($detailsUser['cloture'] == 0 ? $detailsUser['lastTime'] : $detailsUser['cloture']));
 	$vitesseMoyenne = round($detailsUser['vitesseMoyenne'], 1);
-
+	
 	$debTimeStr = date('d/m \&#224;\ H:i', $debTime);
 	$lastTimeStr = date('d/m \&#224;\ H:i', $lastTime);
 	$clotureStr = date('d/m \&#224;\ H:i', $cloture);
 	$dureeTotaleStr = gmdate('H:i', intval($detailsUser['dureeTotale']));
 	$dureeMouvementStr = gmdate('H:i', intval($detailsUser['dureeMouvement']));
-	$sommePauseStr = gmdate('H:i', intval($detailsUser['sommePause']));
+	$sommePauseStr = gmdate('H:i', intval($detailsUser['sommePause']*60));
 
 	$polylineAll .= "polyline$user,";
 	$imgBouton = "$user.png";
@@ -310,39 +312,44 @@ $geofence .=
 		var coordonnee = latlngs[latlngs.length-1].toString();
 		var	 latLng = coordonnee.split(',');
 		latLng_ = L.latLng(latlngs[latlngs.length-1]);
-		var lat = Math.round(latLng[0]*1000000)/1000000;
-		var long = Math.round(latLng[1]*1000000)/1000000;
+		var latitude = Math.round(latLng[0]*1000000)/1000000;
+		var longitude = Math.round(latLng[1]*1000000)/1000000;
 
 		var ecart = parseFloat(complements[i][0]);
-		var dureeEcart = parseFloat(complements[i][1])/60;
+//		var dureeEcart = parseFloat(complements[i][1])/60;
 		var altitude = parseInt(complements[i][2]);
 		var activite = complements[i][3];
 		var pcBatterie = parseInt(complements[i][4]);
+		var dureePause = parseInt(complements[i][5]);
+		var dureePause_P1 = parseInt(complements[i+1][5]);
 
+//		var dureeEcart_2 = parseFloat(complements[i+1][1])/60;
+		var activite_P1 = complements[i+1][3];
 
 		// Marqueur ENTRAINEMENT
-		if (activite == 'I' || activite == 'E') {
-			sommeEcarts = sommeEcarts + ecart;
+		if (activite == 'E') {
+//			sommeEcarts = sommeEcarts + ecart;
 			L.marker( latlngs[i], {icon: iconEntrainement} ).bindTooltip( '<center> $user : ' + dateString + ' - '
-				+ Math.round(sommeEcarts*100)/100 + ' km - Alt ' + altitude + ' m - Bat. ' + pcBatterie + ' %'
-				+ '<br>Coordonn&#232;es : (' + lat + ' , ' + long + ')').addTo( map )
-			dureePause = 0;
+//				+ Math.round(sommeEcarts*100)/100 + ' km - Alt ' + altitude + ' m - Bat. ' + pcBatterie + ' %'
+				+ ecart + ' km - Alt ' + altitude + ' m - Bat. ' + pcBatterie + ' %'
+				+ '<br>Coordonn&#232;es : (' + latitude + ' , ' + longitude + ')').addTo( map )
+//			dureePause = 0;
 		}
 
 		// Marqueur VOITURE
 		if (activite == 'V') {
 			L.marker( latlngs[i], {icon: iconVoiture} ).bindTooltip('$user : '	+ dateString + ' - Bat. ' + pcBatterie + ' %').addTo( map );
-			dureePause = 0;
+//			dureePause = 0;
 		}
 
 		// Marqueur de PAUSE
-		if (activite == 'I' && sommeEcarts > 0) {
-			dureePause = dureePause + parseFloat(complements[i+1][1])/60; //dureeEcart;
+//		if (activite == 'I' && dureePause > 0) {
 			// En fin de pause on affiche l'icone
-			if (dureePause > $pauseMin && complements[i+1][3] != 'I') {
+			if (activite == 'I' && dureePause > $pauseMin && dureePause_P1 == 0/*&& activite_P1 != 'I'*/) {
+			console.log(dateString+' - '+dureePause+' > $pauseMin - '+latlngs[i]+' - '+complements[i][6]);
 			   L.marker( latlngs[i], {icon: iconPause} ).bindTooltip('$user : '	+ dateString + ' - PAUSE de ' + Math.round(dureePause) + ' mn - Alt ' + altitude + ' m').addTo( map );
 			}
-		}
+//		}
 	}
 
 	// Icone du User sur la carte
@@ -351,11 +358,11 @@ $geofence .=
 		message = ' <center>********************* ENTRAINEMENT $user *********************'
 		+ '<br>du $debTimeStr au $clotureStr'
 		+ '<br>Dur&eacute;e $dureeTotaleStr, en mouvement $dureeMouvementStr, ($sommePauseStr de pause)'
-		+ '<br>Dist ' + Math.round($distanceTotale*100)/100 + ' km - d&eacute;nivel&eacute;s +' + $denivelePlus + ' m / ' + $deniveleMoins + ' m - Vitesse		$vitesseMoyenne km/h'
+		+ '<br>Dist ' + Math.round($distanceTotale*100)/100 + ' km - Vitesse $vitesseMoyenne km/h'
 		+ '<br> -------------------------------------------------------------------------------<br>';
 		}
 		message =	message + '<center>$user : $lastTimeStr : Batterie $lastPcBatterie % - $lastSSID'
-					+'<br> Coordonn&#232;es : (' + lat + ' , ' + long + ')';
+					+'<br> Coordonn&#232;es : (' + latitude + ' , ' + longitude + ')';
 
 	L.marker(latLng_, {icon: iconUser}).addTo(map).bindTooltip( message ).openPopup(); // POPUP : bindPopup
 
@@ -485,21 +492,23 @@ return $geofence;
 }
 
 /*********************************************************************************************************************/
-/*******************************************Extrait les LatLong de l'historiques (pour debug) ************************/
+/************************************************* Extrait les LatLong de l'historiques ******************************/
 /*********************************************************************************************************************/
-function makeLatLng(&$tabGeofence, $user, $id, $latLng_Home, $distanceSleep, $pauseMin, $coeffEcart, $coeffDeniveles, $destinatairesSOS, $timingSOS, $limiteEcart) {
+function makeLatLng(&$tabGeofence, $user, $id, $distanceSleep, $pauseMin, $coeffEcart, $coeffDeniveles, $destinatairesSOS, $timingSOS, $limiteEcart) {
+
 	$values = array();
 	$tabGeofence[$user]['latlngs'] = '';
-	$tabGeofence[$user]['complements'] = '';
+	$tabGeofence[$user]['complements'] = array();
 	$tabGeofence[$user]['distanceTotale'] = 0;
 	$tabGeofence[$user]['dureeTotale'] = 0;
 	$tabGeofence[$user]['dureeMouvement'] = 0;
 	$tabGeofence[$user]['sommePause'] = 0;
-	$tabGeofence[$user]['denivelePlus'] = 0;
-	$tabGeofence[$user]['deniveleMoins'] = 0;
+	$tabGeofence[$user]['vitesseMoyenne'] = 0;
 	$tabGeofence[$user]['debTime'] = 0;
 	$tabGeofence[$user]['cloture'] = 0;
 
+	$complements = '';
+	
 //	$etatMode = '';
 	$timeCourante = 0;
 	$dureePause = 0;
@@ -507,11 +516,12 @@ function makeLatLng(&$tabGeofence, $user, $id, $latLng_Home, $distanceSleep, $pa
 	$dureeEcart = 0;
 	$altitude = 0;
 	$oldAltitude = 0;
-	$oldlatlng = $latLng_Home;
-
+	$debPause = 0;
+	$inhibe = 0;
+	
 	 //  $tabGeofence['MG']['dateActive'] = '2020-12-12'; /* POUR LES TEST ***********************/
 
-	$dateSQL = $tabGeofence[$user]['dateActive']; // Date de debut au format SQL
+	$dateSQL = '2021-03-24'; //$tabGeofence[$user]['dateActive']; // Date de debut au format SQL
 	$sql = "
 		SELECT value, datetime
 		FROM `history`
@@ -521,85 +531,81 @@ function makeLatLng(&$tabGeofence, $user, $id, $latLng_Home, $distanceSleep, $pa
 	";
 	mg::message('', $sql);
 	$result = DB::Prepare($sql, (array)$values, DB::FETCH_TYPE_ALL);
+	$tabDetails = calculLigne($result, $coeffEcart);
+//	$tabGeofence[$user]['details'] = calculLigne($result, $coeffEcart);
 
-	for($i=1; $i<count($result)-1; $i++) {
+	for ($i=1; $i<count($result)-1; $i++) {
+		// ******************************** Init des variables via $tabDetails calculé ********************************
+		$timeCourante_M1 = strtotime($result[$i-1]['datetime']);
 		$timeCourante = strtotime($result[$i]['datetime']);
-		$latlng_ = explode(',', $result[$i]['value']); // Decomposition de value
-		$latlng =  $latlng_[0] . ',' . $latlng_[1];
-		$lastAltitude = floatval(intval($latlng_[2]));
-		$pcBatterie = intval($latlng_[3]);
-		$SSID = trim($latlng_[4]);
-		$activite = strtoupper(substr(trim($latlng_[5]), 0, 1));
-
-		// On saute si coordonnées pas changées
-		if ($oldlatlng == $latlng && $SSID != 'Pas de SSID') { continue; }
-
-		$oldlatlngs_ = explode(',', $oldlatlng);
-		$latlngs_ = explode(',', trim(trim($latlng,'['),']'));
-		$ecart = round(mg::getDistance($latlngs_[0], $latlngs_[1], $oldlatlngs_[0], $oldlatlngs_[1], 'k') * $coeffEcart, 3);
-		$dureeEcart = (strtotime($result[$i]['datetime']) - strtotime($result[$i-1]['datetime']));
-
-		// Calcul des valeurs du point "suivant"
-		$latlng_2_ = explode(',', $result[$i+1]['value']);
-		$activite_2 = strtoupper(substr(trim($latlng_2_[5]), 0, 1));
-		$ecart_2 = round(mg::getDistance($latlngs_[0], $latlngs_[1], $latlng_2_[0], $latlng_2_[1], 'k') * $coeffEcart, 3);
-		$dureeEcart_2 = (strtotime($result[$i+1]['datetime']) - strtotime($result[$i]['datetime']));
-
-		// on saute si point courant et suivant trop à l'écart
-		if (($activite == 'E' ||$activite == 'I') && $ecart / $dureeEcart * 60 > $limiteEcart && $ecart_2 / $dureeEcart_2 * 60 > $limiteEcart) {
-			mg::message('', "limite ecart : $limiteEcart ==> $ecart / $dureeEcart * 60 = " . $ecart / $dureeEcart*60 ." && $ecart_2 / $dureeEcart_2 * 60 = " . $ecart_2 / $dureeEcart_2*60);
-			continue;
-		}
-
-		$latLng_Home_ = explode(',', $latLng_Home);
-		$distHome = mg::getDistance($latLng_Home_[0], $latLng_Home_[1], $oldlatlngs_[0], $oldlatlngs_[1], 'k');
+		$timeCourante_P1 = strtotime($result[$i+1]['datetime']);
+		$oldLatlng = $tabDetails[$i-1]['latlng'];
+		$latlng = $tabDetails[$i]['latlng'];
+		$latitude = $tabDetails[$i]['latitude'];
+		$longitude = $tabDetails[$i]['longitude'];
+		$altitude = $tabDetails[$i]['altitude'];
+		$pcBatterie = $tabDetails[$i]['pcBatterie'];
+		$SSID = trim($tabDetails[$i]['SSID']);
+		if ($SSID != '' && $SSID != 'Pas de SSID' && $tabGeofence[$user]['debTime'] == 0) { $tabGeofence[$user]['SSID_Org'] = $SSID; }
+		
+		$activite = $tabDetails[$i]['activite'];
+		$activite_P1 = $tabDetails[$i+1]['activite'];
+		$ecart = $tabDetails[$i]['ecart']; 
+		$dureeEcart = $tabDetails[$i]['dureeEcart']; 
+		$vitesseEcart = $tabDetails[$i]['vitesseEcart']; 
+		$inhibe = $tabDetails[$i]['inhibe'];
 
 		// ********************************************** ENTRAINEMENTS ***********************************************
-		if ($SSID == 'Pas de SSID' && ($activite == 'E' || $activite == 'I')) {
-
+		if ($SSID == 'Pas de SSID' && ($activite == 'I'  || $activite == 'E')) {
 			// debTime
 			if ($activite == 'E' && $tabGeofence[$user]['debTime'] <= 0) {
 				$tabGeofence[$user]['debTime'] = $timeCourante;
 				$tabGeofence[$user]['cloture'] = 0;
-			} else {
-			// Entrainement en cours
-				if ($tabGeofence[$user]['cloture'] == 0) {
-					// Gestion des pauses
-					if ($activite == 'I') {
-						$dureePause += $dureeEcart_2;
-						// *************** ENVOIS D'UN SOS AUTOMATIQUE ***************
-						if ($dureePause / 60 > $timingSOS && (time() - $timeCourante) < 60) {
-							mg::message($destinatairesSOS, "SOS AUTOMATIQUE de $user, Aucun mouvement depuis plus de " . $timingSOS/60 . " mn, Coordonnées ($latlng). VOIR :  https://georgein.dns2.jeedom.com/mg/util/geofence.html");
-						}
-						// ***********************************************************
-						// Fin de pause
-						if ($dureePause > $pauseMin && $activite_2 == 'E') {
-							$tabGeofence[$user]['sommePause'] += $dureePause;
-						}
-					} else { $dureePause = 0; }
+			}
+				// Entrainement en cours
+			if ($tabGeofence[$user]['debTime'] > 0) {
+					
+				// ********** GESTION DES PAUSES **********
+				if ($activite == 'I') {
+					// Début de pause
+					if (!$debPause) { 
+						$debPause = $timeCourante_M1; 
+						$dureePause = round(($timeCourante - $debPause) /60, 1);
+					} else {
+						$dureePause += round(($timeCourante_P1 - $timeCourante) /60, 1);
+					}
+				}
+					
+				// *************** ENVOIS D'UN SOS AUTOMATIQUE ***************
+				/*if ($dureePause > $timingSOS / 60 && (time() - $timeCourante) < 60) {
+					mg::message($destinatairesSOS, "SOS AUTOMATIQUE de $user, Aucun mouvement depuis plus de " . $timingSOS/60 . " mn, Coordonnées ($latlng). VOIR :  https://georgein.dns2.jeedom.com/mg/util/geofence.html");
+				}*/
 
-					$tabGeofence[$user]['dureeTotale'] += $dureeEcart;
+				// Fin de pause
+				if ($dureePause > $pauseMin && $activite_P1 != 'I') {
+					$tabGeofence[$user]['sommePause'] += $dureePause;
+					$debPause = 0;
+					$dureePause = 0;
+					$inhibe = 0; ///////////////////////////////
+				}
+
+				if ($dureeEcart >= 60) {
 					$tabGeofence[$user]['distanceTotale'] += $ecart;
-
-					// Traitement delta altitude
-					$altitude = ($lastAltitude != 0) ? $lastAltitude : $oldAltitude;
-					$ecartAltitude = ($oldAltitude != 0) ? ($altitude - $oldAltitude) : 0;
-					if ($ecartAltitude > 0) { $tabGeofence[$user]['denivelePlus'] = $tabGeofence[$user]['denivelePlus'] +  + $ecartAltitude * $coeffDeniveles; }
-					if ($ecartAltitude < 0) { $tabGeofence[$user]['deniveleMoins'] = $tabGeofence[$user]['deniveleMoins'] +	$ecartAltitude * $coeffDeniveles; }
 				}
 			}
+			
 		// Cloture entrainement
-		} else {
+		} elseif($tabGeofence[$user]['SSID_Org'] == $SSID && $tabGeofence[$user]['cloture'] == 0) {
 			// Cloture
 			if ($tabGeofence[$user]['debTime'] > 0 && $tabGeofence[$user]['cloture'] == 0) {
 				$tabGeofence[$user]['cloture'] = $timeCourante;
 			}
-
 		}
+		// ******************************************** FIN ENTRAINEMENTS *********************************************
 
 		// Suppression Entrainements précédents si trop court (< 1 km ou 15 mn)
-		if ($tabGeofence[$user]['cloture'] > 0 && $timeCourante >= $tabGeofence[$user]['cloture'] && ($tabGeofence[$user]['distanceTotale'] < 1 || $tabGeofence[$user]['dureeTotale'] < 900)) {
-			mg::message('', "************* Suppression entrainement trop court de $user : " . $result[$i]['datetime'] . " - Distance : " . $tabGeofence[$user]['distanceTotale']);
+		if ($tabGeofence[$user]['cloture'] > 0 && $timeCourante +300 > $tabGeofence[$user]['cloture'] && ($tabGeofence[$user]['distanceTotale'] < 1 /*|| $tabGeofence[$user]['dureeTotale'] < 900*/)) {
+			mg::message('', "************* Suppression entrainement trop court de $user : Distance : " . $tabGeofence[$user]['distanceTotale'].' - Durée : '.date('H:m:s', $tabGeofence[$user]['dureeTotale']));
 			$tabGeofence[$user]['debTime'] = 0;
 			$tabGeofence[$user]['cloture'] = 0;
 			$tabGeofence[$user]['dureeTotale'] = 0;
@@ -611,33 +617,69 @@ function makeLatLng(&$tabGeofence, $user, $id, $latLng_Home, $distanceSleep, $pa
 		}
 
 		// Enregistrement pour affichage
-		$tabGeofence[$user]['latlngs'] .= "[$latlng, $timeCourante],";
-		$tabGeofence[$user]['complements'] .= "[$ecart, $dureeEcart, $altitude, '$activite', $pcBatterie],";
-		$oldlatlng = $latlng;
-		$oldAltitude = $altitude;
+		if ($inhibe == 0  || ($activite == 'I' &&$activite_P1 == 'I' && $debPause == 0)) {
+			$tabGeofence[$user]['latlngs'] .= "[$latlng, $timeCourante],";
+			$complements .= "[".round($tabGeofence[$user]['distanceTotale'], 2).", $dureeEcart, $altitude, '$activite', $pcBatterie, $dureePause],";
+			mg::message('', "$i $activite $user $i => ".date('d-m-Y H:i:s', $timeCourante) ." - $altitude - $pcBatterie - $SSID - $ecart km - $dureeEcart sec - $vitesseEcart km/h - $dureePause mn - ".$tabGeofence[$user]['sommePause'].' - '.date('H:i:s', $tabGeofence[$user]['debTime']).' - '.date('H:i:s', $tabGeofence[$user]['cloture']));
+		} else {
+			mg::message('', "***** $i $activite $user $i => ".date('d-m-Y H:i:s', $timeCourante) ." - $altitude - $pcBatterie - $SSID $ecart km - $dureeEcart sec - $vitesseEcart km/h - $dureePause mn - ".$tabGeofence[$user]['sommePause'].' - '.date('H:i:s', $tabGeofence[$user]['debTime']).' - '.date('H:i:s', $tabGeofence[$user]['cloture']));
+		}
 	} // fin for
-
-	// Pour éviter erreurs d'index inexistant
-	$tabGeofence[$user]['complements'] .= "[0, 0, $altitude, '', 0],";
-	$tabGeofence[$user]['complements'] .= "[0, 0, $altitude, '', 0],";
-	$tabGeofence[$user]['complements'] .= "[0, 0, $altitude, '', 0],";
 
 	// *********************************** CALCUL DE LA SYNTHESE DE L'ENTRAINEMENT ************************************
 	if ($tabGeofence[$user]['debTime'] != 0) {
-	$tabGeofence[$user]['dureeTotale'] = $tabGeofence[$user]['dureeTotale'];
+	$tabGeofence[$user]['dureeTotale'] = $tabGeofence[$user]['cloture'] - $tabGeofence[$user]['debTime'];
 
-		$tabGeofence[$user]['dureeMouvement'] = $tabGeofence[$user]['dureeTotale'] - $tabGeofence[$user]['sommePause'];
+		$tabGeofence[$user]['dureeMouvement'] = $tabGeofence[$user]['dureeTotale'] - $tabGeofence[$user]['sommePause']*60;
 		if ($tabGeofence[$user]['distanceTotale'] == 0 || $tabGeofence[$user]['dureeMouvement'] == 0) {$tabGeofence[$user]['vitesseMoyenne'] = 0; }
 		else { $tabGeofence[$user]['vitesseMoyenne'] = $tabGeofence[$user]['distanceTotale'] / $tabGeofence[$user]['dureeMouvement'] * 3600; }
 	}
+	$tabGeofence[$user]['complements'] = $complements;
 
 	// Calcul des lastValues
-	$last = explode(',', mg::getCmd($id, '', $lastTime)); // Decomposition de lastValue
-	$tabGeofence[$user]['lastTime'] = $lastTime;
-	$tabGeofence[$user]['lastPcBatterie'] = intval($last[3]);
-	$tabGeofence[$user]['lastSSID'] = $last[4];
+	$tabGeofence[$user]['lastTime'] = $tabDetails[$i]['datetime'];
+	$tabGeofence[$user]['lastPcBatterie'] = $tabDetails[$i]['pcBatterie'];
+	$tabGeofence[$user]['lastSSID'] = $tabDetails[$i]['SSID'];
 
-	return;
+	mg::setVar('tabGeofence', $tabGeofence);
+	mg::message('', print_r($tabGeofence, true));
+
+}
+
+/*********************************************************************************************************************/
+/************************************************ Init/Calcul $tabDetails des lignes *********************************/
+/*********************************************************************************************************************/
+function calculLigne($result, $coeffEcart) {
+	$tabDetails = array();
+	
+	for($i=0; $i<count($result); $i++) {
+		$tabDetails[$i]['datetime'] = strtotime($result[$i]['datetime']);
+		$latlng_ = explode(',', $result[$i]['value']); // Decomposition de value
+
+		$tabDetails[$i]['latitude'] = round(floatval($latlng_[0]), 6);
+		$tabDetails[$i]['longitude'] = round(floatval($latlng_[1]), 6);
+		$tabDetails[$i]['latlng'] = $tabDetails[$i]['latitude'].', '.$tabDetails[$i]['longitude'];
+		$tabDetails[$i]['altitude'] = intval($latlng_[2]);
+		$tabDetails[$i]['pcBatterie'] = intval($latlng_[3]);
+		$tabDetails[$i]['SSID'] = trim($latlng_[4]);
+		$tabDetails[$i]['activite'] = strtoupper($latlng_[5][1]);
+		$tabDetails[$i]['inhibe'] = 0;
+		if ($i > 0) {
+			$tabDetails[$i]['dureeEcart'] = round(($tabDetails[$i]['datetime'] - $tabDetails[$i-1]['datetime']), 3);
+			$tabDetails[$i]['ecart'] = abs(round(mg::getDistance($tabDetails[$i-1]['latitude'], $tabDetails[$i-1]['longitude'], $tabDetails[$i]['latitude'], $tabDetails[$i]['longitude'], 'k') * $coeffEcart, 4));
+			$tabDetails[$i]['vitesseEcart'] = round($tabDetails[$i]['ecart'] / $tabDetails[$i]['dureeEcart'], 3)*3600;
+			
+			// Force à 'I' les points sans mouvement
+			if ($tabDetails[$i]['vitesseEcart'] <= 0 ) {
+				$tabDetails[$i]['activite'] = 'I';
+			}
+			// Inhibe points en erreur
+			if ($tabDetails[$i]['dureeEcart'] < 60 || ($tabDetails[$i]['activite'] == 'E' && $tabDetails[$i]['vitesseEcart'] >= 8)) {
+				$tabDetails[$i]['inhibe'] = 1;
+			}
+		}
+	}
+	return $tabDetails;
 }
 
 ?>

@@ -20,7 +20,6 @@ Enchaîne au final le scénario ChauffageMode
 	$nuitExt = mg::getVar('NuitExt');
 	$heure_Reveil = mg::getVar('_Heure_Reveil');
 	$destinataires = mg::getParam('Chauffages','destinatairesPortes');				// Destinataire du message d'annonce
-	$timerPortes = 5;
 	
 // Paramètres :
 	$tempSeuilPorte = mg::getParam('Chauffages','tempSeuilPorte');				// Différence de température maximum pour signal lumineux d'ouverture/fermeture de portes
@@ -29,21 +28,19 @@ Enchaîne au final le scénario ChauffageMode
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-// Pause pour éviter les faux signaux en cas d'ouverture/fermeture ponctuelle
-$declencheur = mg::getTag('#trigger#');
-if (strpos($declencheur, 'NbPortes') !== false) { 
-	sleep(30); 
-	mg::setCron('', time() + $timerPortes*60);
-}
-
-$demandeFaite = mg::getVar('_DemandeFaite');
-
 // Sortie si NuitExt ou NuitSalon == 2 ou en alarme
 if ( $nuitSalon == 2 || $alarme) {
 		mg::LampeCouleur($equipLampeCouleur, 0);
 		return;
 	}
 
+// Pause pour éviter les faux signaux en cas d'ouverture/fermeture ponctuelle
+if (mg::declencheur('NbPortes')) {
+	sleep (15);
+	mg::setCron('', time() + 90);
+}
+
+$demandeFaite = mg::getVar('_DemandeFaite');
 $nbPortesSalon = mg::getCmd($infNbPortesSalon);
 $tempSalon = mg::getCmd($infTempSalon);
 $tempExt = mg::getCmd($infTempExt);
@@ -68,9 +65,6 @@ if ( ($saison == 'ETE' && $difference >= $tempSeuilPorte) || ($saison == 'HIVER'
 			mg::message($destinataires, "@La température moyenne extérieure est $sens à $tempExt °, veuillez ouvrir le salon.");
 			mg::setVar('_DemandeFaite', 1);
 		}
-	} else {
-		mg::LampeCouleur($equipLampeCouleur, 0);
-		mg::unsetVar('_DemandeFaite');
 	}
 
 // Demande de fermeture de porte
@@ -83,10 +77,12 @@ if ( ($saison == 'ETE' && $difference >= $tempSeuilPorte) || ($saison == 'HIVER'
 			mg::message($destinataires, "@La température moyenne extérieure est $sens à $tempExt °, veuillez fermer le salon.");
 			mg::setVar('_DemandeFaite', 1);
 		}
-	} else {
-			mg::LampeCouleur($equipLampeCouleur, 0);
-			mg::unsetVar('_DemandeFaite');
-		}
+	}
+}
+
+if ($nbPortesSalon == 0) {
+	mg::LampeCouleur($equipLampeCouleur, 0);
+	mg::unsetVar('_DemandeFaite');
 }
 
 ?>

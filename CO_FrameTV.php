@@ -22,9 +22,8 @@ Gère le ON/Off de la Frame TV selon la présence dans le salon et NuitSalon
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-$declencheur = mg::getTag('#trigger#');
-if (strpos($declencheur, 'Frame TV') !== false ) {
-	$frameTV = mg::getCmd($declencheur);
+if (mg::declencheur('Frame TV')) {
+	$frameTV = mg::getCmd(mg::declencheur());
 }
 
 mg::setCron('', time() + $timingFrameTV*60);

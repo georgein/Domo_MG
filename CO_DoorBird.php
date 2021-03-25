@@ -22,13 +22,12 @@ Gestion de DoorBird
 	$jingleMvmt = 'jingle_07.mp3';
 	$volumeMvmt = 10;
 	$timerRetour = 1;						// Timer mn avant retour au design principal
-	$timer = 15;							// Timer mn normal du cron
+	$timer = 5;								// Timer mn normal du cron
 
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 mg::setCron('', time() + $timer*60);
-$declencheur = mg::getTag('#trigger#');
 
 // Rétablissement de l'IP dans les param de Doorbird et de Caméra
 $camIP = mg::getVar('tabUser')['Cam Doorbird']['IP'];
@@ -38,21 +37,21 @@ if ($camIP) {
 }
 
 // Rien à signaler
-if ($declencheur == 'user' || $declencheur == 'schedule') {
+if (mg::declencheur('user') || mg::declencheur('schedule')) {
 	mg::MessageT('', "! RIEN A SIGNALER");
 	if (mg::getVar('_designActif') != $designPrincipal) {
 		mg::JPI('DESIGN', $designPrincipal);
 		mg::setVar('_designActif', $designPrincipal);
 	}
 	
-} elseif (mg::getCmd($declencheur)) {
+} elseif (mg::getCmd(mg::declencheur())) {
 	// Sonnette
-	if (strpos($declencheur, 'Sonnerie') !== false) {
+	if (mg::declencheur('Sonnerie')) {
 		mg::MessageT('', "! SONNETTE ENTREE");
 		mg::GoogleCast ('PLAY', $sonnettePorte, $volumeSonnette);
 	}
 	// sinon Mouvement
-	if (strpos($declencheur, 'Mouvement') !== false && mg::TimeBetween(strtotime($timeVoletsNuit), time(), $heureReveil)) {
+	if (mg::declencheur('Mouvement') && mg::TimeBetween(strtotime($timeVoletsNuit), time(), $heureReveil)) {
 		mg::MessageT('', "! MOUVEMENT ENTREE");
 //		mg::GoogleCast ('PLAY', $jingleMvmt, $volumeMvmt);
 	}

@@ -49,7 +49,7 @@ class mg {
 		global $scenario, $tabParams, $scenarioVoletManuel;
 		$tabParams = self::getVar('tabParams');
 		$scenarioVoletManuel = 107;
-		self::debug();
+		self::debug(3);
 	}
 
 /************************************************************************************************************************
@@ -1136,7 +1136,8 @@ function dateIntervalle($depuis, $jusque='now', $nbVal =2, &$diff=0) {
 		//
 		$meter = ($earth_radius * $d);
 		if ($unit == 'k') {
-			return $meter / 1000;
+			self::message('', self::$__log_SP . __FUNCTION__ . " : ($lat1, $lng1, $lat2, $lng2) => Distance calculée $meter m.");
+			return floatval($meter / 1000);
 		}
 		return $meter;
 	}
@@ -2151,28 +2152,32 @@ function FONCTIONS_JEEDOM(){}
 * Jeedom											DECLENCHEUR															*
 *************************************************************************************************************************
 * Si $cmd est spécifié, permet de vérifier si c’est bien la valeur en paramètre qui a déclenché le scénario				*
+* Sinon si $part est spécifié, renvoie directement la nième $part de commande (1 à 3)									*
+* Sinon si ni $cmd ni $part spécifiés, renvoie directement le huamanReadable du déclencheur								*
 * Paramètre :																											*
 *	$cmd :	La commande à tester Id ou tag de la commande, avec ou sans les '*#*' autour								*
 *			Ou bien le nom du déclencheur si ce n'est pas une commande													*
 *			Ou bien une chaine devant être contenue dans le déclencheur													*
 ************************************************************************************************************************/
-	function Declencheur($cmd = '') {
+	function Declencheur($cmd = '', $part='') {
 		global $scenario;
 		$trigger = $scenario->getRealTrigger();
-		$return = self::_cmdToHumanReadable($trigger);
-		self::message('', self::$__log_SP . __FUNCTION__ . " : => $return");
+		$declencheur = self::_cmdToHumanReadable($trigger);
+		
 		$cmd = trim($cmd);
 		if ($cmd) {
-			if (self::_humanReadableToCmd($cmd) == $trigger || strpos($trigger, $cmd) !== false) {
-				self::message('', self::$__log_SP . __FUNCTION__ . " : $cmd == TRUE");
-				$return = true;
+			if (self::_humanReadableToCmd($cmd) == $trigger || strpos($declencheur, $cmd) !== false) {
+				self::message('', self::$__log_SP . __FUNCTION__ . " : Le déclencheur contient  '$cmd' (true)");
+				return true;
 			} else {
-				self::message('', self::$__log_SP . __FUNCTION__ . " : $cmd == FALSE");
-				$return = false;
+				self::message('', self::$__log_SP . __FUNCTION__ . " : Le déclencheur '$declencheur' ne contient PAS '$cmd' (false)");
+				return false;
 			}
+		} else if ($part) {
+			return self::extractPartCmd($declencheur, $part);
+		} else {
+			return $declencheur;
 		}
-		self::message('', self::$__log_SP . __FUNCTION__ . " : Declencheur ==> $return");
-		return $return;
 	}
 
 /************************************************************************************************************************

@@ -42,7 +42,6 @@ deb:
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
- $declencheur = mg::getTag('#trigger#');
 $debugAlarme = 0;
 
 /*// ***** INIT de la table PASSWORD *****
@@ -73,7 +72,7 @@ $nomUserSaisi = '';
 $message = '';
 mg::setInf($equipAlarme, 'MessageAlarme', '');
 
-if (strpos($declencheur, 'NomUserModif')) {
+if (mg::declencheur('NomUserModif')) {
 	// ****************************************************************************************************************
 	mg::MessageT('', "! GESTION DE LA MODIFICATION DE $nomUserModif");
 	// ****************************************************************************************************************
@@ -88,7 +87,7 @@ if (strpos($declencheur, 'NomUserModif')) {
 		return;
 }
 
-if (strpos($declencheur, 'CodeSaisi') && $nomUserModif &&  $nomUserModif != 'RETOUR') {
+if (mg::declencheur('CodeSaisi') && $nomUserModif &&  $nomUserModif != 'RETOUR') {
 	// ****************************************************************************************************************
 mg::MessageT('', "! CHANGEMENT MOT DE PASSE $nomUserModif => $codeSaisi");
 	// ****************************************************************************************************************
@@ -109,7 +108,7 @@ mg::MessageT('', "! CHANGEMENT MOT DE PASSE $nomUserModif => $codeSaisi");
 	return;
 }
 
-if (strpos($declencheur, 'Sirène') || strpos($declencheur, 'Inhibition') || strpos($declencheur, 'Force')) {
+if (mg::declencheur('Sirène') || mg::declencheur('Inhibition') || mg::declencheur('Force')) {
 	// ****************************************************************************************************************
 		mg::MessageT('', "! MAJ DES BOUTONS");
 	// ****************************************************************************************************************
@@ -122,7 +121,7 @@ if (strpos($declencheur, 'Sirène') || strpos($declencheur, 'Inhibition') || str
 	return;
 	}
 
-if (strpos($declencheur, 'CodeSaisi') && $codeSaisi != '000000') {
+if (mg::declencheur('CodeSaisi') && $codeSaisi != '000000') {
 	// ****************************************************************************************************************
 	mg::MessageT('', "! VERIFICATIN LOGIN $codeSaisi");
 	// ****************************************************************************************************************
@@ -147,7 +146,7 @@ if (strpos($declencheur, 'CodeSaisi') && $codeSaisi != '000000') {
 //---------------------------------------------------------------------------------------------------------------------
 //											APPEL PAR SCENARIO ==> AUTOPRESENCE
 //---------------------------------------------------------------------------------------------------------------------
-if ( $declencheur == 'scenario') {
+if ( mg::declencheur('scenario') {
 	$nomUserSaisi = 'AutoPrésence';
 }
 
