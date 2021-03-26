@@ -45,7 +45,7 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	$cmdResume = mg::toID("#[$zone][Résumé][$nomResume]#");
 	$tempResume = mg::getCmd($cmdResume);
 	// Température moyenne de reference sur la moyenne (dérive possible)
-	$tempMoyenneRef = round(scenarioExpression::averageBetween($cmdResume, "$periodicite hour ago", 'now'), 2) + $correction;
+	$tempMoyenneRef = round(scenarioExpression::averageBetween($cmdResume, "$periodicite hour ago", 'now'), 2) - $correction;
 //	mg::messageT('', "! Traitement de $zone/$nomChauffage avec timeOuts : $timeOut - pcEcartMax : $pcEcartMax - correction : $correction");
 
 	// Planification de la prochaine 'correction' à 'periodicité' + 1 heure du dernier changement de mode ET SI en mode 'Confort'
