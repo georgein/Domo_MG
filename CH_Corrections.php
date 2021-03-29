@@ -41,12 +41,13 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	if (!$equip) { continue; }
 
 	$mode = $tabChauffages_[$nomChauffage]['mode'];
-
+	$consigne = $tabChauffages_[$nomChauffage]["temp$mode"];
+	
 	$cmdResume = mg::toID("#[$zone][Résumé][$nomResume]#");
 	$tempResume = mg::getCmd($cmdResume);
 	// Température moyenne de reference sur la moyenne (dérive possible)
+//	$tempMoyenneRef = $consigne + $correction;
 	$tempMoyenneRef = round(scenarioExpression::averageBetween($cmdResume, "$periodicite hour ago", 'now'), 2) - $correction;
-//	mg::messageT('', "! Traitement de $zone/$nomChauffage avec timeOuts : $timeOut - pcEcartMax : $pcEcartMax - correction : $correction");
 
 	// Planification de la prochaine 'correction' à 'periodicité' + 1 heure du dernier changement de mode ET SI en mode 'Confort'
 	$infMode = mg::toID("#[$zone][Températures][Consigne Chauffage]#");
@@ -57,8 +58,7 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 		mg::setInf($infMode,  '', 'Correction');
 	} else { $cdMakeOffset = 0; }
 	
-//mg::message('', "**************** $valMode - $lastMode > $periodicite - mode : $mode - tempMoyenneRef : $tempMoyenneRef ************");
-mg::messageT('', "! Traitement de $zone/$nomChauffage - periodicite : $periodicite - timeOuts : $timeOut - pcEcartMax : $pcEcartMax");
+mg::messageT('', "! Traitement de $zone/$nomChauffage - consigne : $mode/$consigne - periodicite : $periodicite h (New correction à ".date('H\hi\m\n', ($valueDate+($periodicite+1)*3600)).") - timeOuts : $timeOut - pcEcartMax : $pcEcartMax");
 
 //$cdMakeOffset = 1; ///////////////////////////////
 
