@@ -717,7 +717,7 @@ function calculLigne($result, $coeffEcart) {
 					$tabDetails[$i]['activite'] = 'V';
 				}
 			// Inhibe points en erreur
-			if (		$tabDetails[$i]['dureeEcart'] < 30 || $tabDetails[$i]['ecart'] < 0.005 
+			if (		$tabDetails[$i]['dureeEcart'] < 10 || $tabDetails[$i]['ecart'] < 0.005 
 					|| ($tabDetails[$i]['activite'] == 'I' && $tabDetails[$i]['vitesseEcart'] > 1)
 					|| ($tabDetails[$i]['activite'] == 'E' && $tabDetails[$i]['vitesseEcart'] > 8) 
 					|| ($tabDetails[$i]['activite'] == 'V' && $tabDetails[$i]['vitesseEcart'] > 140)) {
