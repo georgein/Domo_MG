@@ -56,6 +56,8 @@ global $debug; $debugVolet; $debugVolet = false; // Pour neutraliser l'action su
 //=====================================================================================================================
 mg::messageT('', "! ********************************* CALCUL DES CONDITIONS DE BASES *******************************");
 //=====================================================================================================================
+mg::setCron('', '*/5 * * * * *');
+
 // Condition Saison
 $cdEte = ($saison == 'ETE') ? 1 : 0;
 mg::Message('', "cdEte ==> Saison : $saison ==> " . (int)$cdEte);
@@ -232,7 +234,6 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 				mg::Alerte($cmd, $periodeAlerteFenetre*60, $heureFin, $destinatairesAlerteFenetre, "ATTENTION $nomFenetre est ouverte, Veuillez la fermer.");
 			} else {
 				mg::Alerte($nomFenetre, 0); // Annulation Alerte
-				mg::setCron('', '*/5 * * * * *');
 			}
 		}
 	}

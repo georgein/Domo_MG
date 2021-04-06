@@ -25,7 +25,7 @@ Parcours les équipements sur batterie et affiche :
 // Variables de Ctrl des équipements
 	$alerteComDefaut = 90;								// temps maximum par defaut, en mn depuis dernière comm de l'équipement
 	$alerteComBattery = 14*1440;						// temps maximum, en mn depuis le dernier retour de la batterie 
-	$alerteChgmtBattery = 1.5*(365)*1440;				// temps maximum, en mn depuis le dernier changement de la batterie 
+	$alerteChgmtBattery = 2*(365)*1440;				// temps maximum, en mn depuis le dernier changement de la batterie 
 	
 	// équipement des plugins exclus separés par des '|' (forme regex)
 	$excludeEquip = 'virtual|asuswrt|broadlink|tvdomsamsung|blea|camera|clink|cloudsyncpro|covidattest|dataexport|doorbird|htmldisplay'; // Exclusion plugins N°1

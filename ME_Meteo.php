@@ -221,9 +221,12 @@ function MsgMeteoLocale($EquipMeteo, $equipMeteoFrance) {
 	if (mg::getTag('#heure#') <= 9) { $periode = 'Météo du Matin'; }
 	elseif	(mg::getTag('#heure#') <= 14) { $periode = 'Météo du Midi'; }
 	elseif	(mg::getTag('#heure#') < 19) { $periode = 'Météo du Soir'; }
-	else { $periode = 'Météo de la nuit';
+
+	// Si anomalie sur prévison période 
+//	if (trim(mg::getCmd($equipMeteoFrance, "$periode - $jour - Description")) == '') {
+	if (!mg::existCmd($equipMeteoFrance, "$periode - $jour - Description")) {
+		$periode = 'Météo du Jour'; ////////////////////////////////
 	}
-	//$periode = 'Météo du Jour';
 
 	$description = mg::getCmd($equipMeteoFrance, "$periode - $jour - Description");
 	$vitesse_du_Vent = mg::getCmd($equipMeteoFrance, "$periode - $jour - Vitesse du Vent");
@@ -242,7 +245,11 @@ function MsgMeteoLocale($EquipMeteo, $equipMeteoFrance) {
 	mg::setInf($EquipMeteo, 'Température Météo', $température_Maximum);
 	mg::setInf($EquipMeteo, 'UV Météo', $indice_UV);
 
-	$message = "(...)\n(...) Les prévisions de Météo France pour la $periode sont (...) $description, UV $indice_UV, Température : $température_Minimum à $température_Maximum degrés, (Le vent souflera à $vitesse_du_Vent kilomètres heure du $direction_du_Vent_Libelle avec des rafales à $force_Rafales kilomètres heure.)";
+$message = "Météo générale pour ".mg::getCmd($equipMeteoFrance, "Bulletin France - Nom de la période 1");
+$message .= "(...)\n(...)".mg::getCmd($equipMeteoFrance, "Bulletin France - Texte de la période 1");
+
+
+	$message .= "(...)\n(...) Prévisions détaillées pour la $periode (...) : $description, UV $indice_UV, Température : $température_Minimum à $température_Maximum degrés, (Le vent souflera à $vitesse_du_Vent kilomètres heure du $direction_du_Vent_Libelle avec des rafales à $force_Rafales kilomètres heure.)";
 
 mg::message('', $message);
 

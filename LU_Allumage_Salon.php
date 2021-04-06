@@ -41,7 +41,12 @@ Le retour état du Stop dans le widget est à régler à TimeOut + 5 au minimum 
 /*********************************************************************************************************************/
 mg::setCron('', time() + $timeOutSalon*60);
 
-//$nuitSalon = 1; ***** POUR DEBUG *****
+ //***** POUR DEBUG *****
+/*
+$newIntensite = 50;
+$nuitSalon = 0;
+*/
+
 $nomDeclencheur = mg::declencheur('', 3);
 
 // Extinction lampes
@@ -81,7 +86,7 @@ if ($newIntensite != $memoEtat || $nomDeclencheur == 'Lampe Générale Etat' || 
 //=====================================================================================================================
 mg::MessageT('', "! MODIFICATION D'INTENSITE - memoEtat ==> $memoEtat : newIntensite => $newIntensite - Ambiance N° $ambiance - NomDeclencheur : $nomDeclencheur)");
 //=====================================================================================================================
-	PiloteLampes($equipEcl, $tabLampes, $newIntensite, $ambiance);
+	PiloteLampes($equipEcl, $tabLampes, $newIntensite, $ambiance, $logTimeLine);
 }
 
 //=====================================================================================================================
@@ -105,7 +110,7 @@ mg::setInf($equipEcl, 'Memo Etat', $newIntensite);
 /********************************************* PILOTE DES LAMPES ******************************************************
 Permet de recopier l'état, pondéré par l'ambiance, vers les différentes lampes
 **********************************************************************************************************************/
-function PiloteLampes($equipEcl, $tabLampes, $intensité, $ambiance) {
+function PiloteLampes($equipEcl, $tabLampes, $intensité, $ambiance, $logTimeLine) {
 	// Boucle des lampes
 	$cptMax = 10; // Nb de tentatives max
 	$cpt = 0;
@@ -122,33 +127,27 @@ function PiloteLampes($equipEcl, $tabLampes, $intensité, $ambiance) {
 		$intensiteLampe = max(0, intval($details_Lampe[$ambiance + 1]));
 		$lum_Max_Lampe = min(254, round(($intensité/99 * $intensiteLampe/99 * (($maxValue > 0) ? $maxValue : 99))));
 
-try {
-			// Lampe slider
-		if (mg::existCmd($details_Lampe[0], 'Slider Intensité')) {
-			if ($etatLampe != $lum_Max_Lampe) {
-				@mg::setCmd($details_Lampe[0], 'Slider Intensité', $lum_Max_Lampe);
-				$resteAFaire++;
+		// Changement intensité
+		if ($etatLampe != $lum_Max_Lampe) {
+			// Extinction
+			if ($lum_Max_Lampe == 0) {
+				if (mg::existCmd($details_Lampe[0], 'Slider Intensité')) { mg::setCmd($details_Lampe[0], 'Slider Intensité', $lum_Max_Lampe); }
+//				if ($etatLampe > 1) { mg::setCmd($details_Lampe[0], 'Off'); }
+			// Changement Intensité	
+			} else {
+//				if ($etatLampe < 2) {mg::setCmd($details_Lampe[0], 'On'); }
+				if (mg::existCmd($details_Lampe[0], 'Slider Intensité')) { mg::setCmd($details_Lampe[0], 'Slider Intensité', $lum_Max_Lampe); }
 			}
-		// Lampes sans slider : UNIQUEMENT OFF
-		} else {
-			if ($lum_Max_Lampe == 0 && ($etatLampe > 0 || (mg::existCmd($details_Lampe[0], 'Puissance') && mg::getCmd($details_Lampe[0], 'Puissance') > 2))) {
-				@mg::setCmd($details_Lampe[0], 'Off');
-				$resteAFaire++;
-			}
+			$resteAFaire++;
 		}
-
-} catch(Exception $e){
- 	mg::message($logTimeLine, "CATCH ERROR sur ".$details_Lampe[0]." => ".$e->getMessage());
-	goto reprise;
-}
-
+		mg::pause(0.5);
 	}
 	// On attend queue Zwave == 0 et si reste à faire != 0 on relance
 	$cpt++;
 	mg::message('', "****** Intensité : $intensité - reste à Faire : $resteAFaire - cpt : $cpt : Attente retour Zwave ....");
 	if ($resteAFaire > 0 && $cpt < $cptMax) {
 		mg::ZwaveBusy(1);
-		sleep(2);
+//		sleep(2);
 		goto reprise;
 	}
 	mg::setCmd($equipEcl, 'Lampe Générale Slider', $intensité);

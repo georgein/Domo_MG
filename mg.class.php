@@ -49,7 +49,13 @@ class mg {
 		global $scenario, $tabParams, $scenarioVoletManuel;
 		$tabParams = self::getVar('tabParams');
 		$scenarioVoletManuel = 107;
-		self::debug(3);
+
+		$mode = $scenario->getConfiguration('logmode'/*, 'default'*/);
+		// Passe $debug selon le 'mode' du scénario.
+		if ($mode == 'realtime') { $debug = 5; }
+		elseif ($mode == 'default') { $debug = 4; }
+		else { $debug = -1; }
+		self::debug($debug, $mode);
 	}
 
 /************************************************************************************************************************
@@ -283,7 +289,7 @@ function FONCTIONS_DOMOTIQUE(){}
 		} elseif ($cmd == 'LAYOUT') {
 			$requete = "$IP_JPI/?action=configureLayout&buttons=0&webTitleBar=0&webZoomEnabled=1&androidFullScreen=1";
 
-		// ------------------------------------------------ Chargement d'un design ------------------------------------
+		// -------------------------------------------------------- DESIGN --------------------------------------------
 		} elseif ($cmd == 'DESIGN') {
 			$requete = "$IP_JPI/?action=configureLayout&buttons=0&webTitleBar=0&webZoomEnabled=1&androidFullScreen=1";
 			file_get_contents($requete);
@@ -331,7 +337,7 @@ mg::message('', $requete);
 		//----------------------------------------------------------- SCENARIO --------------------------------------------
 
 		} elseif ($cmd == 'SCENARIO') {
-			$requete = "$IP_JPI/?action=$message";
+			$requete = "$IP_JPI/?action=$message".($complement ? "&#38;parametre=$complement" : '');
 		// --------------------------------------------------------- SMS ----------------------------------------------
 
 		} elseif ($cmd == 'SMS') {
@@ -810,7 +816,7 @@ function FONCTIONS_UTILITAIRES(){}
 		$alertes = self::getVar('tabAlertes');
 
 		// Si heure de fin dépassée ou périodicité == 0, Annulation de l'alerte
-		if (($periodicite < 0 || ($alertes[$nom]['fin'] && time() >= $alertes[$nom]['fin']))) {
+		if (($periodicite < 0 || (@$alertes[$nom]['fin'] && time() >= @$alertes[$nom]['fin']))) {
 			// --------------------------------------------------------------------------------------------------------
 			self::messageT('', "! Fin de l'alerte : $nom");
 			// --------------------------------------------------------------------------------------------------------
@@ -821,7 +827,7 @@ function FONCTIONS_UTILITAIRES(){}
 			return;
 		}
 
-		elseif ($periodicite > 0  && $alertes[$nom]['nom'] == '') {
+		elseif ($periodicite > 0  && @$alertes[$nom]['nom'] == '') {
 			// --------------------------------------------------------------------------------------------------------
 			self::messageT('', "! Lancement de l'alerte : $nom - periodicite : $periodicite mn - fin dans " . $dureeTotale . " mn.");
 			// --------------------------------------------------------------------------------------------------------
@@ -1930,17 +1936,9 @@ function frameTV($nom, $zone, $action='on') {
 *************************************************************************************************************************
 * Change le niveau de l'affichage du log debug (1-4), par defaut 3														*
 ************************************************************************************************************************/
-	function debug($debug='') {
+	function debug($debug='', $mode = 'Manuel') {
 		global $scenario;
 
-		$mode = $scenario->getConfiguration('logmode'/*, 'default'*/);
-		if (!$debug) {
-			// Passe $debug selon le 'mode' du scénario.
-			if ($mode == 'realtime') { $debug = 5; }
-			elseif ($mode == 'default') { $debug = 4; }
-			else { $debug = -1; }
-		}
-		
 		self::$__debug = $debug;
 		$message = ($debug<=0) ? 'Aucun log' : '';
 		$message .= ($debug>=1) ? ' + INFO' : '';
@@ -2355,7 +2353,7 @@ function ConfigEquiLogic($typeName, $equipement, $name, $newValue='') {
 *	Il est possible d'utilisé un chiffre décimal en paramètre si le temps de pause est inférieure à 1 seconde.			*
 ************************************************************************************************************************/
 	function pause($duration) {
-		self::message('', self::$__log_ERROR . __FUNCTION__ . " : Pause de $duration seconde(s)");
+		self::message('', self::$__log_SP . __FUNCTION__ . " : Pause de $duration seconde(s)");
 		if ($duration < 1) {
 			if ($duration < 0.000001) { $duration = 0.000001; }
 			usleep($duration * 1000000);

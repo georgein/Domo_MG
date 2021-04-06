@@ -12,7 +12,7 @@ Une annonce constituée de la météo locale, des prévisions de Météo France 
 //Variables :
 	$urlMonde = "http://www.lemonde.fr/rss/une.xml";											//	Le Monde à la UNE
 	//$urlMonde = "http://www.lemonde.fr/m-actu/rss_full.xml";									// Le Monde en BREF
-	$radioSDB = 'http://direct.franceinfo.fr/live/franceinfo-midfi.mp3';
+//	$radioSDB = 'http://direct.franceinfo.fr/live/franceinfo-midfi.mp3';
 //	$radioSDB = 'http://icecast.radiofrance.fr/fip-midfi.mp3';
 
 	$heure_Reveil = mg::getVar('_Heure_Reveil');
@@ -82,7 +82,7 @@ if (!$reveilOnLine) {
 		mg::Message($logTimeLine, "Reveil - Annonce vocale.");
 		
 	// ----------------------------------------------------------
- 	mg::JPI('SCENARIO', '_radioSdB');
+// 	mg::JPI('SCENARIO', '_radioSdB');
 	// ----------------------------------------------------------
 	
 	//=================================================================================================================
@@ -132,8 +132,7 @@ $message = MsgMeteoLocale();
 	mg::Message($logTimeLine, "Reveil - Arrêt radio SdB et Sonos.");
 	
 	mg::setCmd($equipSonos, 'Stop');
- 	mg::JPI('SCENARIO', '_activeVR');
-	
+// 	mg::JPI('SCENARIO', '_activeVR');
 	mg::unsetVar('_ReveilOnLine');
 	mg::setCron('', time()-60);
 }

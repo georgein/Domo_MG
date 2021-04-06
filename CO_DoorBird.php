@@ -2,6 +2,9 @@
 /**********************************************************************************************************************
 DoorBird - 133
 Gestion de DoorBird
+
+flux video : http://192.168.2.2/bha-api/video.cgi?http-user=ghbbgw0001&http-password=jyf5KEtgDD
+snaphot url : http://192.168.2.2/bha-api/image.cgi?http-user=ghbbgw0001&http-password=jyf5KEtgDD
 **********************************************************************************************************************/
 
 //Infos, Commandes et Equipements :
@@ -21,8 +24,8 @@ Gestion de DoorBird
 	$sonnettePorte = 'sonnettePorte.mp3';
 	$jingleMvmt = 'jingle_07.mp3';
 	$volumeMvmt = 10;
-	$timerRetour = 1;						// Timer mn avant retour au design principal
-	$timer = 5;								// Timer mn normal du cron
+	$timerRetour = 1;						// Timer en mn avant retour au design principal
+	$timer = 15;							// Timer en mn normal du cron
 
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
@@ -41,20 +44,25 @@ if (mg::declencheur('user') || mg::declencheur('schedule')) {
 	mg::MessageT('', "! RIEN A SIGNALER");
 	if (mg::getVar('_designActif') != $designPrincipal) {
 		mg::JPI('DESIGN', $designPrincipal);
-		mg::setVar('_designActif', $designPrincipal);
+		if (mg::getVar('_designActif') != $designPrincipal) {
+			mg::setVar('_designActif', $designPrincipal);
+		}
 	}
-	
+
+// Déclenchement Doorbird	
 } elseif (mg::getCmd(mg::declencheur())) {
 	// Sonnette
 	if (mg::declencheur('Sonnerie')) {
 		mg::MessageT('', "! SONNETTE ENTREE");
 		mg::GoogleCast ('PLAY', $sonnettePorte, $volumeSonnette);
 	}
+	
 	// sinon Mouvement
-	if (mg::declencheur('Mouvement') && mg::TimeBetween(strtotime($timeVoletsNuit), time(), $heureReveil)) {
+	elseif (mg::declencheur('Mouvement') && mg::TimeBetween(strtotime($timeVoletsNuit), time(), $heureReveil)) {
 		mg::MessageT('', "! MOUVEMENT ENTREE");
 //		mg::GoogleCast ('PLAY', $jingleMvmt, $volumeMvmt);
 	}
+	
 	// Affichage cam sur JPI
 	if (mg::getVar('_designActif') != $designCam) {
 		mg::JPI('DESIGN', $designCam);

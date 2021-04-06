@@ -3,7 +3,7 @@
 Veille PC_MG - 126
 
 Si NuitSalon == 2 et Cinéma arrété et Paramètrages OK :
-	Met en veille le PC de MG.
+	Met en Veille ou Veille_Prolongee le PC de MG.
 Sinon Relance le PC-MG.
 **********************************************************************************************************************/
 
@@ -35,7 +35,7 @@ if ($alarme || ( $puissancePcMg > 10 && $nuitSalon == 2 && !$etatCinema && $last
 	// ------------------------------------------------------------------------------------------------------------
 	mg::messageT('', "! ARRET INFORMATIQUE");
 	// ------------------------------------------------------------------------------------------------------------
-	mg::eventGhost('Veille_Prolongee', 'PC-MG');
+	mg::eventGhost('Veille_Prolongee', 'PC-MG'); // Veille
 
 } elseif (!$alarme && $puissancePcMg < 10 && $nuitSalon != 2 && Time() >= ($heureReveil - 1800) && $nbMvmt) {
 	// ------------------------------------------------------------------------------------------------------------
