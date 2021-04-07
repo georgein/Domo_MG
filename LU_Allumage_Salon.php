@@ -132,11 +132,11 @@ function PiloteLampes($equipEcl, $tabLampes, $intensité, $ambiance, $logTimeLin
 			// Extinction
 			if ($lum_Max_Lampe == 0) {
 				if (mg::existCmd($details_Lampe[0], 'Slider Intensité')) { mg::setCmd($details_Lampe[0], 'Slider Intensité', $lum_Max_Lampe); }
-//				if ($etatLampe > 1) { mg::setCmd($details_Lampe[0], 'Off'); }
+				else { mg::setCmd($details_Lampe[0], 'Off'); }
 			// Changement Intensité	
 			} else {
-//				if ($etatLampe < 2) {mg::setCmd($details_Lampe[0], 'On'); }
 				if (mg::existCmd($details_Lampe[0], 'Slider Intensité')) { mg::setCmd($details_Lampe[0], 'Slider Intensité', $lum_Max_Lampe); }
+				else {mg::setCmd($details_Lampe[0], 'On'); }
 			}
 			$resteAFaire++;
 		}

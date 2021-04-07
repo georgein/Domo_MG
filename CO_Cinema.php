@@ -61,6 +61,10 @@ if (mg::getCmd($infCinemaEtat)) {
 	mg::setCmd($equipEcl, 'Lampe Générale Slider', 50);
 	mg::setCmd($equipEcl, 'Lampe Ambiance Slider', 1);
 	mg::wait("scenario($scenAllumageSalon) == 0", 180);	
+	
+	sleep(10);
+	mg::setScenario($scenLuminositeSalon, 'activate');
+	mg::setScenario($scenLuminositeSalon, 'start');
 
 	// On passe en mode 'Art'
 mg::frameTV('Frame TV', 'Salon', 'art');
@@ -70,10 +74,6 @@ mg::frameTV('Frame TV', 'Salon', 'art');
 	} else {
 		mg::VoletsGeneral( 'Salon', 'D', 1);
 	}*/
-	
-//	sleep(120);
-	mg::setScenario($scenLuminositeSalon, 'activate');
-	mg::setScenario($scenLuminositeSalon, 'start');
 
 	// Rétablissement volets
 	mg::unsetVar('_VoletGeneral'); // Pour 'forcer' le prochain mouvement de voletsGeneral

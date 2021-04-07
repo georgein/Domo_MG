@@ -88,13 +88,13 @@ function Extrait_METAR($codeMETAR, $urlMETAR, $regex, $fileResult, $version) {
 	preg_match($regex, $METAR_Brut, $found);
 	$METAR = trim($found[1]);
 //	mg::setVar("METAR_V$Version", mg::getVar("METAR_V$Version") + 1);
-//	mg::message('', "'$METAR' - V$Version=" . mg::getVar("METAR_V$Version",0) . " - '$urlMETAR'");          
+//	mg::message('', "'$METAR' - V$Version=" . mg::getVar("METAR_V$Version",0) . " - '$urlMETAR'");
 	return $METAR;
 }
 
 // -------------------------------------------------------------------------------------------------------------
 	// REFERENCE METAR LFML DECODE : http://fr.allmetsat.com/metar-taf/france.php?icao=LFML
-	
+
 // ------------------- VERSION 2 --------------------------
 	if( $METAR == '') {
 				// http://tgftp.nws.noaa.gov/data/observations/metar/stations/LFML.TXT
@@ -125,7 +125,7 @@ function Extrait_METAR($codeMETAR, $urlMETAR, $regex, $fileResult, $version) {
 	}
 
 	if ($METAR == '') { return ''; }
-	
+
 	// -------------------------------------------------------------------------------------------------------------
 	// Extraction Station
 //	preg_match('@^([A-Z]{1}[A-Z0-9]{3})@', $METAR, $found);
@@ -149,7 +149,7 @@ function Extrait_METAR($codeMETAR, $urlMETAR, $regex, $fileResult, $version) {
 	preg_match('@(M?[0-9]{2})/(M?[0-9]{2}|[X]{2})@', $METAR, $found);
 			$temperature_c = intval(strtr($found[1], 'M', '-'));
 			$result['Temperature'] = $temperature_c;
-			
+
 			// Point de rosée
 			if (isset($found[2]) AND strlen($found[2]) != 0 AND $found[2] != 'XX')
 			{
@@ -164,8 +164,8 @@ function Extrait_METAR($codeMETAR, $urlMETAR, $regex, $fileResult, $version) {
 	// Extraction Vent
 	preg_match('@([0-9]{3}|VRB|///)P?([/0-9]{2,3}|//)(GP?([0-9]{2,3}))?(KT|MPS|KPH)@', $METAR, $found);
 
-	if ($found[1] == '///' AND $found[2] == '//') 
-		{ 
+	if ($found[1] == '///' AND $found[2] == '//')
+		{
 		} // gére le cas où rien n'est observé
 		else
 		{
@@ -214,42 +214,56 @@ function MsgMeteoLocale($EquipMeteo, $equipMeteoFrance) {
 	mg::TranspoCap(mg::getCmd($EquipMeteo, 'Direction Vent METAR'), $CapLibelle);
 	$Temperature = round(mg::getCmd($EquipMeteo, 'Température METAR'));
 	$humidité = round(mg::getCmd($EquipMeteo, 'Humidité METAR'));
-	
+
 	// Météo prévisionnelle
 	$jour = 'Aujourdhui';
 
-	if (mg::getTag('#heure#') <= 9) { $periode = 'Météo du Matin'; }
-	elseif	(mg::getTag('#heure#') <= 14) { $periode = 'Météo du Midi'; }
+	$periode = 'Météo du Matin';
+	if	(mg::getTag('#heure#') <= 14) { $periode = 'Météo du Midi'; }
 	elseif	(mg::getTag('#heure#') < 19) { $periode = 'Météo du Soir'; }
 
-	// Si anomalie sur prévison période 
-//	if (trim(mg::getCmd($equipMeteoFrance, "$periode - $jour - Description")) == '') {
+	// Si anomalie sur prévison période selon l'heure on prend celle de la journée
 	if (!mg::existCmd($equipMeteoFrance, "$periode - $jour - Description")) {
-		$periode = 'Météo du Jour'; ////////////////////////////////
+		$periode = 'Météo du Jour';
 	}
 
-	$description = mg::getCmd($equipMeteoFrance, "$periode - $jour - Description");
-	$vitesse_du_Vent = mg::getCmd($equipMeteoFrance, "$periode - $jour - Vitesse du Vent");
-	$direction_du_Vent = mg::getCmd($equipMeteoFrance, "$periode - $jour - Direction du Vent");
-	$force_Rafales = mg::getCmd($equipMeteoFrance, "$periode - $jour - Force Rafales");
-	$température_Maximum = mg::getCmd($equipMeteoFrance, "$periode - $jour - Température Maximum");
-	$température_Minimum = mg::getCmd($equipMeteoFrance, "$periode - $jour - Température Minimum");
-	$indice_UV = mg::getCmd($equipMeteoFrance, "Météo du Jour - Aujourdhui - Indice UV");
-	mg::TranspoCap($direction_du_Vent, $direction_du_Vent_Libelle);
+	// Lecture de la prévision Météo France de la période si existante
+	if (!mg::existCmd($equipMeteoFrance, "$periode - $jour - Description")) {
+		$description = mg::getCmd($equipMeteoFrance, "$periode - $jour - Description");
+		$vitesse_du_Vent = mg::getCmd($equipMeteoFrance, "$periode - $jour - Vitesse du Vent");
+		$direction_du_Vent = mg::getCmd($equipMeteoFrance, "$periode - $jour - Direction du Vent");
+		$force_Rafales = mg::getCmd($equipMeteoFrance, "$periode - $jour - Force Rafales");
+		$température_Maximum = mg::getCmd($equipMeteoFrance, "$periode - $jour - Température Maximum");
+		$température_Minimum = mg::getCmd($equipMeteoFrance, "$periode - $jour - Température Minimum");
+		$indice_UV = mg::getCmd($equipMeteoFrance, "Météo du Jour - Aujourdhui - Indice UV");
+		mg::setInf($EquipMeteo, 'Lib_MétéoFrance', $description);
+		// Sinon on prend les données REELLES
+	} else {
+		$periode = 'Météo constatée';
+		$description = 'du moment';
+		$vitesse_du_Vent = mg::getCmd($EquipMeteo, "Vitesse Réelle");
+		$direction_du_Vent = mg::getCmd($EquipMeteo, "Direction Réelle");
+		$force_Rafales = mg::getCmd($EquipMeteo, "Rafales Réelles");
+		$température_Maximum = mg::getCmd($EquipMeteo, "Température Extérieur");
+		$température_Minimum = mg::getCmd($EquipMeteo, "Température Extérieur");
+		$indice_UV = 'inconnu';
+		mg::setInf($EquipMeteo, 'Lib_MétéoFrance', 'Météo France HS');
+	}
 
+	// MàJ des virtuels de météo
 	mg::setInf($EquipMeteo, 'Heure Prévision Météo', $periode);
-	mg::setInf($EquipMeteo, 'Lib_MétéoFrance', $description);
 	mg::setInf($EquipMeteo, 'Vitesse Météo', $vitesse_du_Vent);
 	mg::setInf($EquipMeteo, 'Direction Météo', $direction_du_Vent);
 	mg::setInf($EquipMeteo, 'Rafales Météo', $force_Rafales);
 	mg::setInf($EquipMeteo, 'Température Météo', $température_Maximum);
 	mg::setInf($EquipMeteo, 'UV Météo', $indice_UV);
 
+	// Construction du TTS des prévisions
+		mg::TranspoCap($direction_du_Vent, $direction_du_Vent_Libelle);
 $message = "Météo générale pour ".mg::getCmd($equipMeteoFrance, "Bulletin France - Nom de la période 1");
 $message .= "(...)\n(...)".mg::getCmd($equipMeteoFrance, "Bulletin France - Texte de la période 1");
 
-
-	$message .= "(...)\n(...) Prévisions détaillées pour la $periode (...) : $description, UV $indice_UV, Température : $température_Minimum à $température_Maximum degrés, (Le vent souflera à $vitesse_du_Vent kilomètres heure du $direction_du_Vent_Libelle avec des rafales à $force_Rafales kilomètres heure.)";
+$message .= "(...)\n(...) Prévisions détaillées pour la $periode (...) : $description, UV $indice_UV, Température : $température_Minimum à $température_Maximum degrés, (Le vent souflera à $vitesse_du_Vent kilomètres heure du $direction_du_Vent_Libelle avec des rafales à $force_Rafales kilomètres heure.)";
 
 mg::message('', $message);
 
