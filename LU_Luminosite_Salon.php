@@ -56,8 +56,8 @@ if ($lumSalon < $seuilNuitSalon && $nuitExt) {
 // Si changement
 if ($nuitSalon != $oldNuitSalon) {
 	mg::setVar('NuitSalon', $nuitSalon);
-	mg::Message($logTimeLine, $message);
-	sleep(180); // Pour éviter yoyo sur passage à nuit et nbMvmt
+	if ($nuitSalon == 2 || $oldNuitSalon == 2) { mg::Message($logTimeLine, $message); }
+	sleep(300); // Pour éviter yoyo sur passage à nuit et nbMvmt
 }
 
 // Allumage le soir et pas en alarme

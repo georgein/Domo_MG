@@ -98,13 +98,13 @@ mg::setInf($equipEcl, 'Memo Etat', $newIntensite);
 	if (($newIntensite < 1 && $memoEtat > 0) || $boutonOnOff == 1004) {
 		// Attente absence de mouvement pendant 2 mn plus sleep(120) avant sortie finale et ainsi éviter une relance précoce par NuitSalon ou 'schedule'
 		mg::message('', "Attente de 5 mn sans mouvement ...");
-	mg::wait("$infNbMvmtSalon == 0", 120);
-	sleep(120);
-	mg::Message('', "Extinction du salon terminé.");
+	mg::wait("$infNbMvmtSalon == 0", 180);
+	sleep(300);
+	mg::Message($logTimeLine, "Extinction du salon terminé.");
 
 // Au premier allumage complet
 } elseif ($newIntensite > 0 && ($nomDeclencheur == 'Lampe Générale Etat' || $boutonOnOff == 1002)) {
-	mg::Message('', "Allumage du salon terminé.");
+	mg::Message($logTimeLine, "Allumage du salon terminé.");
 }
 
 /********************************************* PILOTE DES LAMPES ******************************************************

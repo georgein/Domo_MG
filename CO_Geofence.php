@@ -603,8 +603,8 @@ function makeLatLng(&$tabGeofence, $user, $dateSQL, $id, $pauseMin, $coeffEcart,
 						$dureePause += round(($timeCourante_P1 - $debPause) /60, 1);
 				} // ********** FIN GESTION DES PAUSES **********
 				
-			} // CLOTURE ENTRAINEMENT
-			 if (!$inhibe  && $tabGeofence[$user]['debTime'] > 0 && $tabGeofence[$user]['cloture'] == 0) {
+			} // CLOTURE ENTRAINEMENT ////////////////////////////////////////////////////////////
+			 if (/*!$inhibe  &&*/ $tabGeofence[$user]['debTime'] > 0 && $tabGeofence[$user]['cloture'] == 0) {
 					if (	$SSID != 'Pas de SSID'
 						 || strpos($tabGeofence[$user]['SSID_Org'], $SSID) !== false 
 						 || strpos($SSID, $tabGeofence[$user]['SSID_Org']) !== false
@@ -649,9 +649,9 @@ function makeLatLng(&$tabGeofence, $user, $dateSQL, $id, $pauseMin, $coeffEcart,
 	}
 
 	// Calcul des lastValues
-	$tabGeofence[$user]['lastTime'] = $tabDetails[$i]['datetime'];
-	$tabGeofence[$user]['lastPcBatterie'] = $tabDetails[$i]['pcBatterie'];
-	$tabGeofence[$user]['lastSSID'] = $tabDetails[$i]['SSID'];
+	$tabGeofence[$user]['lastTime'] = (isset($tabDetails[$i]['datetime']) ? $tabDetails[$i]['datetime'] : 0);
+	$tabGeofence[$user]['lastPcBatterie'] = (isset($tabDetails[$i]['pcBatterie']) ? $tabDetails[$i]['pcBatterie'] : 0);
+	$tabGeofence[$user]['lastSSID'] = (isset($tabDetails[$i]['SSID']) ? $tabDetails[$i]['SSID'] : '');
 
 	mg::setVar('tabGeofence', $tabGeofence);
 	mg::message('', print_r($tabGeofence, true));

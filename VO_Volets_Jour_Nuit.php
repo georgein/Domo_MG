@@ -172,7 +172,7 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 		{
 			$slider = $sliderSoleilGenant; $messageAff = "Soleil Génant";
 		}
-		elseif ($nuitSalon || !$cdSoleil && !$cdOuvert) { ///////////////////////////////
+		elseif ($nuitSalon || !$cdSoleil && !$cdOuvert) { 
 			$slider = 99; $messageAff = "Fin Soleil Génant";
 		}
 	}
@@ -248,7 +248,7 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 		$message = "$sens pour $nomAff ($messageAff) Slider $sliderCourant => $slider.";
 		mg::Message('', "---------------------------------------------- $message -----------------------------------");
 		// Activation volet si différence sensible ou min forcé ou max forcé
-		if (abs($slider - $sliderCourant) >= 5 || $slider < 0.1 || $slider > 99) { //////////////////////////////// <= et >=
+		if (abs($slider - $sliderCourant) >= 5 || $slider < 0.1 || $slider > 99) { 
 			if (!$debugVolet) {
 				$debug = false;
 				mg::VoletRoulant($nomZone, $cmd, 'Slider', $slider);
