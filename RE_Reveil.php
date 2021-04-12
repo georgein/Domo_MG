@@ -88,7 +88,7 @@ if (!$reveilOnLine) {
 	//=================================================================================================================
 	mg::messageT('', ". METEO LOCALE");
 	//=================================================================================================================
-$message = MsgMeteoLocale();
+	$message = MsgMeteoLocale();
 	
 	$message .= "(...)\n(...) " . mg::getVar('_Notif_ICO');
 
@@ -200,7 +200,7 @@ function MsgMeteoLocale() {
 	$LMois = mg::getTag('#smois#');
 	$Heure = trim(mg::getTag('#heure#'));
 	$Minute = trim(mg::getTag('#minute#'));
-	$message = "Nous sommes aujourd'hui le $LJour $NJour $LMois et il est $Heure heures $Minute minutes";
+	$message = "Nous sommes aujourd'hui le $LJour $NJour $LMois et il est $Heure heures $Minute minutes(...)\n(...)";
 
 	$message .= mg::getVar('_MeteoLocale');
 

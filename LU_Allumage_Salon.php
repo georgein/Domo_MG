@@ -121,6 +121,7 @@ function PiloteLampes($equipEcl, $tabLampes, $intensité, $ambiance, $logTimeLin
 	for ($i = 0; $i < count($tabLampes); $i++) {
 		$details_Lampe = explode(':', $tabLampes[$i]);
 		$etatLampe = mg::getCmd($details_Lampe[0], 'Etat');
+		$etatLampeOnOff = (mg::existCmd($details_Lampe[0], 'Etat_ON-OFF') ? mg::getCmd($details_Lampe[0], 'Etat_ON-OFF') : -1);
 		$maxValue = mg::getMinMaxCmd($details_Lampe[0], 'Etat', 'max');
 		if (!mg::isActive($details_Lampe[0])) { mg::setEquipement($details_Lampe[0], 'activate'); } // Pour deconz
 
@@ -129,18 +130,24 @@ function PiloteLampes($equipEcl, $tabLampes, $intensité, $ambiance, $logTimeLin
 
 		// Changement intensité
 		if ($etatLampe != $lum_Max_Lampe) {
-			// Extinction
-			if ($lum_Max_Lampe == 0) {
-				if (mg::existCmd($details_Lampe[0], 'Slider Intensité')) { mg::setCmd($details_Lampe[0], 'Slider Intensité', $lum_Max_Lampe); }
-				else { mg::setCmd($details_Lampe[0], 'Off'); }
-			// Changement Intensité	
-			} else {
-				if (mg::existCmd($details_Lampe[0], 'Slider Intensité')) { mg::setCmd($details_Lampe[0], 'Slider Intensité', $lum_Max_Lampe); }
-				else {mg::setCmd($details_Lampe[0], 'On'); }
+			if (mg::existCmd($details_Lampe[0], 'Slider Intensité')) {
+				if ($etatLampeOnOff != 0) { // Différent de off
+					mg::setCmd($details_Lampe[0], 'Slider Intensité', $lum_Max_Lampe);
+				}
 			}
 			$resteAFaire++;
 		}
-		mg::pause(0.5);
+		
+		// Gestion on-off si existe
+		if ($lum_Max_Lampe == 0 && $etatLampeOnOff == 1) {
+			mg::setCmd($details_Lampe[0], 'Off'); 
+			$resteAFaire++;
+		} elseif ($lum_Max_Lampe > 0 && $etatLampeOnOff == 0) {
+			mg::setCmd($details_Lampe[0], 'On'); 
+			$resteAFaire++;
+		}
+				
+//		mg::pause(0.2);
 	}
 	// On attend queue Zwave == 0 et si reste à faire != 0 on relance
 	$cpt++;

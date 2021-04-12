@@ -241,8 +241,11 @@ function MsgMeteoLocale($EquipMeteo, $equipMeteoFrance) {
 		$indice_UV = mg::getCmd($equipMeteoFrance, "Météo du Jour - Aujourdhui - Indice UV");
 		mg::setInf($EquipMeteo, 'Lib_MétéoFrance', $description);
 
-		$message = "Météo générale pour ".mg::getCmd($equipMeteoFrance, "Bulletin France - Nom de la période 1");
-		$message .= "(...)\n(...)".mg::getCmd($equipMeteoFrance, "Bulletin France - Texte de la période 1");
+		if (mg::getCmd($equipMeteoFrance, "Bulletin France - Texte de la période 1") != 0) {
+			$message .= "Météo générale pour ".mg::getCmd($equipMeteoFrance, "Bulletin France - Nom de la période 1");
+			$message .= "(...)\n(...)".mg::getCmd($equipMeteoFrance, "Bulletin France - Texte de la période 1");
+		}
+		
 		// Sinon on prend les données REELLES
 	} else {
 		$periode = 'Météo constatée';
@@ -266,6 +269,7 @@ function MsgMeteoLocale($EquipMeteo, $equipMeteoFrance) {
 
 	// Construction du TTS des prévisions
 	mg::TranspoCap($direction_du_Vent, $direction_du_Vent_Libelle);
+	
 	$message .= "(...)\n(...) Prévisions détaillées pour la $periode (...) : $description, UV $indice_UV, Température : $température_Minimum à $température_Maximum degrés, (Le vent souflera à $vitesse_du_Vent kilomètres heure du $direction_du_Vent_Libelle avec des rafales à $force_Rafales kilomètres heure.)";
 	mg::message('', $message);
 
