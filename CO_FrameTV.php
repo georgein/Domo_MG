@@ -35,7 +35,7 @@ if ($nuitSalon != 2 && ($nbMvmt || $frameTV == 1)) {
 	mg::frameTV('Frame TV', 'Salon', 'on'); 
 } 
 
-elseif (!$cinema && ($nuitSalon == 2 || $lastMvmt >= $timingFrameTV) || $frameTV == 0) {
+elseif (!$cinema && ($nuitSalon == 2 || $lastMvmt >= $timingFrameTV || $frameTV == 0)) {
 	//=================================================================================================================
 	mg::MessageT('', "! ARRET DE LA TV - lastMvmt : $lastMvmt");
 	//=================================================================================================================

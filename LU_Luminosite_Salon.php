@@ -1,8 +1,9 @@
 <?php
 /**********************************************************************************************************************
 Luminosité Salon - 59
+
 Calcul le flag Jour/Soir/Nuit.
-Calcul le flag Jour/Soir/Nuit.
+Calcul le flag nePasDeranger.
 Desactive l'éclairage du salon la journée et la nuit si éteint, l'active le soir (NuitSalon == 1)
 **********************************************************************************************************************/
 // Infos, Commandes et equipements :
@@ -19,6 +20,8 @@ Desactive l'éclairage du salon la journée et la nuit si éteint, l'active le s
 	$nuitExt = mg::getVar('NuitExt');
 	$lumSalon = mg::getCmd($equipLumSalon, 'Luminosité');
 	$etatLumiere = mg::getCmd($equipEcl, 'Lampe Générale Etat');
+	$heureReveil = mg::getVar('_Heure_Reveil');
+	$timeVoletsNuit = mg::getParam('Volets', 'timeVoletsNuit');
 
 // Paramètres :
 	$logTimeLine = mg::getParam('Log', 'timeLine');
@@ -53,12 +56,17 @@ if ($lumSalon < $seuilNuitSalon && $nuitExt) {
 	$message = "NuitSalon - Passage à NuitSalon (2).";
 }
 
+//$nuitSalon = 1; // POUR DEBUG
 // Si changement
 if ($nuitSalon != $oldNuitSalon) {
 	mg::setVar('NuitSalon', $nuitSalon);
 	if ($nuitSalon == 2 || $oldNuitSalon == 2) { mg::Message($logTimeLine, $message); }
 	sleep(300); // Pour éviter yoyo sur passage à nuit et nbMvmt
 }
+
+// NE PAS DERANGER
+$nePasDeranger = mg::TimeBetween(strtotime($timeVoletsNuit), time(), $heureReveil);
+if ($nePasDeranger || $nuitSalon == 2) { mg::setVar('nePasDeranger', 1); } else { mg::unsetVar('nePasDeranger'); }
 
 // Allumage le soir et pas en alarme
 if (!$alarme && $nuitSalon == 1) {

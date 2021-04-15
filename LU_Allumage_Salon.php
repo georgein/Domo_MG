@@ -41,12 +41,6 @@ Le retour état du Stop dans le widget est à régler à TimeOut + 5 au minimum 
 /*********************************************************************************************************************/
 mg::setCron('', time() + $timeOutSalon*60);
 
- //***** POUR DEBUG *****
-/*
-$newIntensite = 50;
-$nuitSalon = 0;
-*/
-
 $nomDeclencheur = mg::declencheur('', 3);
 
 // Extinction lampes
@@ -130,22 +124,35 @@ function PiloteLampes($equipEcl, $tabLampes, $intensité, $ambiance, $logTimeLin
 
 		// Changement intensité
 		if ($etatLampe != $lum_Max_Lampe) {
+			
+			// Lampe avec réglage intensité
 			if (mg::existCmd($details_Lampe[0], 'Slider Intensité')) {
 				if ($etatLampeOnOff != 0) { // Différent de off
 					mg::setCmd($details_Lampe[0], 'Slider Intensité', $lum_Max_Lampe);
+				}
+				
+				// Gestion on-off si existe
+				if ($lum_Max_Lampe == 0 && $etatLampeOnOff == 1) {
+					mg::setCmd($details_Lampe[0], 'Off'); 
+//					$resteAFaire++;
+				} elseif ($lum_Max_Lampe > 0 && $etatLampeOnOff == 0) {
+					mg::setCmd($details_Lampe[0], 'On'); 
+//					$resteAFaire++;
+				}
+				
+			// Lampe SANS réglage intensité
+			} else {
+				if ($lum_Max_Lampe == 0 && $etatLampe == 1) {
+					mg::setCmd($details_Lampe[0], 'Off'); 
+//					$resteAFaire++;
+				} elseif ($lum_Max_Lampe > 0 && $etatLampe == 0) {
+					mg::setCmd($details_Lampe[0], 'On'); 
+//					$resteAFaire++;
 				}
 			}
 			$resteAFaire++;
 		}
 		
-		// Gestion on-off si existe
-		if ($lum_Max_Lampe == 0 && $etatLampeOnOff == 1) {
-			mg::setCmd($details_Lampe[0], 'Off'); 
-			$resteAFaire++;
-		} elseif ($lum_Max_Lampe > 0 && $etatLampeOnOff == 0) {
-			mg::setCmd($details_Lampe[0], 'On'); 
-			$resteAFaire++;
-		}
 				
 //		mg::pause(0.2);
 	}

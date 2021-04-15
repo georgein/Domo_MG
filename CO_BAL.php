@@ -10,7 +10,7 @@ Gestion de la boite aux lettres.
 // N° des scénarios :
 
 //Variables :
-	$nuitSalon = mg::getVar('NuitSalon');
+	$nePasDeranger = mg::getVar('nePasDeranger', 0);
 	$destinataire = "Log:/_TimeLine, Message, TTS:GOOGLECAST, SMS:@MG";
 	$heureReveil = mg::getVar('_Heure_Reveil');
 
@@ -24,6 +24,8 @@ mg::message('', "lastPorteEntree - $lastPorteEntree");
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
+if ($nePasDeranger) { return; }
+
 // RàZ BAL par le cron
 if (mg::declencheur('schedule') || mg::declencheur('user')) {
 		mg::setInf($infBalAff, '', 0);

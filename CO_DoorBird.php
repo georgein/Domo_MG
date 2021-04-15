@@ -15,8 +15,7 @@ snaphot url : http://192.168.2.2/bha-api/image.cgi?http-user=ghbbgw0001&http-pas
 //Variables :
 
 // Paramètres :
-	$heureReveil = mg::getVar('_Heure_Reveil');
-	$timeVoletsNuit = mg::getParam('Volets', 'timeVoletsNuit');
+	$nePasDeranger = mg::getVar('nePasDeranger', 0);
 	$designCam = 24;
 	$designPrincipal = mg::getParam('Media', 'designGeneral');
 
@@ -58,7 +57,7 @@ if (mg::declencheur('user') || mg::declencheur('schedule')) {
 	}
 	
 	// sinon Mouvement
-	elseif (mg::declencheur('Mouvement') && mg::TimeBetween(strtotime($timeVoletsNuit), time(), $heureReveil)) {
+	elseif (mg::declencheur('Mouvement') && !$nePasDeranger) {
 		mg::MessageT('', "! MOUVEMENT ENTREE");
 //		mg::GoogleCast ('PLAY', $jingleMvmt, $volumeMvmt);
 	}

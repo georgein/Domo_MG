@@ -396,12 +396,12 @@ function setAlertes ($batteryDangerDefaut, $batteryWarningDefaut, $excludeEquip)
 		$modif =0;
 		if ($isEnabled != $isEnabled_) {
 			mg::message('', "$ID - $type - $humanName - isEnabled : $isEnabled => $isEnabled_"); 
-			$eqLogic->setIsEnabled($isEnabled_ == 1 ? 1 : 0);
+			$eqLogic->setIsEnabled($isEnabled_ == 1 ? '1' : '0');
 			$modif++;
 		}
 		if ($isVisible != $isVisible_) {
 			mg::message('', "$ID - $type - $humanName - isVisible : $isVisible => $isVisible_"); 
-			$eqLogic->setIsVisible($isVisible_ == 1 ? 1 : 0);
+			$eqLogic->setIsVisible($isVisible_ == 1 ? '1' : '0');
 			$modif++;
 		}
 		if ($timeout != $timeout_) {
