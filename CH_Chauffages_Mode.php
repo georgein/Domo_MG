@@ -23,7 +23,7 @@ global $tabChauffages_, $saison, $logChauffage, $logTimeLine, $nomChauffage, $Sc
 
 // Infos, Commandes et Equipements :
 	//	$infTempExt,
-	// $infPresenceEtage, $equipGeneralMaison
+	// $infPresenceEtage, $equipGeneralMaison, $infNbMvmtSalon
 
 // N° des scénarios :
 //	$ScenRegulation = 115;
@@ -37,7 +37,8 @@ global $tabChauffages_, $saison, $logChauffage, $logTimeLine, $nomChauffage, $Sc
 	$heureReveil = mg::getVar('_Heure_Reveil');
 	$temp_Ext = mg::getCmd($infTempExt);
 	$presenceEtage = mg::getCmd($infPresenceEtage) > 0;
-
+	$nbMvmtSalon = mg::getCmd($infNbMvmtSalon);
+	
 // Paramètres :
 	$logTimeLine = mg::getParam('Log', 'timeLine');
 	$logChauffage = mg::getParam('Log', 'chauffage');
@@ -115,7 +116,7 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	//-----------------------------------------------------------------------------------------------------------------
 	else if ( $nomChauffage == 'Chambre' ) {
 		if (!isset($tabChauffages_[$nomChauffage]['ratio'])) { $tabChauffages_[$nomChauffage]['ratio'] = 8.01; }
-		$timeDebConfort = HeureConfort(strtotime($heureChaufChambre));
+		$timeDebConfort = HeureConfort(($nbMvmtSalon == 0 ? strtotime($heureChaufChambre) : time()-60)); ////////////////////////////////
 		$timeFinConfort = $heureReveil;
 		LancementMode($timeDebConfort, $timeFinConfort);
 	}
@@ -223,7 +224,7 @@ function LancementMode($timeDebConfort, $timeFinConfort) {
 	mg::message('', 'Confort ==> Debut : ' . date('d\/m\/Y \à H\hi\m\n', $timeDebConfort) . ' - Fin : ' . date('d\/m\/Y \à H\hi\m\n', $timeFinConfort));
 
 	// Calcul du mode
-	if (mg::TimeBetween( $timeDebConfort, time(),	$timeFinConfort)) {
+	if (mg::TimeBetween( $timeDebConfort, time(), $timeFinConfort)) {
 		$tabChauffages_[$nomChauffage]['mode'] = 'Confort';
 
 	} elseif ($tabChauffages_[$nomChauffage]['timeDeb'] == 0) { // on ne passe pas en eco si calcul ratio en cours

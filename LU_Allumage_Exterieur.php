@@ -15,6 +15,7 @@
 //Variables :
 	$lastMvmt = round(mg::lastMvmt($infNbMvmtExt, $nbMvmt)/60);
 	$ventFort = mg::getCmd($cmdVentFort);
+	$etatLumCave = mg::getCmd($equipEclCave, 'Etat');
 	
 	$nuitExt = mg::getVar('NuitExt');
 
@@ -36,7 +37,7 @@ if (mg::declencheur('Eclairages')) {
 // ==================================================== EXTINCTION =====================================================
 if ( !$nuitExt || $ventFort || $lastMvmt >= $timerLumExt) { $action = 'Off'; }
 // ===================================================== ALLUMAGE ======================================================
-elseif ($nuitExt && $nbMvmt > 0) { $action = 'On'; }
+elseif ($nuitExt && ($nbMvmt > 0 || $etatLumCave)) { $action = 'On'; }
 
 // ================================================ MODIF LAMPE GENERALE ===============================================
 mg::setCmd(str_replace('Etat', $action, trim(mg::toHuman($cmdEtatEclExt), '#')));

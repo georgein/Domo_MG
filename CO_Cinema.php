@@ -32,22 +32,22 @@ if (mg::getCmd($infCinemaEtat)) {
 	mg::MessageT('', "! MISE EN ROUTE DU CINEMA");
 	//=================================================================================================================
 	// Allumage TV
+	mg::message($logTimeLine, "Cinéma - Mise en route.");
+
 	mg::frameTV('Frame TV', 'Salon', 'hdmi');
 
 	// Fermeture volets
 	mg::setScenario($scenVoletsJourNuit, 'deactivate');
-//	mg::unsetVar('_VoletGeneral');
+	mg::unsetVar('_VoletGeneral');
 	mg::VoletsGeneral( 'Salon', 'D', 1);
 
+	mg::setScenario($scenLuminositeSalon, 'deactivate');
+	
 	// Ambiance lumière à 'Cinéma'
 	mg::wait("scenario($scenAllumageSalon) == 0", 180);	
 	mg::setCmd($equipEcl, 'Lampe Ambiance Slider', 3);
 	mg::wait("scenario($scenAllumageSalon) == 0", 180);	
-
 	mg::setScenario($scenAllumageSalon, 'deactivate');
-	mg::setScenario($scenLuminositeSalon, 'deactivate');
-
-	mg::Message($logTimeLine, "Cinéma - Mise en route.");
 
 // ************************************************** ARRET DU CINEMA *************************************************
 } else {
@@ -56,31 +56,26 @@ if (mg::getCmd($infCinemaEtat)) {
 	//=================================================================================================================
 	// Rallumage lumière
 	mg::setVar('NuitSalon', 1);
-	mg::setScenario($scenAllumageSalon, 'activate');
-	sleep(5);
 	mg::setCmd($equipEcl, 'Lampe Générale Slider', 50);
 	mg::setCmd($equipEcl, 'Lampe Ambiance Slider', 1);
+//	sleep(5);
+	mg::setScenario($scenAllumageSalon, 'activate');
+	mg::setScenario($scenAllumageSalon, 'start');
 	mg::wait("scenario($scenAllumageSalon) == 0", 180);	
 	
-	sleep(10);
+	sleep(15);
 	mg::setScenario($scenLuminositeSalon, 'activate');
 	mg::setScenario($scenLuminositeSalon, 'start');
 
 	// On passe en mode 'Art'
 mg::frameTV('Frame TV', 'Salon', 'art');
 
-/*	if (!$nuitExt && time() < strtotime($timeVoletsNuit)) {
-		mg::VoletsGeneral( 'Salon', 'M', 1);
-	} else {
-		mg::VoletsGeneral( 'Salon', 'D', 1);
-	}*/
-
 	// Rétablissement volets
 	mg::unsetVar('_VoletGeneral'); // Pour 'forcer' le prochain mouvement de voletsGeneral
 	mg::setScenario($scenVoletsJourNuit, 'activate');
 	mg::setScenario($scenVoletsJourNuit, 'start');
 
-	mg::Message($logTimeLine, "Cinéma - Arrêt.");
+	mg::message($logTimeLine, "Cinéma - Arrêt.");
 }
 
 ?>

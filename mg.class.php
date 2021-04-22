@@ -975,7 +975,7 @@ $infEclRdC = '#[Salon][Eclairages][Lampe Générale Etat]#';																*
 $cdExtinction = (mg::getVar('NuitSalon') != 1 || mg::getCmd($infEclRdC) == 0);											*
 $cdAllumage = '';																										*
 																														*
-mg::minuterie($equipEcl, $infNbMvmt, $timer, $cdExtinction, $cdAllumage);												*
+mg::minuterie($equipEcl, $infNbMvmt, $timer, $cdExtinction, $cdAllumage);						 						*
 *-----------------------------------------------------------------------------------------------------------------------*
 ************************************************************************************************************************/
 function minuterie($equipEcl, $infNbMvmt, $timer=2, $cdExtinction, $cdAllumage, $actionEtat='Etat') {
@@ -1003,6 +1003,46 @@ function minuterie($equipEcl, $infNbMvmt, $timer=2, $cdExtinction, $cdAllumage, 
 		if (self::getCmd($equipEcl, $actionEtat) || (self::existCmd($equipEcl, 'Puissance') && self::getCmd($equipEcl, 'Puissance') > 2)) {
 			$action = str_replace('Etat', 'Off', $actionEtat);
 			self::setCmd($equipEcl, $action);
+		}
+	}
+}
+
+/************************************************************************************************************************
+* UTIL													SET LAMPE														*
+*************************************************************************************************************************
+* Gère le contrôle des lampes en prenant en compte 																		*
+*	L'obligation du On  pour celle pourvue d'une commande  Etat_On-Off													*
+*	Une attente de dispo de Zwave pour les types openzwave pour éviter la saturation de la queue						*
+*	Paramètres :																										*
+*		$equipLampe : Le nom de l'équipement de la lampe																*
+*		La nouvelle intensité désirée																					*
+************************************************************************************************************************/
+function setLampe($equipLampe, $intensite) {
+//	if (!mg::isActive($equipLampe)) { mg::setEquipement($equipLampe, 'activate'); } // Pour deconz
+
+	$type = strtolower(mg::getTypeEqui($equipLampe)); 
+	// Si type == openzwave on attend queue Zwave == 0
+	if ($type == 'openzwave') { mg::ZwaveBusy(1, 5); }
+	
+	// Lampe avec réglage intensité
+	$etatLampe = mg::getCmd($equipLampe, 'Etat');
+	mg::message('', "Equipement : ".self::toHuman($equipLampe)." - Intensité : $etatLampe ($etatLampe => $intensite) type : $type");
+	if (mg::existCmd($equipLampe, 'Slider Intensité')) {
+		if ($intensite == 0 && $etatLampe >= 1) {
+			mg::setCmd($equipLampe, 'Slider Intensité', $intensite);
+			mg::setCmd($equipLampe, 'Off'); 
+		} elseif ($intensite > 0 && $etatLampe != $intensite) {
+			mg::setCmd($equipLampe, 'On'); 
+			mg::setCmd($equipLampe, 'Slider Intensité', $intensite);
+		}
+
+	// Lampe SANS réglage intensité
+	} else {
+		$etatLampeOnOff = (mg::existCmd($equipLampe, 'Etat') ? mg::getCmd($equipLampe, 'Etat') : -1);
+		if ($intensite == 0 && $etatLampe >= 1) {
+			mg::setCmd($equipLampe, 'Off'); 
+		} elseif ($intensite > 0 && $etatLampe == 0) {
+			mg::setCmd($equipLampe, 'On'); 
 		}
 	}
 }
@@ -2410,9 +2450,9 @@ function ConfigEquiLogic($typeName, $equipement, $name, $newValue='') {
 			$cmd = (self::_isId($cmd)) ? self::_tag($cmd_obj->getHumanName()) : $cmd;
 			$objet = $cmd_obj->getType();
 			if ($objet != null) {
-				self::message('', self::$__log_SP . __FUNCTION__ . " : La commande '$cmd' est de type '$objet'");
-			$type = $objet;
-			return $cmd_obj->getId();
+				//self::message('', self::$__log_SP . __FUNCTION__ . " : La commande '$cmd' est de type '$objet'");
+				$type = $objet;
+				return $cmd_obj->getId();
 			}
 		}else {
 			self::message('', self::$__log_SP . __FUNCTION__ . " : La commande '$cmd' n'éxiste pas");
@@ -2645,14 +2685,37 @@ function ConfigEquiLogic($typeName, $equipement, $name, $newValue='') {
 	}
 
 /************************************************************************************************************************
+* Jeedom												GET TYPE EQUITY													*
+*************************************************************************************************************************
+* Renvoie le type de l'équipement																						*
+* $eqLogic Id ou tag de l'équipement, avec ou sans les '*#*' autour														*
+* Si vous utilisez l'id, vous pouvez l'entrer indifféremment avec ou sans les tag '*#*'									*
+************************************************************************************************************************/
+function getTypeEqui($eqLogic) {
+	$eqLogic = self::_tag($eqLogic);
+	if (!$eqLogic) {
+	  return false;
+	}
+	$eqLogic_obj = eqLogic::byId(str_replace(array('#eqLogic', '#'), '', self::_humanReadableToEqLogic($eqLogic)));
+		if (is_object($eqLogic_obj)) {
+			$eqLogic = (self::_isEqLogicId($eqLogic)) ? self::_tag($eqLogic_obj->getHumanName()) : $eqLogic;
+			$type = $eqLogic_obj->getEqType_name();
+			self::message('', self::$__log_SP . __FUNCTION__ . " : Le type de l'équipement $eqLogic est $type.");
+			return $type;
+		}
+	self::message('', self::$__log_ERROR . __FUNCTION__ . " : Impossible de trouver l'équipement $eqLogic");
+	return false;
+  }
+
+/************************************************************************************************************************
 * Jeedom												IS ACTIVE														*
 *************************************************************************************************************************
 * Récupère l'état (actif ou inactif) de l'équipement (eqLogic)															*
 * $eqLogic Id ou tag de l'équipement, avec ou sans les '*#*' autour														*
 * Si vous utilisez l'id, vous pouvez l'entrer indifféremment avec ou sans les tag '*#*'									*
 ************************************************************************************************************************/
-function isActive($eqLogic, $_log = true, $_logStyle = null) {
-	$eqLogic = self::_tag($eqLogic, $_log, "isEqActive");
+function isActive($eqLogic) {
+	$eqLogic = self::_tag($eqLogic);
 	if (!$eqLogic) {
 	  return false;
 	}
@@ -2661,7 +2724,7 @@ function isActive($eqLogic, $_log = true, $_logStyle = null) {
 			$eqLogic = (self::_isEqLogicId($eqLogic)) ? self::_tag($eqLogic_obj->getHumanName()) : $eqLogic;
 			$isActive = $eqLogic_obj->getIsEnable();
 			$isActive = (is_numeric($isActive) && $isActive > 0) ? true : false;
-			//self::message('', self::$__log_SP . __FUNCTION__ . " : L'équipement $eqLogic est actif");
+			self::message('', self::$__log_SP . __FUNCTION__ . " : L'équipement $eqLogic est actif");
 			return $isActive;
 		}
 	self::message('', self::$__log_ERROR . __FUNCTION__ . " : Impossible de trouver l'équipement $eqLogic");
@@ -2676,7 +2739,7 @@ function isActive($eqLogic, $_log = true, $_logStyle = null) {
 * Si vous utilisez l'id, vous pouvez l'entrer indifféremment avec ou sans les tag '*#*'									*
 ************************************************************************************************************************/
   function isVisible($cmd_or_eqLogic) {
-	$tag = self::_tag($cmd_or_eqLogic, $_log, "isVisible");
+	$tag = self::_tag($cmd_or_eqLogic);
 	if (!$tag) {
 	  return false;
 	}
@@ -2718,7 +2781,7 @@ function isActive($eqLogic, $_log = true, $_logStyle = null) {
 			self::message('', self::$__log_WARNING . __FUNCTION__ . " : Le texte '$texte' passé en paramètre est vide !");
 			return "";
 		}
-		self::message('', self::$__log_SP . __FUNCTION__ . " : Les occurences entouré de '#' ont été remplacées par leur noms.");
+		//self::message('', self::$__log_SP . __FUNCTION__ . " : Les occurences entouré de '#' ont été remplacées par leur noms.");
 		return self::_expressionToHumanReadable($texte);
 	}
 
@@ -2748,7 +2811,7 @@ function isActive($eqLogic, $_log = true, $_logStyle = null) {
 			self::message('', self::$__log_SP . __FUNCTION__ . " : L'equilogic de $texte est $return.");
 			return $return;
 		} else {
-		self::message('', self::$__log_SP . __FUNCTION__ . " : Les occurences entouré de '#' ont été remplacées par leur ID.");
+		//self::message('', self::$__log_SP . __FUNCTION__ . " : Les occurences entouré de '#' ont été remplacées par leur ID.");
 			return self::_expressionToId($texte);
 		}
 	}
@@ -3041,7 +3104,7 @@ function FONCTIONS_CONDITIONNELLES(){}
 		if ($return === $exp) {
 			self::message('', self::$__log_WARNING . __FUNCTION__ . " : L'évaluation de l'expression est égale à l'expression ( '$exp' => '$return' )");
 		} else {
-			self::message('', self::$__log_SP . __FUNCTION__ . " : Résultat => '$return'");
+			//self::message('', self::$__log_SP . __FUNCTION__ . " : Résultat => '$return'");
 		}
 		return $return;
 	}
@@ -3176,12 +3239,12 @@ function zwaveSoins() {
 * Attend que le server ne soit plus 'busy' SI $timer > 0 via un ping sur le Node N° 1,									*
 * Si timer = 0 renvoie directement la valeur de la queue Zwave															*
 ************************************************************************************************************************/
-function ZwaveBusy($timer = 0, $echo = '') {
+function ZwaveBusy($timer = 0, $queueMax=0, $echo = '') {
 	$networkState = openzwave::callOpenzwave('/network?type=info&info=getStatus');
 	$queueSize = $networkState['result']['outgoingSendQueue'];
 
 	$oldQueueSize = 0;
-	while ($timer > 0 && $queueSize > 0) {
+	while ($timer > 0 && $queueSize > $queueMax) {
 		$networkState = openzwave::callOpenzwave('/network?type=info&info=getStatus');
 		$queueSize = $networkState['result']['outgoingSendQueue'];
 		if ($oldQueueSize != $queueSize && $echo) { mg::message('', "Attente Queue sortante à 0 : $queueSize"); }

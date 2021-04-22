@@ -66,7 +66,7 @@ if ($nuitSalon != $oldNuitSalon) {
 
 // NE PAS DERANGER
 $nePasDeranger = mg::TimeBetween(strtotime($timeVoletsNuit), time(), $heureReveil);
-if ($nePasDeranger || $nuitSalon == 2) { mg::setVar('nePasDeranger', 1); } else { mg::unsetVar('nePasDeranger'); }
+if ($nePasDeranger || $nuitSalon == 2) { mg::setVar('nePasDeranger', 1); } else { mg::setVar('nePasDeranger', 0); }
 
 // Allumage le soir et pas en alarme
 if (!$alarme && $nuitSalon == 1) {

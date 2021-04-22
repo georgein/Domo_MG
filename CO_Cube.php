@@ -12,7 +12,7 @@ Allumage et extinction de la radio Sono, gestion du volumesonore, Allumage/Extin
 
 //Variables :
 	$incrementSon = 0.25;										// Incrément de modification du son en %
-	$incrementLumiere = 0.10;									// Incrément de modification de la lumière en %
+	$incrementLumiere = 0.5;									// Incrément de modification de la lumière en %
 	$eclEnCours = mg::getCmd($equipEcl, 'Lampe Générale Etat');
 	$memoEtat = mg::getCmd($equipEcl, 'Memo Etat');
 	
@@ -24,7 +24,8 @@ Allumage et extinction de la radio Sono, gestion du volumesonore, Allumage/Extin
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-$mouvement = deconz_lumi_sensor_cube_data(mg::getCmd(mg::declencheur()));
+	$valEtat = mg::getCmd(mg::declencheur());
+	$mouvement = deconz_lumi_sensor_cube_data($valEtat);
 
 $sonosEnCours = mg::getCmd($equipSonos, 'Status');
 $sonosEnCours = mg::getCmd($equipSonos, 'Status') == 'Lecture' ;
@@ -32,16 +33,16 @@ $volume = max(5, mg::getCmd($equipSonos, 'Volume status'));
 if ($volume <= 0) { $volume = $reveilVolumeRadio; }
 
 //=====================================================================================================================
-mg::MessageT('', "Mouvement ==> $mouvement");
+mg::messageT('', "Mouvement ($valEtat) ==> $mouvement - Sonos en cours : $sonosEnCours - Memo lumière : $memoEtat");
 //=====================================================================================================================
 // Allumage lampes extérieures
 //=====================================================================================================================
 // tap_twice : Taper deux fois sur la surface où il se trouve.
 if ($mouvement == 'tap_twice') {
 	if (mg::getCmd($equipEclExt, 'Lampe Générale Etat') == 0) {
-			mg::setCmd($equipEcl, 'Lampe Générale Slider', 99);
+			mg::setCmd($equipEclExt, 'Lampe Générale Slider', 99);
 	} else {
-		mg::setCmd($equipEcl, 'Lampe Générale Slider', 0);
+		mg::setCmd($equipEclExt, 'Lampe Générale Slider', 0);
 	}
 }
 
@@ -93,59 +94,40 @@ elseif ($mouvement == 'rotate_right') {
 	else {
 		if ($memoEtat == 0) { $memoEtat = 10;}
 		$memoEtat = $memoEtat * (1 + $incrementLumiere);
-		if ($memoEtat > 99) { $memoEtat = 99; }
+		$maxValue = mg::getMinMaxCmd($equipEcl, 'Etat', 'max');
+		if ($memoEtat > $maxValue) { $memoEtat = $maxValue; }
 		mg::setCmd($equipEcl, 'Lampe Générale Slider', $memoEtat);
 		mg::Message('', "Augmente l'intensité à $memoEtat %");
 	}
 }
 
-/*//=====================================================================================================================
-// flip90 : lorsqu’on pivote une face sur une autre à 90°.
-//	case 'flip90':
-		break;
-//=====================================================================================================================
-// flip180 : Même chose que le précédent sauf à 180°.
-//	case 'flip180':
-		break;
-//=====================================================================================================================
-// free_fall : Chute du cube.
-	case 'free_fall':
-		break;
-//=====================================================================================================================
-// move : lorsque l’on bouge le cube sur une surface plane.
-//	  case 'move':
-		  break;
-//=====================================================================================================================
-// alert : dès que l’on touche ou fait une action sur le cube, l’action se déclenche donc vraiment trop sensible à part lorsqu’on l’utilise dans un mode alarme.
-	  case 'alert':
-		mg::message('', 'test alert');
-		break;
-//=====================================================================================================================
-//}*/
-
+// ********************************************************************************************************************
+// ************************************************* DECODAGE DU CUBE *************************************************
+// ********************************************************************************************************************
 function deconz_lumi_sensor_cube_data($buttonevent){
-    if(in_array($buttonevent, array(1002, 1003, 1004, 1005, 2001, 2003, 2004, 2006, 3001, 3002, 3005, 3006, 4001, 4002, 4005, 4006, 5001, 5003, 5004, 5006, 6002, 6003, 6004, 6005))){
-      $result = 'flip90';
-    }else if(in_array($buttonevent, array(1000, 2000, 3000, 4000, 5000, 6000))){
-      $result = 'move';
-    } else if(in_array($buttonevent, array(1001, 2002, 3003, 4004, 5005, 6006))){
-      $result = 'tap_twice';
-    } else if(in_array($buttonevent, array(1006, 2005, 3004, 4003, 5002, 6001))){
-      $result = 'flip180';
-    } else if($buttonevent == 7007){
+    if($buttonevent == 0) {
       $result = 'shake_air';
-    } else if($buttonevent == 7008){
-      $result = 'free_fall';
-    } else if($buttonevent == 7000){
+    } else if ($buttonevent == '') {
+      $result = 'aucun';
+    } else if(in_array($buttonevent, array( 65, 66, 68, 69, 72, 74, 75, 77, 80, 81, 83, 84, 89, 90, 92, 93, 96, 98, 99, 101, 104, 105, 107, 108))) {
+      $result = 'flip90';
+    } else if(in_array($buttonevent, array(257, 258, 259, 260, 260, 261))) {
+      $result = 'move';
+    } else if(in_array($buttonevent, array(511, 512, 513, 514, 515, 516, 517))) {
+      $result = 'tap_twice';
+    } else if(in_array($buttonevent, array(130, 133))) {
+      $result = 'flip180';
+    } else if($buttonevent == 3){
+      $result = 'chute';
+    } else if($buttonevent == 7000) {
       $result = 'alert';
-    } else if(strlen($buttonevent) != 4 || substr($buttonevent, 1, 2) != '00'){
+    } else if(isset($buttonevent)) {
 		  if($buttonevent > 0){
 			$result = 'rotate_right';
-		  } else if($buttonevent < 0){
+		  } else if($buttonevent < 0) {
 			 $result = 'rotate_left';
 		  } 
     } 
-//mg::message('', "$buttonevent - $buttonevent2 - $result");
   return $result;
 }
 

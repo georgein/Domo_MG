@@ -234,8 +234,8 @@ function Volume($equipMonitoring, $volumeMin, $volumeMax) {
 	$volumeLibre = $volumeDetails[3];
 
 	$volumeLibre_pc = round(100-intval($volumeDetails[4]));
-	$volumeLibre_pc = ThreeColor($volumeLibre_pc, $volumeMin, $volumeMax, '+', $color);
 	mg::setInf($equipMonitoring, 'VolumeLibre_pc', $volumeLibre_pc);
+	$volumeLibre_pc = ThreeColor($volumeLibre_pc, $volumeMin, $volumeMax, '+', $color);
 	
 	$volumeUtilise = $volumeTotal - $volumeLibre; 
 	$volumeUtilise_pc = round(intval($volumeDetails[4])); 
@@ -372,6 +372,7 @@ function setAlertes ($batteryDangerDefaut, $batteryWarningDefaut, $excludeEquip)
 		$type = strtolower($eqLogic->getEqType_name()); 
 		$humanName = $eqLogic->getHumanName();
 		$isEnabled = $eqLogic->getIsEnable();
+		if (!$isEnabled) { continue; }
 		$isVisible = $eqLogic->getIsVisible();
 		$timeout = $eqLogic->getTimeout(); 
 		$battery_danger = $eqLogic->getConfiguration('battery_danger_threshold');
@@ -444,6 +445,7 @@ function getAlertes ($excludeEquip, $excludeActivite, $excludeBattery, $batteryD
 		$type = strtolower($eqLogic->getEqType_name()); 
 		$humanName = $eqLogic->getHumanName();
 		$isEnabled = $eqLogic->getIsEnable();
+		if (!$isEnabled) { continue; }
 		$isVisible = $eqLogic->getIsVisible();
 		$lastCommunication = $eqLogic->getStatus('lastCommunication', date('Y-m-d H:i:s')); 
 		$timeout = trim($eqLogic->getTimeout());

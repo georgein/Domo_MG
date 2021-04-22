@@ -59,7 +59,7 @@ if ($redox < $redoxMin) {
 }
 
 if ($batterie < $batterieMin) {
-	$notif_ICO .= ", La batterie de l'Ondilo est inférieure à $batterieMin %, veuillez le recharger !";
+	$notif_ICO .= ", La batterie de l'Ondilo est à $batterie %, veuillez le recharger !";
 }
 
 $notif_ICO .= " La température de l'eau est de $tempPiscine °C.";
