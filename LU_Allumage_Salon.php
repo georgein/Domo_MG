@@ -81,8 +81,8 @@ if ($newIntensite != $memoEtat || $nomDeclencheur == 'Lampe Générale Etat' || 
 mg::MessageT('', "! MODIFICATION D'INTENSITE - memoEtat ==> $memoEtat : newIntensite => $newIntensite - Ambiance N° $ambiance - NomDeclencheur : $nomDeclencheur)");
 //=====================================================================================================================
 	PiloteLampes($equipEcl, $tabLampes, $newIntensite, $ambiance, $logTimeLine);
-	sleep(5);
-	PiloteLampes($equipEcl, $tabLampes, $newIntensite, $ambiance, $logTimeLine);
+//	sleep(5);
+//	PiloteLampes($equipEcl, $tabLampes, $newIntensite, $ambiance, $logTimeLine);
 }
 
 //=====================================================================================================================

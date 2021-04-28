@@ -69,7 +69,7 @@ if ($saison != mg::getVar('Saison')) {
 mg::setVar('Saison', $saison);
 
 // Bypass du passage en eco la nuit par grand froid
-//$bypassPonderation = (mg::getCmd($infTempExt) < $tempBypassPondertion ? 1 : 0);
+$bypassPonderation = (mg::getCmd($infTempExt) < $tempBypassPondertion ? 1 : 0);
 
 // Correction HeureRéveil si dépassée de 1 heures30
 if (time() > $heureReveil+1.5*3600) {
@@ -102,8 +102,10 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	//-----------------------------------------------------------------------------------------------------------------
 	if ( $nomChauffage == 'Salon' ) {
 		if (!isset($tabChauffages_[$nomChauffage]['ratio'])) { $tabChauffages_[$nomChauffage]['ratio'] = 4.47; }
-		$timeDebConfort = HeureConfort($heureReveil);
-		//if ($bypassPonderation) { $timeDebConfort = $heureReveil - 8*3600; } // Pour palier partiellement au disfonctionnement de la pompe à chaleur par grand froid
+//		$timeDebConfort = HeureConfort($heureReveil);
+		$timeDebConfort = HeureConfort(($nbMvmtSalon == 0 ? $heureReveil : time()-60)); ////////////////////////////////
+		
+		if ($bypassPonderation) { $timeDebConfort = $heureReveil - 8*3600; } // Pour palier partiellement au disfonctionnement de la pompe à chaleur par grand froid
 
 		// Pour passer en mode Eco immédiatement si DebConfort dans plus de 15 mn
 		if ($nuitSalon == 2 && time() < ($timeDebConfort - 90)) { $timeFinConfort = time(); }
@@ -116,7 +118,7 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	//-----------------------------------------------------------------------------------------------------------------
 	else if ( $nomChauffage == 'Chambre' ) {
 		if (!isset($tabChauffages_[$nomChauffage]['ratio'])) { $tabChauffages_[$nomChauffage]['ratio'] = 8.01; }
-		$timeDebConfort = HeureConfort(($nbMvmtSalon == 0 ? strtotime($heureChaufChambre) : time()-60)); ////////////////////////////////
+		$timeDebConfort = HeureConfort(strtotime($heureChaufChambre));
 		$timeFinConfort = $heureReveil;
 		LancementMode($timeDebConfort, $timeFinConfort);
 	}
@@ -191,7 +193,9 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 mg::messageT('', ". FIN");
 //=====================================================================================================================
 mg::setVar('_tabChauffages', $tabChauffages_);
-//mg::message('', print_r($tabChauffages_, true));
+if ( $scenario->getConfiguration('logmode') == 'realtime') {
+	mg::message('', print_r($tabChauffages_, true));
+}
 
 /**********************************************************************************************************************
 													SOUS PROGRAMMES
@@ -258,7 +262,7 @@ function CalculRatio() {
 	if ($tabChauffages_[$nomChauffage]['timeDeb'] == 0 || $saison != 'HIVER') { return; }
 
 	// Si température confort atteinte ou trop de temps passé, calcul/memo du ratio
-	if ($tempZone >= ($tempConfort + $correction) || $tabChauffages_[$nomChauffage]['timeDeb'] < time()-6*3600) {
+	if ($tempZone > ($tempConfort + $correction) || $tabChauffages_[$nomChauffage]['timeDeb'] < time()-6*3600) {
 		$deltaTemp = abs($tempZone - $tabChauffages_[$nomChauffage]['tempDeb']);
 		$deltaTime = time() - $tabChauffages_[$nomChauffage]['timeDeb'];
 		if ($deltaTime > 1800 && $deltaTemp > 0.5) {

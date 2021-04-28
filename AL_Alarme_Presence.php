@@ -66,9 +66,9 @@ if (mg::declencheur('Maj_Aff')&& mg::getCmd($equipTabReseau, 'Maj_Aff')) {
 mg::setInf($equipTabReseau, 'Maj_Aff', 0);
 
 // Scan du réseau
-if (mg::declencheur('schedule') || mg::declencheur('user')) { 
+/*if (mg::declencheur('schedule') || mg::declencheur('user')) { 
 	ScanReseau($interfaceReseau, $scanReseau);
-}
+}*/
 
 // --------------------------------------------------------------------------------------------------------------------
 // Parcours de la table des Users

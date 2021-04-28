@@ -1039,9 +1039,9 @@ function setLampe($equipLampe, $intensite) {
 	// Lampe SANS réglage intensité
 	} else {
 		$etatLampeOnOff = (mg::existCmd($equipLampe, 'Etat') ? mg::getCmd($equipLampe, 'Etat') : -1);
-		if ($intensite == 0 && $etatLampe >= 1) {
+		if ($intensite == 0 /*&& $etatLampe >= 1*/) {
 			mg::setCmd($equipLampe, 'Off'); 
-		} elseif ($intensite > 0 && $etatLampe == 0) {
+		} elseif ($intensite > 0 /*&& $etatLampe == 0*/) {
 			mg::setCmd($equipLampe, 'On'); 
 		}
 	}
@@ -1182,7 +1182,7 @@ function dateIntervalle($depuis, $jusque='now', $nbVal =2, &$diff=0) {
 		//
 		$meter = ($earth_radius * $d);
 		if ($unit == 'k') {
-			self::message('', self::$__log_SP . __FUNCTION__ . " : ($lat1, $lng1, $lat2, $lng2) => Distance calculée $meter m.");
+			//self::message('', self::$__log_SP . __FUNCTION__ . " : ($lat1, $lng1, $lat2, $lng2) => Distance calculée $meter m.");
 			return floatval($meter / 1000);
 		}
 		return $meter;
