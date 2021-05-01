@@ -89,7 +89,8 @@ foreach ($tabUser as $user => $detailsUser) {
 	if (!$userPresent || $tabGeofence[$user]['debTime'] > 0) { $userActif = $user; }
 
 	if (!$userPresent) { $tabGeofence[$user]['dateActive'] = $dateSQL; }
-	else { $dateSQL = $tabGeofence[$user]['dateActive']; }
+//	else { $dateSQL = isset($tabGeofence[$user]['dateActive']) ? $tabGeofence[$user]['dateActive'] : $dateSQL; }
+	else { $dateSQL = @$tabGeofence[$user]['dateActive']; }
 
 	makeLatLng($tabGeofence, $user, $dateSQL, $idUser, $pauseMin, $coeffDeniveles, $destinatairesSOS, $timingSOS);
 
@@ -124,10 +125,10 @@ foreach ($tabUser as $user => $detailsUser) {
 			mg::unsetVar("_OldDist_$user");
 			continue;
 		}*/
+
 		mg::messageT('', "! Signalement de proximité de $user à $dist km");
 		$oldDist = mg::getVar("_OldDist_$user", $dist);
-
-		if ($dist < $oldDist * $coeffDist && $dist > $distanceMax) {
+		if (abs($dist-$oldDist) > $distanceMax && $dist < $oldDist * $coeffDist && $dist > $distanceMax) {
 			$distTxt = str_replace('.', ',', round($dist,1));
 			mg::Message($destinataires, "'$user' en approche à $distTxt kilomètres.");
 			mg::setVar("_OldDist_$user", $dist);
@@ -708,7 +709,7 @@ function makeLatLng(&$tabGeofence, $user, $dateSQL, $id, $pauseMin, $coeffDenive
 /*********************************************************************************************************************/
 function calculLigne($result) {
 	$tabDetails = array();
-	for($i=0; $i<count($result)-2; $i++) {
+	for($i=0; $i<count($result); $i++) {
 		$tabDetails[$i]['datetime'] = strtotime($result[$i]['datetime']);
 		$latlng_ = explode(',', $result[$i]['value']); // Decomposition de value
 
@@ -723,14 +724,8 @@ function calculLigne($result) {
 		$tabDetails[$i]['inhibe'] = 0;
 
 		// Normalisation de l'activité
-		$activite = strtoupper($latlng_[5][1]);
+		$activite = strtoupper(@$latlng_[5][1]);
 		$tabDetails[$i]['activite'] = $activite;
-
-		$latlng_P1 = explode(',', $result[$i+1]['value']); // Decomposition de value+1
-		$latlng_P2 = explode(',', $result[$i+2]['value']); // Decomposition de value+2
-
-		$activite_P1 = strtoupper($latlng_P1[5][1]);
-		$activite_P2 = strtoupper($latlng_P2[5][1]);
 
 		if ($i > 0) {
 			$tabDetails[$i]['ecart'] = abs(round(mg::getDistance($tabDetails[$i-1]['latitude'], $tabDetails[$i-1]['longitude'], $tabDetails[$i]['latitude'], $tabDetails[$i]['longitude'], 'k'), 4));
@@ -738,27 +733,10 @@ function calculLigne($result) {
 			$tabDetails[$i]['vitesseEcart'] = round($tabDetails[$i]['ecart'] / $tabDetails[$i]['dureeEcart']*3600, 1);
 
 				// Force à 'I' SI SSID renseigné
-				if (/*$activite != 'E' &&*/ $tabDetails[$i]['SSID'] != 'Pas de SSID' ) {
+				if ($tabDetails[$i]['SSID'] != 'Pas de SSID' ) {
 					$tabDetails[$i]['activite'] = 'I';
 				}
 
-/*				// Force à 'E' les points EN mouvement < 8 ET activite P1/P2/Last == 'E'
-				if (	($activite_P2 == 'E' && $tabDetails[$i]['activite'] == 'E' && $activite_P1 == 'E')
-					 && ($tabDetails[$i]['vitesseEcart'] >= 1 && $tabDetails[$i]['vitesseEcart'] < 7) ) {
-					$tabDetails[$i]['activite'] = 'E';
-				}
-
-				// Force à 'I' les points SANS mouvement ET activite P1/P2/Last == 'I'
-				if (	($activite_P1 == 'I' && $activite_P2 == 'I' && $activite_P1 == 'I')
-						&& $tabDetails[$i]['vitesseEcart'] <= 1 ) {
-					$tabDetails[$i]['activite'] = 'I';
-				}*/
-
-				// SINON Force à 'V' les points EN mouvement > 8 ET activite P1/P2/Last == 'V'
-				if (	($activite_P1 == 'V' && $activite_P2 == 'V' && $activite_P1 == 'V')
-					 && ($tabDetails[$i]['vitesseEcart'] >= 8 && $tabDetails[$i]['vitesseEcart'] < 140) ) {
-					$tabDetails[$i]['activite'] = 'V';
-				}
 			// Inhibe points en erreur
 			if (
 				($tabDetails[$i]['activite'] == 'I' && $tabDetails[$i]['ecart'] == 0) ||

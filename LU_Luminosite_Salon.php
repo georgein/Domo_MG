@@ -61,7 +61,7 @@ if ($lumSalon < $seuilNuitSalon && $nuitExt) {
 if ($nuitSalon != $oldNuitSalon) {
 	mg::setVar('NuitSalon', $nuitSalon);
 	if ($nuitSalon == 2 || $oldNuitSalon == 2) { mg::Message($logTimeLine, $message); }
-	sleep(300); // Pour éviter yoyo sur passage à nuit et nbMvmt
+	sleep(120); // Pour éviter yoyo sur passage à nuit et nbMvmt
 }
 
 // NE PAS DERANGER

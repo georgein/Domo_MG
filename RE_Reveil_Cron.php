@@ -79,9 +79,9 @@ mg::Message('', "-------------------------------------- LECTURE AGENDAS --------
 	}
 	
 	$myDate = strtotime($alarmTime);
-}
+
 // Si mise à jour manuelle des sets on lis les set
- else {
+} else {
 mg::Message('', "------------------------------------- LECTURE DU SLIDER -------------------------------------------");
 	$myDate = mg::getCmd($equipReveil, 'Heure_Reveil')/1000;
 }
@@ -97,7 +97,7 @@ mg::Message('', "------------------------------------- ACTIVATION REVEIL -------
 	if ($myDate < time()) { $myDate = $myDate + (24*3600); }
 	
 	mg::setVar('_Heure_Reveil', $myDate);
-	mg::setCmd($equipReveil, 'Reveil_Slider', $myDate*1000);
+	if (!mg::declencheur('Heure_Reveil')) { mg::setCmd($equipReveil, 'Reveil_Slider', $myDate*1000); }
 	mg::unsetVar('_ReveilOnLine');
 	
 	mg::setScenario($ScenarioReveil, 'activate');
