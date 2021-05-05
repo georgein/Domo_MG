@@ -98,7 +98,7 @@ foreach ($tabUser as $user => $detailsUser) {
 	// ------------------------------------------------------------------------------------------------------------------
 	// Test de localisation
 	if ($geofence > 0 && !$OK) {
-		if (mg::getVar("dist_$user") < $geofence) {
+		if (mg::getVar("dist_$user") > 0 && mg::getVar("dist_$user") < $geofence) {
 			$OK .= " GEOFENCE";
 		}
 	}

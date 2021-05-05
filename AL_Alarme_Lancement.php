@@ -208,6 +208,7 @@ mg::MessageT('', "! ****************************************** ACTIVATION ******
 	mg::LampeCouleur($equipLampeCouleur, 80, mg::ROUGE, '', 180);
 
 	mg::setScenario($scen_GestionAlarme, 'activate');
+	mg::setScenario($scen_GestionAlarme, 'start');
 } // Fin d'activation
 
 //Si Inhibée ou demande de désactivation et user OK on Désactive

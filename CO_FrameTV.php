@@ -14,7 +14,6 @@ Gère le ON/Off de la Frame TV selon la présence dans le salon et NuitSalon
 	$nuitSalon = mg::getVar('NuitSalon');
 	$lastMvmt = round(mg::lastMvmt($infMvmt, $nbMvmt)/60);
 	$cinema = mg::getCmd($infCinema);
-	$frameTV = -1;
 	
 // Paramètres :
 	$timingFrameTV = mg::getParam('Confort', 'timingFrameTV');
@@ -26,6 +25,8 @@ mg::setCron('', time() + $timingFrameTV*60);
 
 if (mg::declencheur('Frame TV')) {
 	$frameTV = mg::getCmd(mg::declencheur());
+} else {
+	$frameTV = -1;
 }
 
 if ($nuitSalon != 2 && ($nbMvmt || $frameTV == 1)) {

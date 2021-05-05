@@ -32,7 +32,7 @@ if ($typeChauffage == 'Auto') {
 			$tabChauffages_[$nomChauffage]['mode'] = 'Confort'; 
 	}
 	mg::setScenario($scenChauffageMode, 'Activate');
-	mg::setScenario($scenChauffageMode, 'Start');
+	mg::setScenario($scenChauffageMode, 'start');
 	mg::unsetVar('_TypeChauffage');
 	mg::message($logChauffage, "Retour forcé des chauffages en mode Auto");
 	mg::setCron('', time() - 24*3600); // Annulation du cron

@@ -529,7 +529,7 @@ mg::message('', $requete);
 			$zone = trim($details_Volet['zone']);
 			$duree =  intval(trim($details_Volet['duree']));
 			$groupe =  trim($details_Volet['groupe']);
-			
+
 			if (!$groupe || !$duree) { continue; }
 			$voletInverse =	 trim($details_Volet['inverse']);
 
@@ -544,7 +544,7 @@ mg::message('', $requete);
 				mg::debug();
 				self::Message('', "-------------- $sens ($sensDemandé) individuelle du volet : $cmd / $zone ($slider) --------------");
 				mg::debug(-1);
-				
+
 				self::VoletRoulant($zone, $cmd, 'Slider', $slider);
 				self::wait("scenario($scenarioVoletManuel) == 0", 180);
 			}
@@ -915,7 +915,7 @@ function FONCTIONS_UTILITAIRES(){}
 			$MAC = $tabUser[$nomStation]['MAC'];
 
 			if ($IP != '' && $MAC != '') {
-				
+
 				$regex = "(\d+[\.]\d+[\.]\d+[\.])";
 				preg_match("/$regex/ui", $IP, $found);
 				$IP = $found[0].'255';
@@ -1018,31 +1018,28 @@ function minuterie($equipEcl, $infNbMvmt, $timer=2, $cdExtinction, $cdAllumage, 
 *		La nouvelle intensité désirée																					*
 ************************************************************************************************************************/
 function setLampe($equipLampe, $intensite) {
-//	if (!mg::isActive($equipLampe)) { mg::setEquipement($equipLampe, 'activate'); } // Pour deconz
-
-	$type = strtolower(mg::getTypeEqui($equipLampe)); 
+	$type = strtolower(mg::getTypeEqui($equipLampe));
 	// Si type == openzwave on attend queue Zwave == 0
 	if ($type == 'openzwave') { mg::ZwaveBusy(1, 5); }
-	
+
 	// Lampe avec réglage intensité
 	$etatLampe = mg::getCmd($equipLampe, 'Etat');
 	mg::message('', "Equipement : ".self::toHuman($equipLampe)." - Intensité : $etatLampe ($etatLampe => $intensite) type : $type");
 	if (mg::existCmd($equipLampe, 'Slider Intensité')) {
 		if ($intensite == 0 && $etatLampe >= 1) {
 			mg::setCmd($equipLampe, 'Slider Intensité', $intensite);
-			mg::setCmd($equipLampe, 'Off'); 
+			mg::setCmd($equipLampe, 'Off');
 		} elseif ($intensite > 0 && $etatLampe != $intensite) {
-			mg::setCmd($equipLampe, 'On'); 
+			mg::setCmd($equipLampe, 'On');
 			mg::setCmd($equipLampe, 'Slider Intensité', $intensite);
 		}
 
 	// Lampe SANS réglage intensité
 	} else {
-		$etatLampeOnOff = (mg::existCmd($equipLampe, 'Etat') ? mg::getCmd($equipLampe, 'Etat') : -1);
-		if ($intensite == 0 /*&& $etatLampe >= 1*/) {
-			mg::setCmd($equipLampe, 'Off'); 
-		} elseif ($intensite > 0 /*&& $etatLampe == 0*/) {
-			mg::setCmd($equipLampe, 'On'); 
+		if ($intensite == 0 ) {
+			mg::setCmd($equipLampe, 'Off');
+		} elseif ($intensite > 0) {
+			mg::setCmd($equipLampe, 'On');
 		}
 	}
 }
@@ -1946,29 +1943,26 @@ function frameTV($nom, $zone, $action='on') {
 		mg::setCmd($equipSmartThings, 'Eteindre');
 		sleep(2);
 		mg::setCmd($equipOnOff, 'off');
-		return;
 	// ON ++
 	} else {
-		if (!mg::getCmd($equipOnOff, 'Etat')) { 
-			mg::setCmd($equipOnOff, 'on'); 
+		if (!mg::getCmd($equipOnOff, 'Etat')) {
+			mg::setCmd($equipOnOff, 'on');
 			sleep(2);
 		}
-//		while (mg::getCmd($equipSmartThings, 'Santé') == 'Hors ligne' || !mg::getCmd($equipSmartThings, 'Sous tension')) {
-			mg::wakeOnLan($nom);
-			mg::setCmd($equipSmartThings, 'Allumer');
-			mg::setCmd($equipSmartThings, 'Rafraîchir');
+		mg::wakeOnLan($nom);
 			sleep(2);
-//		}
+		mg::setCmd($equipSmartThings, 'Allumer');
+		mg::setCmd($equipSmartThings, 'Rafraîchir');
+		sleep(2);
 		// ART
-		if ($action == 'art') {
+		if ($action == 'art' /*|| $action == 'on'*/) {
 			mg::setCmd($equipTvDomSamsung, 'Sendkey', 'KEY_POWER');
 		// HDMI
 		} elseif ($action == 'hdmi') {
 			mg::setCmd($equipSmartThings, 'Changer de source dentrée', 'HDMI1');
 		}
 	}
-	self::message('', self::$__log_SP . __FUNCTION__ . " : $nom de $zone est à '$action'");
-
+	self::messageT('', '! '.self::$__log_SP . __FUNCTION__ . " : $nom de $zone est à '$action'");
 }
 
 /************************************************************************************************************************
@@ -2201,7 +2195,7 @@ function FONCTIONS_JEEDOM(){}
 		global $scenario;
 		$trigger = $scenario->getRealTrigger();
 		$declencheur = self::_cmdToHumanReadable($trigger);
-		
+
 		$cmd = trim($cmd);
 		if ($cmd) {
 			if (self::_humanReadableToCmd($cmd) == $trigger || strpos($declencheur, $cmd) !== false) {
@@ -3062,7 +3056,7 @@ function FONCTIONS_VARIABLES(){}
 		for ($i = 0; $i < count($listVar); $i++) {
 			$name = trim($listVar[$i]);
 			$value = trim($listVar[$i]);
-			
+
 			if ($name != '') {
 				 $value = self::getVar($name);
 				if ( $value > 1000000000) {
@@ -3076,7 +3070,7 @@ function FONCTIONS_VARIABLES(){}
 		$message = trim($message, ' -- ');
 		self::message('', self::$__log_SP . __FUNCTION__ . " : $message");
 		return $message;
-		
+
 	}
 
 /************************************************************************************************************************
