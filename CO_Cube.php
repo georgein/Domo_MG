@@ -12,8 +12,7 @@ Allumage et extinction de la radio Sono, gestion du volumesonore, Allumage/Extin
 
 //Variables :
 	$incrementSon = 0.25;										// Incrément de modification du son en %
-	$incrementLumiere = 0.5;									// Incrément de modification de la lumière en %
-	$eclEnCours = mg::getCmd($equipEcl, 'Lampe Générale Etat');
+	$incrementLumiere = 0.33;									// Incrément de modification de la lumière en %
 	$memoEtat = mg::getCmd($equipEcl, 'Memo Etat');
 	
 // Paramètres :
@@ -24,35 +23,34 @@ Allumage et extinction de la radio Sono, gestion du volumesonore, Allumage/Extin
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-	$valEtat = mg::getCmd(mg::declencheur());
-	$mouvement = deconz_lumi_sensor_cube_data($valEtat);
+$valEtat = mg::getCmd(mg::declencheur());
+$mouvement = deconz_lumi_sensor_cube_data($valEtat);
 
+$eclEnCours = mg::getCmd($equipEcl, 'Lampe Générale Etat');
 $sonosEnCours = mg::getCmd($equipSonos, 'Status');
-$sonosEnCours = mg::getCmd($equipSonos, 'Status') == 'Lecture' ;
 $volume = max(5, mg::getCmd($equipSonos, 'Volume status'));
 if ($volume <= 0) { $volume = $reveilVolumeRadio; }
 
 //=====================================================================================================================
-mg::messageT('', "Mouvement ($valEtat) ==> $mouvement - Sonos en cours : $sonosEnCours - Memo lumière : $memoEtat");
+mg::messageT('', "Mouvement ($mouvement) => Sonos en cours : $sonosEnCours - Memo lumière : $memoEtat");
 //=====================================================================================================================
 // Allumage lampes extérieures
 //=====================================================================================================================
 // tap_twice : Taper deux fois sur la surface où il se trouve.
 if ($mouvement == 'tap_twice') {
-	if (mg::getCmd($equipEclExt, 'Lampe Générale Etat') == 0) {
+	if ($eclEnCours == 0) {
 			mg::setCmd($equipEclExt, 'Lampe Générale Slider', 99);
 	} else {
 		mg::setCmd($equipEclExt, 'Lampe Générale Slider', 0);
 	}
-}
 
 //=====================================================================================================================
 // Mise en route de Sonos sur la radio par defaut du réveil :
 // shake air : Comme son nom l’indique, il suffit de le secouer.
 //=====================================================================================================================
-elseif ($mouvement == 'shake_air') {
-	mg::Message('', "Met en route ou arrète la radio de Sonos");
-	if (!$sonosEnCours) {
+} elseif ($mouvement == 'shake_air') {
+	if ($sonosEnCours != 'Lecture') {
+		mg::Message('', "Met en route ou arrète la radio de Sonos");
 		mg::setCmd($equipSonos, 'Volume', $reveilVolumeRadio);
 		mg::setCmd($equipSonos, 'Jouer une radio', '', $reveilStationRadio);
 	} else {
@@ -60,42 +58,37 @@ elseif ($mouvement == 'shake_air') {
 		mg::setCmd($equipSonos, 'Volume', 100);
 		return;
 	}
-}
+
 //=====================================================================================================================
 // Gestion du volume SONOS et si en route sinon de l'intensité de l'éclairage
 //=====================================================================================================================
-elseif ($mouvement == 'rotate_left') {
+} elseif ($mouvement == 'rotate_left') {
 	// DIMINUTION SON
-	if ($sonosEnCours) {
-		$volume = mg::getCmd($equipSonos, 'Volume status') * (1 - $incrementSon);
-		if ($volume < 0) { $volume = 0; }
+	if ($sonosEnCours == 'Lecture') {
+		$volume = max(mg::getCmd($equipSonos, 'Volume status') * (1 - $incrementSon), 0);
 		mg::Message('', "Diminue le volume de Sono à $volume %");
 		mg::setCmd($equipSonos, 'Volume', $volume);
 		return;
-	}
+	
 	// DIMINUTION LUMIERE
-	else {
-		$memoEtat = $memoEtat * (1 - $incrementLumiere);
-		if ($memoEtat < 0) { $memoEtat = 0; }
+	} else {
+		$memoEtat = max($memoEtat * (1 - $incrementLumiere), 20);
 		mg::setCmd($equipEcl, 'Lampe Générale Slider', $memoEtat);
 		mg::Message('', "Diminue l'intensité à $memoEtat %");
 	}
-}
+
 //=====================================================================================================================
-elseif ($mouvement == 'rotate_right') {
+} elseif ($mouvement == 'rotate_right') {
 	// AUGMENTATION SON
-	if ($sonosEnCours) {
-		$volume = $volume * (1 + $incrementSon);
+	if ($sonosEnCours == 'Lecture') {
+		$volume = min($volume * (1 + $incrementSon), 99);
 		mg::Message('', "Augmente le volume de Sono à $volume %");
 		mg::setCmd($equipSonos, 'Volume', $volume);
 		return;
-	}
+	
 // AUGMENTATION LUMIERE
-	else {
-		if ($memoEtat == 0) { $memoEtat = 10;}
-		$memoEtat = $memoEtat * (1 + $incrementLumiere);
-		$maxValue = mg::getMinMaxCmd($equipEcl, 'Etat', 'max');
-		if ($memoEtat > $maxValue) { $memoEtat = $maxValue; }
+	} else {
+		$memoEtat =  min($memoEtat * (1 + $incrementLumiere), 99);
 		mg::setCmd($equipEcl, 'Lampe Générale Slider', $memoEtat);
 		mg::Message('', "Augmente l'intensité à $memoEtat %");
 	}

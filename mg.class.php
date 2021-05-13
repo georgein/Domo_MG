@@ -43,9 +43,9 @@ class mg {
 	var $tabParams, $scenario, $debugVolet, $scenarioVoletManuel;
 
 	/**************************************************************************************************************************
-	*				INIT de la class, Calcul la variable $__debug en image du paramètrage 'Log' des scénarios.
+	*				INIT de la class, Calcul la variable $__debug en image du paramètrage 'Log' des scénarios, si param 'del' renseigné, pas d'effacement du log.
 	**************************************************************************************************************************/
-	function init() {
+	function init($del='') {
 		global $scenario, $tabParams, $scenarioVoletManuel;
 		$tabParams = self::getVar('tabParams');
 		$scenarioVoletManuel = 107;
@@ -55,6 +55,7 @@ class mg {
 		if ($mode == 'realtime') { $debug = 5; }
 		elseif ($mode == 'default') { $debug = 4; }
 		else { $debug = -1; }
+		self::delLog($del);
 		self::debug($debug, $mode);
 	}
 
@@ -1030,7 +1031,7 @@ function setLampe($equipLampe, $intensite) {
 			mg::setCmd($equipLampe, 'Slider Intensité', $intensite);
 			mg::setCmd($equipLampe, 'Off');
 		} elseif ($intensite > 0 && $etatLampe != $intensite) {
-			mg::setCmd($equipLampe, 'On');
+			//mg::setCmd($equipLampe, 'On');
 			mg::setCmd($equipLampe, 'Slider Intensité', $intensite);
 		}
 
@@ -2110,6 +2111,21 @@ function FONCTIONS_SCENARIOS(){}
 		self::message('', self::$__log_SP . __FUNCTION__ . " : Retour " . $scenario->getReturn());
 		return true;
 	}
+
+/************************************************************************************************************************
+* Scenario													DEL LOG														*
+*************************************************************************************************************************
+* Vide le Efface le scénario courant si pas d'error et param 'del' vide.												*
+************************************************************************************************************************/
+	function delLog($del='') {
+	global $scenario;
+	$scenarioID = $scenarioID = $scenario->getID();
+	$fileLog = "/var/www/html/log/scenarioLog/scenario$scenarioID.log";
+		$error = @shell_exec("sudo grep -rn -o -i 'error' $fileLog --files-with-matches");
+		if (!$error) {
+			shell_exec("sudo rm -f $fileLog");
+		}
+}
 
 /************************************************************************************************************************
 *																														*

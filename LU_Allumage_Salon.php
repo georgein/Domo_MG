@@ -26,6 +26,7 @@ Le retour état du Stop dans le widget est à régler à TimeOut + 5 au minimum 
 	$newIntensite = mg::getCmd($equipEcl, 'Lampe Générale Etat');
 	$ambiance = mg::getcmd($equipEcl, 'Ambiance');
 	$boutonEvent = mg::getCmd($infBoutonEvent);
+	$cronSalon = 5;
 
 // Paramètres :
 	$seuilNbMvmt = mg::getParam('Lumieres', 'seuilNbMvmt');		// Nb de mouvement minimum pour provoquer le réallumage de nuit
@@ -39,7 +40,8 @@ Le retour état du Stop dans le widget est à régler à TimeOut + 5 au minimum 
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-mg::setCron('', time() + $timeOutSalon*60);
+//mg::setCron('', time() + $timeOutSalon*60);
+mg::setCron('', time() + $cronSalon*60);
 
 $nomDeclencheur = mg::declencheur('', 3);
 //$nuitSalon = 1; $newIntensite = 50;/////////////////

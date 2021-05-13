@@ -58,9 +58,9 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 		mg::setInf($infMode,  '', 'Correction');
 	} else { $cdMakeOffset = 0; }
 	
-mg::messageT('', "! Traitement de $zone/$nomChauffage - consigne : $mode/$consigne - periodicite : $periodicite h (New correction à ".date('H\hi\m\n', ($valueDate+($periodicite+1)*3600)).") - timeOuts : $timeOut - pcEcartMax : $pcEcartMax");
+mg::messageT('', "! Traitement de $zone/$nomChauffage - consigne : $mode/$consigne - periodicite : $periodicite h (New correction à ".date('H\hi\m\n', ($valueDate+($periodicite+1)*3600)).") - timeOut : $timeOut - pcEcartMax : $pcEcartMax");
 
-//$cdMakeOffset = 1; ///////////////////////////////
+//$cdMakeOffset = 1; // ***** POUR DEBUG *****
 
 	ControleResumes($zone, $nomChauffage, $cleResume, $timeOut, $pcEcartMax, $tempResume, $tempMoyenneRef, $correction, $periodicite, $cdMakeOffset, $logDebug, $timeLine);
 }
@@ -173,6 +173,8 @@ function makeOffset($cmd, $allCmd, $tempMoyenneRef, $valueOffset, $periodicite, 
 	preg_match("/$regex/ui", $valueOffset, $found);
 	if (@iconv_strlen($found[1]) != 0) {
 		$baseValueOffset = $found[1];
+	} elseif (strpos($valueOffset, '#') !== false) {
+		$baseValueOffset = "($valueOffset)";
 	} else {
 		$baseValueOffset = "(#value#)";
 	}
@@ -183,14 +185,14 @@ function makeOffset($cmd, $allCmd, $tempMoyenneRef, $valueOffset, $periodicite, 
 		mg::message($logDebug, "*** ERRO R *** ".mg::toHuman('#'.$cmd.'#')." sur la/les Températures moyennes ref/Comd : $tempMoyenneRef/$temperatureMoyenneCmd");
 		return;
 	}
-	$newCorrection = round(/*$oldCorrection +*/ ($tempMoyenneRef - $temperatureMoyenneCmd), 2);
+	$newCorrection = round(($tempMoyenneRef - $temperatureMoyenneCmd), 2);
 	if ( $newCorrection >= 0) { $newCorrection = "+$newCorrection"; }
 	elseif ($newCorrection == 0) { $newCorrection = "+0.0"; }
 
 	//  Recalcul de la chaine 'ValueOffset'
 	$newValueOffset = "$baseValueOffset$newCorrection";
 
-	mg::message($timeLine, mg::toHuman("#$cmd#")." - tempRef/tempCmd : $tempMoyenneRef/$temperatureMoyenneCmd (sur $periodicite heures) - old/New Correction : $oldCorrection/$newCorrection - ValueOffset : $newValueOffset");
+	mg::message($timeLine, mg::extractPartCmd("#$cmd#", 2)." - temp Ref/Cmd : $tempMoyenneRef/$temperatureMoyenneCmd (sur $periodicite heures) - old/New Corr. : $oldCorrection/$newCorrection - NewValueOffset : $newValueOffset");
 
 	// **************************************
 	// BIEN CONTROLER LE LOG AVANT D'ENLEVER LES REM.)

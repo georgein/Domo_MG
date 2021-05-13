@@ -5,7 +5,7 @@ Gestion de la boite aux lettres.
 **********************************************************************************************************************/
 
 // Infos, Commandes et Equipements :
-// $inPorteEntree, $infBAL_Mvmt, $infBalAff,
+// $inPorteEntree, $infBAL_Mvmt, $infBAL_Mvmt2, $infBalAff,
 
 // N° des scénarios :
 
@@ -30,19 +30,20 @@ if ($nePasDeranger) { return; }
 if (mg::declencheur('schedule') || mg::declencheur('user')) {
 		mg::setInf($infBalAff, '', 0);
 }
+$balMvmt = mg::getCmd($infBAL_Mvmt) + mg::getCmd($infBAL_Mvmt2);
 
 // CD NE PAS DERANGER
 if (mg::TimeBetween(strtotime($timeVoletsNuit), time(), $heureReveil)) { return; }
 
 // Si boite aux lettres ET porte entré > 2 mn on active le signalement
-if (mg::declencheur('BAL') && mg::getCmd($infBAL_Mvmt) && $lastPorteEntree > 2) {
+if (mg::declencheur('BAL') && $balMvmt && $lastPorteEntree > 2) {
 	mg::message($destinataire, 'Il y a du courrier dans la boite aux lettres.');
 	mg::setInf($infBalAff, '', 1);
 	mg::setCron('', time() + 12*3600);
 }
 
 // Si boite aux lettres ET porte entré < 2 mn on annule le signalement
-if (mg::getCmd($infBAL_Mvmt) && $lastPorteEntree <= 2) {
+if ($balMvmt && $lastPorteEntree <= 2) {
 	mg::setInf($infBalAff, '', 0);
 }
 ?>

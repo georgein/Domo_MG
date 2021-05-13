@@ -136,7 +136,7 @@ if (mg::getVar('FREE_OK', 0)) {
 	$freeEnErreur .= '****** Réseau FREE HS ******.<br>';
 }
 
-if (mg::getTag('#minute#') == 0 && ((mg::getTag('#heure#') == $timerNettoieLog) || $timerNettoieLog == 'all')) {
+/*if (mg::getTag('#minute#') == 0 && ((mg::getTag('#heure#') == $timerNettoieLog) || $timerNettoieLog == 'all')) {
 	//=================================================================================================================
 	// ********************************************** NETTOYAGE DES LOGS **********************************************
 	//=================================================================================================================
@@ -148,7 +148,7 @@ if (mg::getTag('#minute#') == 0 && ((mg::getTag('#heure#') == $timerNettoieLog) 
 	} else {
 		mg::messageT('', "! PAS D'EFFACEMENT : ERREUR => '$logEnErreur' - Contrôle toutes les $timerCtrlLog mn - Nettoyage prévu à $timerNettoieLog heures.");
 	}
-}
+}*/
 
 if ($nomTab == '_alertes' || (mg::getTag('#heure#')*60 + mg::getTag('#minute#')) % $timerCtrlLog == 0 || mg::getTag('#trigger#') == 'user') {
 	//=================================================================================================================
@@ -181,7 +181,7 @@ if ($nomTab == '_alertes' || (mg::getTag('#heure#')*60 + mg::getTag('#minute#'))
 	}
 
 	// Nettoyage log > 1 Mo
-	@shell_exec("find /var/www/html/log -type f -size +1000k -exec rm -f {} \;"); // Permet d'économiser du CPU
+	//@shell_exec("find /var/www/html/log -type f -size +1000k -exec rm -f {} \;"); // Permet d'économiser du CPU
 
 	if (trim($logEnErreur)) {
 		$logEnErreur = "ERREUR dans LOG : <br>$logEnErreur<br>";

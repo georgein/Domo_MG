@@ -25,19 +25,23 @@
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-mg::setCron('', "*/$timerLumExt * * * *");
 $action = 'Off'; 
 
 if (mg::declencheur('Eclairages')) {
-	if (mg::getCmd($cmdEtatEclExt)) { $action = 'On'; } 
-	else { $action = 'Off'; }
+	if (mg::getCmd($cmdEtatEclExt)) { 
+		$action = 'On'; } else { $action = 'Off'; }
 	goto suite; 
 }
 
 // ==================================================== EXTINCTION =====================================================
-if ( !$nuitExt || $ventFort || $lastMvmt >= $timerLumExt) { $action = 'Off'; }
+if ( !$nuitExt || $ventFort || $lastMvmt >= $timerLumExt) { 
+	$action = 'Off'; 
+	mg::setCron('', '*/'.(3*$timerLumExt).' * * * *');
 // ===================================================== ALLUMAGE ======================================================
-elseif ($nuitExt && ($nbMvmt > 0 || $etatLumCave)) { $action = 'On'; }
+} elseif ($nuitExt && ($nbMvmt > 0 || $etatLumCave)) { 
+	$action = 'On'; 
+	mg::setCron('', time() + $timerLumExt*60);
+}
 
 // ================================================ MODIF LAMPE GENERALE ===============================================
 mg::setCmd(str_replace('Etat', $action, trim(mg::toHuman($cmdEtatEclExt), '#')));
@@ -50,4 +54,3 @@ for ($i = 0; $i < count($tab_EquipLampes); $i++) {
 		mg::setCmd(str_replace(' Etat', " $action", trim(mg::toHuman($tab_EquipLampes[$i]), '#')));
 	}
 }
-//if ($action == 'On') { mg::setCron('', time() + $timerLumExt*60); }
