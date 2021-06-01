@@ -69,11 +69,11 @@ if (mg::declencheur('Position') || mg::declencheur('SSID')) {
 		$userAppel = str_replace('_SSID)', '', $userAppel);
 	}
 
-	$GeofencepcBat = mg::getVar($userAppel.'_pcBat', '999');
+//	$GeofencepcBat = mg::getVar($userAppel.'_pcBat', '999');
 	$GeofenceSSID = mg::getVar($userAppel.'_SSID', 'Pas de SSID');
 	$PositionJeedomConnect = mg::getCmd("#[Sys_Comm][Tel-$userAppel][Position]#", '', $collectDate, $valueDate);
 	$ActiviteJeedomConnect = mg::getCmd("#[Sys_Comm][Tel-$userAppel][Activité]#");
-
+	$GeofencepcBat = mg::getCmd("#[Sys_Comm][Tel-$userAppel][Batterie]#");
 	//  SI at HOME
 	if (strpos(" $GeofenceSSID", $homeSSID) !== false) {
 		$PositionJeedomConnect = $latLng_Home;
@@ -158,12 +158,6 @@ if ((time() - $lastAppel) < 3) { return; }
 	} else {
 		mg::setVar("_OldDist_$userAppel", max($dist, $oldDist));
 	}
-
-	// ****************************************** ENVOIS D'UN SOS MANUEL ******************************************
-/*	if (trim($latLng_[5]) == 'SOS') {
-		mg::message($destinatairesSOS, "SOS MANUEL de $userAppel, Coordonnées (" . $value_[0] . ', ' . $value_[1] . "). VOIR :  https://georgein.dns2.jeedom.com/mg/util/geofence.html");
-	}
-*/
 
 //	******************************************* ECRITURE DU FICHIER HTML **********************************************
 mg::messageT('', "! GENERATION HTML GEOFENCE (new $userAppel)");
@@ -657,13 +651,6 @@ function makeLatLng(&$tabGeofence, &$tabGeofence_L, &$tabGeofence_C, $user, &$la
 	$tabGeofence[$user]['sommePause'] = 0;
 	$tabGeofence[$user]['SSID_Org'] = 'xxx';
 
-/*	$oldTimeCourante = time();
-	$oldACtivite = 'I';
-	$oldLatitude = '43';
-	$oldLongitude = '5';
-	$oldAltitude = 190;
-	$oldVitesseEcart = 0;*/
-
 	$complements = '';
 	$timeCourante = 0;
 	$dureePause = 0;
@@ -671,10 +658,11 @@ function makeLatLng(&$tabGeofence, &$tabGeofence_L, &$tabGeofence_C, $user, &$la
 	$dureeEcart = 0;
 	$altitude = 0;
 	$ecartAltitude = 0;
-	$deltaI_Pause = 0;
 	$debPause = 0;
+	$deltaI_Pause = 0;
 	$vitesseEcart = 0;
-	
+	$alerteEnCours = 0;
+
 	$id = trim($id, '#');
 	$sql = "
 		SELECT value, datetime
@@ -743,7 +731,7 @@ function makeLatLng(&$tabGeofence, &$tabGeofence_L, &$tabGeofence_C, $user, &$la
 			}
 
 			// ********************************************** ENTRAINEMENTS ***********************************************
-			if ($activite == 'I'  || $activite == 'E') {
+			if ($activite == 'I'  || $activite == 'E'  || $activite == 'V') {
 				// Demarrage Entrainement
 				if ($SSID == 'Pas de SSID' && $activite == 'E' && $tabGeofence[$user]['debTime'] <= 0) {
 				if ($SSID != 'Pas de SSID' && $tabGeofence[$user]['debTime'] <= 0) { $tabGeofence[$user]['SSID_Org'] = $SSID; }
@@ -773,8 +761,9 @@ function makeLatLng(&$tabGeofence, &$tabGeofence_L, &$tabGeofence_C, $user, &$la
 						// Pause en cours
 						} else {
 							// *************** ENVOIS D'UN SOS AUTOMATIQUE ***************
-							if ($dureePause > $timingSOS / 60 && (time() - $timeCourante) < 60*60) {
-								mg::message($destinatairesSOS, "SOS AUTOMATIQUE de $user, Aucun mouvement depuis plus de " . $timingSOS/60 . " mn, Coordonnées ($latlng). VOIR :  https://georgein.dns2.jeedom.com/mg/util/geofence.html");
+							if ($dureePause > $timingSOS / 60 && (time() - $timeCourante) < 2*$timingSOS && !$alerteEnCours) {
+								mg::message($destinatairesSOS, "SOS AUTOMATIQUE de $user, Aucun mouvement depuis " . ($timeCourante - $alerteEnCours)/60 . " mn, Coordonnées ($latlng). VOIR :  https://georgein.dns2.jeedom.com/mg/util/geofence.html");
+								$alerteEnCours = $timeCourante;
 							}
 						}
 
@@ -784,9 +773,11 @@ function makeLatLng(&$tabGeofence, &$tabGeofence_L, &$tabGeofence_C, $user, &$la
 						$tabGeofence[$user]['sommePause'] += $dureePause;
 						$deltaI_Pause=$i-$iDeb;
 						$debPause = 0;
-					} else {
 						$dureePause = 0;
-						$deltaI_Pause = 0;
+						$alerteEnCours = 0;
+//					} else {
+//						$dureePause = 0;
+//						$deltaI_Pause = 0;
 					}
 				} // ********** FIN GESTION DES PAUSES ********** 
 				
@@ -804,11 +795,14 @@ function makeLatLng(&$tabGeofence, &$tabGeofence_L, &$tabGeofence_C, $user, &$la
 			// ********** SUPPRESSION ENTRAINEMENT TROP COURT (< 1 km ou 15 mn) **********
 			if ($tabGeofence[$user]['cloture'] > 0 && $timeCourante +300 > $tabGeofence[$user]['cloture'] && ($tabGeofence[$user]['distanceTotale'] < 1)) {
 				mg::message('', "************* Suppression entrainement trop court de $user : Distance : " . $tabGeofence[$user]['distanceTotale'].' - Durée : '.date('H:m:s', $tabGeofence[$user]['dureeTotale']));
+				$dureePause = 0;
+				$alerteEnCours = 0;
 				$tabGeofence[$user]['debTime'] = 0;
 				$tabGeofence[$user]['cloture'] = 0;
 				$tabGeofence[$user]['dureeTotale'] = 0;
 				$tabGeofence[$user]['sommePause'] = 0;
 				$tabGeofence[$user]['$dureePause'] = 0;
+				$tabGeofence[$user]['deltaI_Pause'] = 0;
 				$tabGeofence[$user]['distanceTotale'] = 0;
 				$tabGeofence[$user]['denivelePlus'] = 0;
 				$tabGeofence[$user]['deniveleMoins'] = 0;

@@ -37,7 +37,6 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	$timeOut = $detailsZone['timeOut'];
 	$pcEcartMax = $detailsZone['pcEcartMax'];
 	$periodicite = $detailsZone['periodicite'];
-	$correction = $detailsZone['correction'];
 	if (!$equip) { continue; }
 
 	$mode = $tabChauffages_[$nomChauffage]['mode'];
@@ -45,9 +44,10 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	
 	$cmdResume = mg::toID("#[$zone][Résumé][$nomResume]#");
 	$tempResume = mg::getCmd($cmdResume);
+	$correction = -0.0;	//$detailsZone['correction']; A remettre à zéro APRES la correction
 	// Température moyenne de reference sur la moyenne (dérive possible)
-//	$tempMoyenneRef = $consigne + $correction;
-	$tempMoyenneRef = round(scenarioExpression::averageBetween($cmdResume, "$periodicite hour ago", 'now'), 2) - $correction;
+	$tempMoyenneRef = round(scenarioExpression::averageBetween($cmdResume, "$periodicite hour ago", 'now'), 2) + $correction;
+	$tempResume = $tempMoyenneRef; ///////////////////////////////
 
 	// Planification de la prochaine 'correction' à 'periodicité' + 1 heure du dernier changement de mode ET SI en mode 'Confort'
 	$infMode = mg::toID("#[$zone][Températures][Consigne Chauffage]#");
@@ -57,10 +57,10 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 		$cdMakeOffset = 1;
 		mg::setInf($infMode,  '', 'Correction');
 	} else { $cdMakeOffset = 0; }
-	
-mg::messageT('', "! Traitement de $zone/$nomChauffage - consigne : $mode/$consigne - periodicite : $periodicite h (New correction à ".date('H\hi\m\n', ($valueDate+($periodicite+1)*3600)).") - timeOut : $timeOut - pcEcartMax : $pcEcartMax");
 
-//$cdMakeOffset = 1; // ***** POUR DEBUG *****
+	//$cdMakeOffset = 1; // ***** POUR DEBUG *****
+	
+	mg::messageT('', "! Traitement de $zone/$nomChauffage - consigne : $mode/$consigne - periodicite : $periodicite h (New correction à ".date('H\hi\m\n', ($valueDate+($periodicite+1)*3600)).") - timeOut : $timeOut - pcEcartMax : $pcEcartMax");
 
 	ControleResumes($zone, $nomChauffage, $cleResume, $timeOut, $pcEcartMax, $tempResume, $tempMoyenneRef, $correction, $periodicite, $cdMakeOffset, $logDebug, $timeLine);
 }
@@ -210,7 +210,7 @@ function cmdIsOK($cmd, $tempResume, &$lastComm, &$pcEcart, &$valCmd, $enable) {
 	$valCmd = mg::getCmd($cmd, '', $collectDate, $valueDate);
 	$lastComm = round(((time() - $collectDate)/60));
 
-	$pcEcart = abs(round(($tempResume-$valCmd)/$tempResume*100, 1));
+	$pcEcart = $tempResume > 0 ? abs(round(($tempResume-$valCmd)/$tempResume*100, 1)) : 0;
 //	mg::debug();
 	mg::message('', "Last comm $lastComm mn - $pcEcart % ($tempResume/$valCmd) - enabled : $enable");
 }

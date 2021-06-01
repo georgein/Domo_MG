@@ -35,7 +35,11 @@ Desactive l'éclairage du salon la journée et la nuit si éteint, l'active le s
 /**********************************************************************************************************************/
 /**********************************************************************************************************************/
 //$nuitSalon = 1;
-	$oldNuitSalon = $nuitSalon;
+$oldNuitSalon = $nuitSalon;
+
+// NE PAS DERANGER
+$nePasDeranger = mg::TimeBetween(strtotime($timeVoletsNuit), time(), $heureReveil);
+if ($nePasDeranger || $nuitSalon == 2) { mg::setVar('nePasDeranger', 1); } else { mg::setVar('nePasDeranger', 0); }
 	
 if (mg::getCmd($infCinemaEtat)) { return; }
 
@@ -46,7 +50,7 @@ if ( ($nuitSalon == 2 && $nbMvmt >= $seuilNbMvmt)
 	$message = "NuitSalon - Passage à SoirSalon (1).";
 }
 // JOUR
-elseif ($nuitSalon != 0 && $lumSalon >= $seuilLumSalon*1.25) {
+elseif ($nuitSalon != 0 && $lumSalon >= $seuilLumSalon*1.35) {
 	$nuitSalon = 0;
 	$message = "NuitSalon - Passage à JourSalon (0).";
 }
@@ -57,16 +61,13 @@ if ($lumSalon < $seuilNuitSalon && $nuitExt) {
 }
 
 //$nuitSalon = 1; // POUR DEBUG
+
 // Si changement
 if ($nuitSalon != $oldNuitSalon) {
 	mg::setVar('NuitSalon', $nuitSalon);
 	if ($nuitSalon == 2 || $oldNuitSalon == 2) { mg::Message($logTimeLine, $message); }
 	sleep(120); // Pour éviter yoyo sur passage à nuit et nbMvmt
 }
-
-// NE PAS DERANGER
-$nePasDeranger = mg::TimeBetween(strtotime($timeVoletsNuit), time(), $heureReveil);
-if ($nePasDeranger || $nuitSalon == 2) { mg::setVar('nePasDeranger', 1); } else { mg::setVar('nePasDeranger', 0); }
 
 // Allumage le soir et pas en alarme
 if (!$alarme && $nuitSalon == 1) {

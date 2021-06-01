@@ -10,7 +10,7 @@ Fonctions prise en charge :
 **********************************************************************************************************************/
 
 // Infos, Commandes et Equipements :
-//	$EquipCube, $equipEcl, $equipEclExt
+//	$equipEcl, $equipEclExt
 
 // N° des scénarios :
 

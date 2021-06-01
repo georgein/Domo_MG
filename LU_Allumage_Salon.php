@@ -54,7 +54,7 @@ if ($alarme != 0 || $nuitSalon == 0 || $lastMvmt >= $timeOutSalon || $boutonEven
 }
 
 // Allumage manuel ou reprise de mouvement
-if (( $nuitSalon != 0 && $memoEtat < $intensiteMininimum && $nbMvmt >= $seuilNbMvmt) || $boutonEvent == 'simple') {
+if (( $nuitSalon != 0 && $memoEtat < $intensiteMininimum && $nbMvmt >= $seuilNbMvmt) || $boutonEvent == 'single') {
 	//=====================================================================================================================
 	mg::MessageT('', "! ALLUMAGE MANUEL OU AUTOMATIQUE");
 	//=====================================================================================================================
@@ -101,7 +101,7 @@ if (($newIntensite < 1 && ($memoEtat > 0) || $boutonEvent == 'double')) {
 	mg::Message($logTimeLine, "Extinction du salon terminé.");
 
 // Au premier allumage complet
-} elseif ($newIntensite > 0 && ($nomDeclencheur == 'Lampe Générale Etat' || $boutonEvent == 'simple')) {
+} elseif ($newIntensite > 0 && ($nomDeclencheur == 'Lampe Générale Etat' || $boutonEvent == 'single')) {
 	mg::Message($logTimeLine, "Allumage du salon terminé.");
 }
 
@@ -112,10 +112,16 @@ function PiloteLampes($equipEcl, $tabLampes, $intensite, $ambiance, $logTimeLine
 	// Boucle des lampes
 	for ($i = 0; $i < count($tabLampes); $i++) {
 		$details_Lampe = explode(':', $tabLampes[$i]);
-		$maxValue = mg::getMinMaxCmd($details_Lampe[0], 'Etat', 'max');
+
+		$maxValue = 254;
+		if (mg::existCmd($details_Lampe[0], 'Etat_Intensité')) {
+			$maxValue = mg::getMinMaxCmd($details_Lampe[0], 'Etat_Intensité', 'max');
+		} 
+		
 		$intensiteAmbiance = max(0, intval($details_Lampe[$ambiance + 1]));
-		$newIntensite = min($maxValue, round(($intensite/99 * $intensiteAmbiance/99 * (($maxValue > 0) ? $maxValue : 99))));
+		$newIntensite = min($maxValue, round(($intensite/99 * $intensiteAmbiance/99 * $maxValue)));
 		mg::setLampe($details_Lampe[0], $newIntensite);
+		//mg::message('', $details_Lampe[0]."************************** $intensiteAmbiance - $intensite - $maxValue");
 	}
 	mg::setCmd($equipEcl, 'Lampe Générale Slider', $intensite);
 }

@@ -179,13 +179,8 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	$modeCourant = $tabChauffages_[$nomChauffage]['mode'];
 	$colorCourante = ($modeCourant == 'Confort') ? 'Yellow' : (($modeCourant == 'Eco') ? 'lightGreen' : 'lightBlue');
 	$ConsigneCourante = ($modeCourant == 'Confort') ? $tempConfort : (($modeCourant == 'Eco') ? $tempEco : $tempHG);
-/*	$chaufLib =
-		"<font color='$colorCourante'>  Mode ".$modeCourant.'</font><br><br> ('
-		.($modeCourant == 'Confort' ? "<font color='$colorCourante'>".round($tempConfort, 1).'</font>' : round($tempConfort, 1))
-		.' | '.($modeCourant=='Eco' ? "<font color='$colorCourante'>".round($tempEco, 1).'</font>' : round($tempEco, 1))
-		.' | '.($modeCourant=='HG' ? "<font color='$colorCourante'>".round($tempHG, 1).'</font>' : round($tempHG, 1)).')';*/
-
 	$chaufLib = "<font color='$colorCourante'>Mode $modeCourant ($ConsigneCourante °)</font><br><br>Confort :";
+
 	mg::setInf("#[$nomChauffage][Températures][Consigne Chauffage]#", '', $chaufLib);
 }
 

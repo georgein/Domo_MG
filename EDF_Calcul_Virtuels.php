@@ -34,11 +34,11 @@ foreach ($tabConso as $equipement => $detailsConso) {
 	// ------------------------------------- GESTION DES MIN / MAX DE CONSOMMATION ------------------------------------
 	if ($gestionMinMax == 'true' && mg::existCmd($equipement, 'Consommation')) {
 		$infConso = mg::mkCmd($equipement, 'Consommation');
-		$consommation = mg::getCmd($infConso);
-		$consoDay = intval(mg::getExp("minBetween($infConso,7 day ago, now)")); 
+		$consommation = floatval(mg::getCmd($infConso));
+		$consoDay = floatval(mg::getExp("minBetween($infConso,7 day ago, now)")); 
 		$consoDay = max(($consommation - $consoDay)/7, 2); 
-		$min = max(round($consommation-5), 0);
-		$max = round($consommation+$consoDay*1.5+5, 0);
+		$min = max(round($consommation-5), 0);//*0+5;////////////////////////////////////
+		$max = round($consommation+$consoDay*+5, 0);//*3;////////////////////////////
 		mg::setMinMaxCmd($equipement, 'Consommation', $min, $max);
 		if (!$recalculConso) { $tabConso[$equipement]['consoCalculee'] = ''; }
 		if ($recalculPuissance || $recalculConso) {

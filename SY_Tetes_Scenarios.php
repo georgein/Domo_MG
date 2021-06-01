@@ -56,17 +56,18 @@ foreach ($dataStore as $variable) {
 $exportTxt .=  "\n";
 $exportTxt .=  str_repeat("\t", 13) . "$i Variables Jeedom.\n";
 
+mg::MessageT('', "-----------------------Export des variables terminés. ------------------------------");
+
 //-----------------------------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------------------------------------------------
-mg::debug(0);
-
 // Export des scénario
 foreach ($scenario->all() as $scenario) {
 
 	$export = $scenario->export('array');
 
-	$blocCode = $export['elements'][0]['subElements'][0]['expressions'][0]['expression']; if (mg::$__debug) { print_r($export); }
+	$blocCode = $export['elements'][0]['subElements'][0]['expressions'][0]['expression']; 
+//		print_r($export); 
 
 		// On filtre les scénarios sur l'existence d'une ligne d'étoile en tête du bloc code
 	if (strpos($blocCode, '******************') !== false) {
@@ -75,6 +76,7 @@ foreach ($scenario->all() as $scenario) {
 		$exportTxt .=  $separateur;
 		$exportTxt .=  $nom;
 		$exportTxt .=  $separateur;
+mg::message('', $exportTxt);
 
 		// Calcul du schedule
 		$schedule = $export['schedule'];
@@ -89,14 +91,12 @@ foreach ($scenario->all() as $scenario) {
 
 		// Export du bloc code
 		$exportTxt .= "\n$blocCode\n";
-
 	}
 }
 $exportTxt .= "\n?>";
 
 file_put_contents($fileExport, $exportTxt);
 
-mg::Message('', "-----------------------Export des scénarios et des variables terminés. ------------------------------");
-mg::Message($logTimeLine, "Export des Scénarios terminé.");
+mg::MessageT('', "-----------------------Export des scénarios terminés. ------------------------------");
 
 ?>

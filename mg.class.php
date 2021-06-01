@@ -35,7 +35,7 @@ class mg {
 	static $__log_INF2 = 'INF2 : ';				// Affichage des messages info des routines de type getParam ou setXxxx
 	static $__log_SP = 'SP : ';					// Affichage des messages résultats des routines
 
-	private static $__debug = 3;
+	private static $__debug = 4;//3;
 	private static $__wait_cmd = true;
 	private static $__stop_exception = 'Arrêt forcé du scénario';
 
@@ -50,12 +50,15 @@ class mg {
 		$tabParams = self::getVar('tabParams');
 		$scenarioVoletManuel = 107;
 
-		$mode = $scenario->getConfiguration('logmode'/*, 'default'*/);
+		$mode = $scenario->getConfiguration('logmode');
 		// Passe $debug selon le 'mode' du scénario.
 		if ($mode == 'realtime') { $debug = 5; }
 		elseif ($mode == 'default') { $debug = 4; }
 		else { $debug = -1; }
 		self::delLog($del);
+		$message = ' Déclencheur : '.self::declencheur().' ';
+		$message = str_repeat("=", (138-strlen($message))/2).$message.str_repeat("=", (138-strlen($message))/2);
+		$scenario->setlog($message);
 		self::debug($debug, $mode);
 	}
 
@@ -354,6 +357,7 @@ mg::message('', $requete);
 
 		// Envoie de la requète
 		if ($requete != '') {
+			//$requete = urlencode($requete);
 			$file = @file_get_contents($requete);
 			self::message('', "$requete => '$file'");
 	// ------------------------------------------------------------------------------------------------------------------
@@ -610,11 +614,11 @@ mg::message('', $requete);
 			$cdOuvert = self::getCmd($equipOuverture, 'Ouverture');
 		}
 		else {
-			$cdOuvert = 0;
+			$cdOuvert = 1;////////////////////////////////////////////////////////////////////
 		}
 
 		// ------------------------------- CALCUL DU TYPE ---------------------------------
-		if ($cdOuvert) { $type = 100; } //Image fenêtre ouverte
+		if (!$cdOuvert) { $type = 100; } //Image fenêtre ouverte
 		else { $type = 0; } // Image fenêtre fermée
 
 		// Calcul de l'état du volet corrigé du type pour le widget
@@ -1012,35 +1016,39 @@ function minuterie($equipEcl, $infNbMvmt, $timer=2, $cdExtinction, $cdAllumage, 
 * UTIL													SET LAMPE														*
 *************************************************************************************************************************
 * Gère le contrôle des lampes en prenant en compte 																		*
-*	L'obligation du On  pour celle pourvue d'une commande  Etat_On-Off													*
+*	L'obligation du On  pour celle pourvue de commandes  Etat_On/Off ET Etat_Intensité									*
 *	Une attente de dispo de Zwave pour les types openzwave pour éviter la saturation de la queue						*
 *	Paramètres :																										*
 *		$equipLampe : Le nom de l'équipement de la lampe																*
 *		La nouvelle intensité désirée																					*
 ************************************************************************************************************************/
 function setLampe($equipLampe, $intensite) {
-	$type = strtolower(mg::getTypeEqui($equipLampe));
+	$type = strtolower(self::getTypeEqui($equipLampe));
 	// Si type == openzwave on attend queue Zwave == 0
-	if ($type == 'openzwave') { mg::ZwaveBusy(1, 5); }
+	//if ($type == 'openzwave') { self::ZwaveBusy(1, 5); }
 
 	// Lampe avec réglage intensité
-	$etatLampe = mg::getCmd($equipLampe, 'Etat');
-	mg::message('', "Equipement : ".self::toHuman($equipLampe)." - Intensité : $etatLampe ($etatLampe => $intensite) type : $type");
-	if (mg::existCmd($equipLampe, 'Slider Intensité')) {
-		if ($intensite == 0 && $etatLampe >= 1) {
-			mg::setCmd($equipLampe, 'Slider Intensité', $intensite);
-			mg::setCmd($equipLampe, 'Off');
-		} elseif ($intensite > 0 && $etatLampe != $intensite) {
-			//mg::setCmd($equipLampe, 'On');
-			mg::setCmd($equipLampe, 'Slider Intensité', $intensite);
+	if (self::existCmd($equipLampe, 'Slider Intensité')) {
+		if (self::existCmd($equipLampe, 'Etat_Intensité')) {
+			$etatLampe = self::getCmd($equipLampe, 'Etat_Intensité');
+		} else {
+			$etatLampe = self::getCmd($equipLampe, 'Etat');
 		}
+
+		self::setCmd($equipLampe, 'Slider Intensité', $intensite);
+		if ($intensite == 0 && $etatLampe >= 1) {
+			self::setCmd($equipLampe, 'Off');
+		} elseif ($intensite > 0 && $etatLampe != $intensite) {
+			self::setCmd($equipLampe, 'On');
+		}
+		self::messageT('', "Equipement : ".trim(self::toHuman($equipLampe))." - Intensité : $etatLampe => $intensite - type : $type");
 
 	// Lampe SANS réglage intensité
 	} else {
 		if ($intensite == 0 ) {
-			mg::setCmd($equipLampe, 'Off');
+			self::setCmd($equipLampe, 'Off');
 		} elseif ($intensite > 0) {
-			mg::setCmd($equipLampe, 'On');
+			self::setCmd($equipLampe, 'On');
 		}
 	}
 }
@@ -2122,7 +2130,7 @@ function FONCTIONS_SCENARIOS(){}
 	$scenarioID = $scenarioID = $scenario->getID();
 	$fileLog = "/var/www/html/log/scenarioLog/scenario$scenarioID.log";
 		$error = @shell_exec("sudo grep -rn -o -i 'error' $fileLog --files-with-matches");
-		if (!$error) {
+		if (!$error && !$del) {
 			shell_exec("sudo rm -f $fileLog");
 		}
 }

@@ -23,7 +23,7 @@ Parcours les équipements sur batterie et affiche :
 	$queueZwaveMin = 5;	$queueZwaveMax = 10;
 
 // Variables de Ctrl des équipements
-	$alerteComDefaut = 90;								// temps maximum par defaut, en mn depuis dernière comm de l'équipement
+	$alerteComDefaut = 1440;								// temps maximum par defaut, en mn depuis dernière comm de l'équipement
 	$alerteComBattery = 14*1440;						// temps maximum, en mn depuis le dernier retour de la batterie 
 	$alerteChgmtBattery = 2*(365)*1440;				// temps maximum, en mn depuis le dernier changement de la batterie 
 	
@@ -89,14 +89,14 @@ if ($nomTab == '_alertes' || (mg::getTag('#heure#')*60 + mg::getTag('#minute#'))
 			if (intval($DureeMaxComDefaut) > 0 && $lastComDuree > $DureeMaxComDefaut) {
 				$messages .= "$type - $equip - last Comm : {$detailsEquip['cDepuis']} > $DureeMaxComDefaut mn)<br>";
 				// ********************* CORRECTION refreshAllValues DE ZWAVE *****************
-				if ($type == 'openzwave' && !$detailsEquip['pcBattery']) { 
+/*				if ($type == 'openzwave' && !$detailsEquip['pcBattery']) {
 					$logicalID =  $detailsEquip['-logicalID'];
 					if( mg::ZwaveBusy() == 0) {
-//						mg::ZwaveAction($logicalID, $nomActionZwave);
+						mg::ZwaveAction($logicalID, $nomActionZwave);
 						mg::message(mg::getParam('Log', 'timeLine'), "WARNING monitoring - ERROR '$nomActionZwave' de $type - $equip ($logicalID) lastCom : $lastComDuree mn.");
-//						mg::ZwaveBusy(1);
+						mg::ZwaveBusy(1);
 					}
-				}
+				}*/
 			}
 			
 			if (trim($detailsEquip['pcBattery']) != '') {
@@ -120,6 +120,7 @@ if ($nomTab == '_alertes' || (mg::getTag('#heure#')*60 + mg::getTag('#minute#'))
 			}
 		}
 	}
+
 	// En tête des messages de ctrlErreurBat
 	if ($messages) {
 		$equipErreur = "Capteurs en ERREUR : <br>$messages";
@@ -274,11 +275,11 @@ function LoadAvg($equipMonitoring, $loadMin, $loadMax, &$upTxt, $queueZwaveMin, 
 	}
 	
 	//	Calcul / affichage de la queue Zwave
-	$queueZwave = mg::ZwaveBusy();
+/*	$queueZwave = mg::ZwaveBusy();
 	$queueZwave = ThreeColor($queueZwave, $queueZwaveMin, $queueZwaveMax, '', $color);
-	$queueZwave = ThreeColor("Queue Zwave : ", '', '', '', $color) . $queueZwave;	
+	$queueZwave = ThreeColor("Queue Zwave : ", '', '', '', $color) . $queueZwave;	*/
 
-	$upTxt = "Up $nbJours $nbHeures" . ' - ' . $queueZwave;
+	$upTxt = "Up $nbJours $nbHeures";// . ' - ' . $queueZwave;
 
 	// Calcul et mise en couleurs des AvgLoad
 	$loadAvg_1 = $loadAvgDetails[$Count-2];
@@ -371,6 +372,7 @@ function setAlertes ($batteryDangerDefaut, $batteryWarningDefaut, $excludeEquip)
 		$ID = $eqLogic->getId();
 		$type = strtolower($eqLogic->getEqType_name()); 
 		$humanName = $eqLogic->getHumanName();
+		
 		$isEnabled = $eqLogic->getIsEnable();
 		if (!$isEnabled) { continue; }
 		$isVisible = $eqLogic->getIsVisible();
@@ -438,7 +440,6 @@ function getAlertes ($excludeEquip, $excludeActivite, $excludeBattery, $batteryD
 	mg::unsetVar('_alertes');
 //	unset($alertes);
 	$_alertes = array();
-
 	$eqLogics = eqLogic::all();
 	// Lecture de la base de données
 	foreach($eqLogics as $eqLogic) {

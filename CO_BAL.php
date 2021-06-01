@@ -5,7 +5,7 @@ Gestion de la boite aux lettres.
 **********************************************************************************************************************/
 
 // Infos, Commandes et Equipements :
-// $inPorteEntree, $infBAL_Mvmt, $infBAL_Mvmt2, $infBalAff,
+// $inPorteEntree, $infBAL_Mvmt, $infBalAff,
 
 // N° des scénarios :
 
@@ -30,7 +30,7 @@ if ($nePasDeranger) { return; }
 if (mg::declencheur('schedule') || mg::declencheur('user')) {
 		mg::setInf($infBalAff, '', 0);
 }
-$balMvmt = mg::getCmd($infBAL_Mvmt) + mg::getCmd($infBAL_Mvmt2);
+$balMvmt = mg::getCmd($infBAL_Mvmt); 
 
 // CD NE PAS DERANGER
 if (mg::TimeBetween(strtotime($timeVoletsNuit), time(), $heureReveil)) { return; }

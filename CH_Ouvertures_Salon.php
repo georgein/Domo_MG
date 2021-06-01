@@ -35,8 +35,8 @@ if ( $nuitSalon == 2 || $alarme) {
 	}
 
 // Pause pour éviter les faux signaux en cas d'ouverture/fermeture ponctuelle
-if (mg::declencheur('NbPortes')) {
-	sleep (15);
+if (mg::declencheur('NbPortes') && mg::getCmd($infNbPortesSalon) > 0) {
+	sleep (30);
 	mg::setCron('', time() + 90);
 }
 
@@ -49,7 +49,7 @@ $difference = $tempSalon - $tempExt;
 mg::MessageT('', "Saison : $saison - (TempExtérieure : $tempExt - TempSalon : $tempSalon) => (TempSeuilPorte : $tempSeuilPorte - Différence avec Ext. : $difference");
 
 // Sortie si différence non significative ou trop élevé
-if ($difference < $tempSeuilPorte /*|| $difference > 2 * $tempSeuilPorte*/) {
+if ($difference < $tempSeuilPorte) {
 	mg::LampeCouleur($equipLampeCouleur, 0);
 	mg::unsetVar('_DemandeFaite');
 	return;

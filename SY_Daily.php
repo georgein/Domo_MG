@@ -69,22 +69,14 @@ if (mg::declencheur('schedule')) {
 	// *EFFACEMENT DES LOG DU JOUR
 //	log::removeAll();
 	
-	if ($soignerZwave) { 
+/*	if ($soignerZwave) { 
 		mg::zwaveSoins(); 
 		mg::Message($logTimeLine, "Daily - Soigner Zwave OK.");
-	}
+	}*/
 	// ............................
 }
 
 if (mg::declencheur('end_backup')) {
-	
-	if ($snapshotsVmWare) {
-		//=============================================================================================================
-		mg::MessageT('', "! GESTION DES SNAPSHOTS");
-		//=============================================================================================================
-		SnapShot($vmWareJeedom, $snapshotspNbJours, $logTimeLine);
-		SnapShot($vmWareAntenne, $snapshotspNbJours, $logTimeLine);
-	}
 
 	if ($ctrlBackup) {
 		//=============================================================================================================
@@ -103,6 +95,14 @@ if (mg::declencheur('end_backup')) {
 			mg::Message('MESSAGE', $messageBackup);
 		}
 		mg::Message($logTimeLine, $messageBackup);
+	}
+	
+	if ($snapshotsVmWare) {
+		//=============================================================================================================
+		mg::MessageT('', "! GESTION DES SNAPSHOTS");
+		//=============================================================================================================
+		SnapShot($vmWareJeedom, $snapshotspNbJours, $logTimeLine);
+		SnapShot($vmWareAntenne, $snapshotspNbJours, $logTimeLine);
 	}
 
 	if ($savGdrive) {

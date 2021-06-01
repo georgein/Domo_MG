@@ -22,7 +22,7 @@ Joue un son à l'ouverture de la porte.
 if(mg::declencheur('user')) { return; }
 
 // Ouverture
-if (mg::getCmd(mg::declencheur()) == 1) {
+if (mg::getCmd(mg::declencheur()) == 0) {
 	if ($nuitSalon) { mg::setCmd($equipEclCuisine, 'On'); }
 	mg::GoogleCast ('PLAY', $sonOuverture, $volOuverture);
 }

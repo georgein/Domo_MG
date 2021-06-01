@@ -2,9 +2,9 @@
 /**********************************************************************************************************************
 EDF_Tab_Conso - 127
 Calcul les consommations par mois, années et totale.
-La première ligne du tableau @TabConso doit OBLIGATOIREMENT commencer par le cpt_Ligne général.
+La première ligne du tableau @TabConso doit OBLIGATOIREMENT commencer par le cpt_Ligne général et se terminer par ENEDIS EN DERNIER.
 ***********************************************************************************************************************/
-global $tabConso, $tabNomCol, $tabAff;
+global $tabConso, $tabNomCol, $tabAff, $cmdMaj_Aff;
 
 // Infos, Commandes et Equipements :
 	// $equipEDF, $equipConso
@@ -26,6 +26,7 @@ global $tabConso, $tabNomCol, $tabAff;
 /**********************************************************************************************************************
 **********************************************************************************************************************/
 $traitementPartiel = false;
+$cmdMaj_Aff = trim(mg::toID($equipEDF, 'Maj_Aff_'), '#'); // Pour relnce via JS
 
 // Gestion MàJ du widget (action à "JAMAIS REPETER")
 if (mg::declencheur('Maj_Aff') && mg::getCmd($equipEDF, 'Maj_Aff')) {
@@ -43,7 +44,7 @@ maj:
 if ($traitementPartiel) {
 	$tabAff = mg::getVar('_consoEDF_TabAff');
 	$tabNomCol = mg::getVar('_consoEDF_TabNomCol');
-	$nbLgnAffichage = mg::getVar('_consoEDF_NbLgn', 0);
+	$nbLgnAffichage = mg::getVar('_consoEDF_NbLgn');
 	mg::message('', "============> TRAITEMENT PARTIEL <=============================");
 	goto Affichage;
 }
@@ -136,7 +137,7 @@ $TxtHTML .= FinTableau($width);
 $TxtHTML .= styleTab();
 mg::setInf($equipConso, 'Conso_HTML', $TxtHTML);
 
-//file_put_contents($fileExportHTML, $TxtHTML); /* pour debug */
+file_put_contents($fileExportHTML, $TxtHTML); /* pour debug */
 file_put_contents($fileExportJS, $script); 
 
 if (abs($tabAff[$idxAutre]['Puiss.']) < 500) {
@@ -308,20 +309,20 @@ return $HTML;
 													LignesMois
 // ==================================================================================================================*/
 function LigneMois($numLigne, $consoCoutKWH, &$script, $pathRef) {
-	global $tabNomCol, $tabConso, $tabAff;
+	global $tabNomCol, $tabConso, $tabAff, $cmdMaj_Aff;
 
 	$nbLignes = count($tabConso);
 	$tabAffLgn = $tabAff[$numLigne];
 
 	$consoMoisCourantTotale = round($tabAff[1]['Mois courant'] / date('d') * date('t'));
 	$ConsoMoisCourant = round($tabAffLgn['Mois courant'] / date('d') * date('t')); 
-	$PourCentMois = $consoMoisCourantTotale ? round($ConsoMoisCourant / $consoMoisCourantTotale * 100, 1) : 0;
+	$PourCentMois = $consoMoisCourantTotale > 0 ? round($ConsoMoisCourant / $consoMoisCourantTotale * 100, 1) : 0;
 
 	$consoAnnuelleTotale = $tabAff[1]['Kw Ann.'];
 	$consoAnnuelleEquip = round($tabAffLgn['Kw Ann.']);
 	$consoMensuelle = round($consoAnnuelleEquip / 12);
 	$coutAnnuel = round($consoAnnuelleEquip * $consoCoutKWH);
-	$pourCent = round($consoAnnuelleEquip / $consoAnnuelleTotale * 100,1);
+	$pourCent = $consoAnnuelleTotale > 0 ? round($consoAnnuelleEquip / $consoAnnuelleTotale * 100, 1) : 0;
 
 	$puissance = round($tabAffLgn['Puiss.']);
 	$equiConso = $tabAffLgn['EquiConso'];
@@ -384,8 +385,9 @@ $HTML = "
 	$script .= "
 	$('.Conso$equiConso').on('click',function(){ graph('$tabAffLgn[Nom]', $equiConso);});
 	$('.Puis$equiPuis').on('click',function(){ graph('$tabAffLgn[Nom]', $equiPuis);});
+
 	$('.Action$equiAction').on('click',function(){ jeedom.cmd.execute({id: '$equiAction'});
-		setTimeout(refresh, 4000);
+		setTimeout('jeedom.cmd.execute({id: $cmdMaj_Aff})', 1000);
 	});
 	";
 	

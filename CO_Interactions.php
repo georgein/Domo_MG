@@ -684,8 +684,6 @@ function getCmdInfo(&$r) {
 			$r['cmd'] = trim($found[0]);
 		} else { $r['cmd'] = 'Etat'; }
 		
-		//if ($r['cmd'] == $r['objet']) {$r['cmd'] = 'etat'; }////////////////////////////////////////
-		
 		// exceptions de libellé pour l'état d'une commande
 		if ($r['objet'] == 'porte') { $r['cmd'] = 'ouverture'; }
 		if ($r['objet'] == 'fenêtre') { $r['cmd'] = 'ouverture'; }

@@ -193,7 +193,7 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 		$sliderOuvert = $sliderCourant;
 		if ($nuitSalon == 1) { $sliderOuvert = $sliderSoirETE_O; } // Le soir (Si fenêtre ouverte)
 		if ($nuitSalon == 2) { $sliderOuvert = $sliderNuitETE_O; } // La nuit (Si fenêtre ouverte)
-		if ($cdOuvert) {
+		if (!$cdOuvert) {
 			$slider = $sliderOuvert; $messageAff = "Fenêtre ouverte.";
 			if ($voletInverse == '-') { $slider = 99; $messageAff = "$messageAff ==> Fin"; }
 		}
@@ -211,7 +211,7 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 	}
 	fin:
 
-	if ($cdOuvert && $cdVentVort && $ventMax > 0) {
+	if (!$cdOuvert && $cdVentVort && $ventMax > 0) {
 		//=============================================================================================================
 		mg::messageT('', ". FERMETURE VOLET SI VENT FORT");
 		//=============================================================================================================
@@ -220,7 +220,7 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 		$messageAff = "Vent fort / Nuit";
 	}
 
-	if ($alerteOuvert == 'A' && $cdOuvert) {
+	if ($alerteOuvert == 'A' && !$cdOuvert) {
 		//=============================================================================================================
 		mg::messageT('', ". ALERTE FENETRE OUVERTE");
 		//=============================================================================================================

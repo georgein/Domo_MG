@@ -3,6 +3,8 @@
 Cube - 132
 Gestion du Cube Magique Xiaomi
 Allumage et extinction de la radio Sono, gestion du volumesonore, Allumage/Extinction lumière extérieure
+
+Mouvement : rotate_right, rotate_left, slide (glissement horizontal), shake (agiter), tap (tper deux fois), flip90, fall (chute)
 **********************************************************************************************************************/
 
 // Infos, Commandes et Equipements :
@@ -23,8 +25,10 @@ Allumage et extinction de la radio Sono, gestion du volumesonore, Allumage/Extin
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-$valEtat = mg::getCmd(mg::declencheur());
-$mouvement = deconz_lumi_sensor_cube_data($valEtat);
+//$valEtat = mg::getCmd(mg::declencheur());
+//$mouvement = deconz_lumi_sensor_cube_data($valEtat);
+
+$mouvement = mg::getCmd(mg::declencheur());
 
 $eclEnCours = mg::getCmd($equipEcl, 'Lampe Générale Etat');
 $sonosEnCours = mg::getCmd($equipSonos, 'Status');
@@ -37,18 +41,18 @@ mg::messageT('', "Mouvement ($mouvement) => Sonos en cours : $sonosEnCours - Mem
 // Allumage lampes extérieures
 //=====================================================================================================================
 // tap_twice : Taper deux fois sur la surface où il se trouve.
-if ($mouvement == 'tap_twice') {
-	if ($eclEnCours == 0) {
-			mg::setCmd($equipEclExt, 'Lampe Générale Slider', 99);
+if ($mouvement == 'tap') {
+	if (mg::getCmd($equipEclExt, 'Lampe Générale Etat') == 0) {
+			mg::setCmd($equipEclExt, 'Lampe Générale On');
 	} else {
-		mg::setCmd($equipEclExt, 'Lampe Générale Slider', 0);
+		mg::setCmd($equipEclExt, 'Lampe Générale Off');
 	}
 
 //=====================================================================================================================
 // Mise en route de Sonos sur la radio par defaut du réveil :
-// shake air : Comme son nom l’indique, il suffit de le secouer.
+// shake : Comme son nom l’indique, il suffit de le secouer.
 //=====================================================================================================================
-} elseif ($mouvement == 'shake_air') {
+} elseif ($mouvement == 'shake') {
 	if ($sonosEnCours != 'Lecture') {
 		mg::Message('', "Met en route ou arrète la radio de Sonos");
 		mg::setCmd($equipSonos, 'Volume', $reveilVolumeRadio);
@@ -97,7 +101,7 @@ if ($mouvement == 'tap_twice') {
 // ********************************************************************************************************************
 // ************************************************* DECODAGE DU CUBE *************************************************
 // ********************************************************************************************************************
-function deconz_lumi_sensor_cube_data($buttonevent){
+/*function deconz_lumi_sensor_cube_data($buttonevent){
     if($buttonevent == 0) {
       $result = 'shake_air';
     } else if ($buttonevent == '') {
@@ -122,6 +126,6 @@ function deconz_lumi_sensor_cube_data($buttonevent){
 		  } 
     } 
   return $result;
-}
+}*/
 
 ?>
