@@ -142,7 +142,7 @@ if (!$reveilOnLine) {
 	if (mg::getCmd($infVoletChambre) < 1) {
 		mg::Message($logTimeLine, "Reveil - RELANCE DU REVEIL.");
 		mg::unsetVar('_ReveilOnLine');
-	mg::setCron('', $heureRelance);
+		mg::setCron('', $heureRelance);
 //		goto deb;
 	}
 

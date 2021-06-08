@@ -262,8 +262,9 @@ function verifCode($tabUser, $tab_Password, $codeSaisi) {
 		if ($user == 'RETOUR'  || $user == '') { continue; }
 		if ($detailsUser['mdp'] != $codeSaisi) {
 		// nettoyage des users inutilisés ou supprimé.
-			if ($tabUser[$user]['type'] != 'user') {
-			}
+			//if ($tabUser["Tel-$user"]['type'] != 'user') {
+				//////////////////////////////////////////////////////
+			//}
 			continue;
 		}
 		$nomUserSaisi = $user;

@@ -7,8 +7,8 @@ Permet de remplacer certains fichiers de Jeedom posant problème après la mise 
 
 $logTimeLine = mg::getParam('Log', 'timeLine');
 
-// Sauvegarde
 if (mg::declencheur('begin')) {
+	// Sauvegarde TEMPLATE jMQTT
 	$repDest = '/var/www/html/mg/modif_php_jeedom/template_jMQTT';
 	$fileName = 'var/www/html/plugins/jMQTT/core/config/template/*.json';
 	copyFile ($repDest, '', $fileName);
@@ -18,7 +18,7 @@ if (mg::declencheur('begin')) {
 } elseif (mg::declencheur('end')) {
 	$repOrg = '/var/www/html/mg/modif_php_jeedom';
 	
-	// MEMO TEMPLATE jMQTT
+	// Restaure TEMPLATE jMQTT
 	$fileName = 'template_jMQTT/*.json';
 	$repDest = '/var/www/html/plugins/jMQTT/core/config/template/';
 	copyFile ($repDest, $repOrg, $fileName);
@@ -26,12 +26,12 @@ if (mg::declencheur('begin')) {
 	// MODALE VARIABLES
 	$fileName = 'dataStore.management.php';
 	$repDest = ' /var/www/html/desktop/modal';
-	copyFile ($repDest, $repOrg, $fileName);
+//	copyFile ($repDest, $repOrg, $fileName);
 
 	// ERREURS LOG CMD.CLASS
 	$fileName = 'cmd.class.php';
 	$repDest = '/var/www/html/core/class';
-	copyFile ($repDest, $repOrg, $fileName);
+//	copyFile ($repDest, $repOrg, $fileName);
 
 	// ERREURS LOGS ASUSWRT
 	$fileName = 'asuswrt.class.php';

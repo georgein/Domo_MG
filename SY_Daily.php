@@ -13,7 +13,7 @@ Si flaggé et lancé par EndBackup :
 **********************************************************************************************************************/
 
 // Infos, Commandes et Equipements :
-//	$equipBackupGDrive, $vmWareJeedom, $vmWareAntenne, $googleCastStart
+//	$equipBackupGDrive, $vmWareJeedom, $vmWareMQTT, $vmWareAntenne, $googleCastStart
 
 
 //N° des scénarios à lancer à chaque éxécution:
@@ -102,7 +102,8 @@ if (mg::declencheur('end_backup')) {
 		mg::MessageT('', "! GESTION DES SNAPSHOTS");
 		//=============================================================================================================
 		SnapShot($vmWareJeedom, $snapshotspNbJours, $logTimeLine);
-		SnapShot($vmWareAntenne, $snapshotspNbJours, $logTimeLine);
+		SnapShot($vmWareMQTT, $snapshotspNbJours, $logTimeLine);
+//		SnapShot($vmWareAntenne, $snapshotspNbJours, $logTimeLine);
 	}
 
 	if ($savGdrive) {

@@ -765,6 +765,10 @@ mg::message('', $requete);
 *	Si intensité <= 1 => off (les autres paramètres sont optionnels).													*
 ************************************************************************************************************************/
 	function lampeCouleur($equipement, $intensité=0, $couleur = '', $scenarioStopID = 90, $timing = 0) {
+		
+		// ***** POUR LAMPE COULEURS .... SANS COULEUR *****
+		$couleur = '';
+		
 		if ($scenarioStopID == 0) { $scenarioStopID = 90; }
 		if ($intensité <= 1) { $intensité = 0; }
 
@@ -1973,6 +1977,28 @@ function frameTV($nom, $zone, $action='on') {
 	}
 	self::messageT('', '! '.self::$__log_SP . __FUNCTION__ . " : $nom de $zone est à '$action'");
 }
+
+
+/************************************************************************************************************************
+*																														*
+*												FONCTIONS JEEDOM CONNECT												*
+*																														*
+************************************************************************************************************************/
+function FONCTIONS_JEEDOM_CONNECT(){}
+
+/************************************************************************************************************************
+* Scenario												replaceWidgetCmd												*
+* Remplace des Id de Cmd dans un widget																					*
+************************************************************************************************************************/
+	function replaceWidgetCmd($widgetId, $previousCmd, $newCmd) {
+		require_once dirname(__FILE__) . '/../../plugins/JeedomConnect/core/class/JeedomConnectWidget.class.php';
+
+		//$widgetId = 9876  ;
+		//$previousCmd= '10275'  ;          // <<--- indiquez l'id de la précédente commande statut à modifier 
+		//$newCmd = '1111'   ;             // <<--- indiquez l'id de la nouvelle commande statut à utiliser
+
+		JeedomConnectWidget::replaceTextConfig($widgetId,  array("#".$previousCmd."#" => "#".$newCmd ."#"));
+	}
 
 /************************************************************************************************************************
 * Util														DEBUG														*

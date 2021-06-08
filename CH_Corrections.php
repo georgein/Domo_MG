@@ -89,7 +89,7 @@ function ControleResumes($zone, $nomChauffage, $cleResume, $timeOut, $pcEcartMax
 			$enable = $details['enable'];
 			cmdIsOK($cmd, $tempResume, $lastComm, $pcEcart, $valCmd, $enable);
 			if ($tempResume == 0 || $valCmd == 0) {
-				mg::message($logDebug, "*** ERROR *** ".mg::toHuman('#'.$cmd.'#')." sur la/les Températures ref/Comd : $tempResume/$valCmd");
+				mg::message($logDebug, "*** ERRO R *** ".mg::toHuman('#'.$cmd.'#')." sur la//les Températures ref/Comd : $tempResume/$valCmd");
 				continue;
 			}
 			

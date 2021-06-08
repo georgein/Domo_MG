@@ -395,6 +395,7 @@ function initialize() {
 $polylineAll = '';
 $numUser = 0;
 foreach ($tabGeofence_L as $user => $detailsUser) {
+//	if ($user != $userAppel) continue; ////////////////////////////////////
 	$latlngs = $tabGeofence_L[$user]['latlngs'];
 	$complements = $tabGeofence_C[$user]['complements'];
 

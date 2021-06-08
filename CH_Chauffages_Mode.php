@@ -58,9 +58,9 @@ $zone = mg::declencheur('', 1);
 //=====================================================================================================================
 mg::messageT('', ". GESTION ETE/HIVER");
 //=====================================================================================================================
-$tempMoyExt = round(scenarioExpression::averageBetween($infTempExt, '7 days ago', 'today') +0.5, 1);
+$tempMoyExt = round(scenarioExpression::averageBetween($infTempExt, '7 days ago', 'today') +0.5, 1)      +10; ////////////////////// A SUPPRIMER !!!!!!
 $saison = $tempMoyExt >= $tempSalonConfort ? 'ETE' : 'HIVER';
-mg::message('', "Temp Extérieure Moyenne 7 jours: $tempMoyExt ° ==> $saison");
+mg::messageT('', "Temp Extérieure Moyenne 7 jours: $tempMoyExt ° ==> $saison");
 
 if ($saison != mg::getVar('Saison')) {
 	mg::message($logChauffage, "Passage en '$saison' (temp extérieure moyenne sur 7 jours : $tempMoyExt °)");
@@ -72,7 +72,7 @@ mg::setVar('Saison', $saison);
 $bypassPonderation = (mg::getCmd($infTempExt) < $tempBypassPondertion ? 1 : 0);
 
 // Correction HeureRéveil si dépassée de 1 heures30
-if (time() > $heureReveil+1.5*3600) {
+if (time() > $heureReveil+2*3600) { //////////////////////////////////////////////////////////
 	mg::setVar('_Heure_Reveil', $heureReveil + 24*3600);
 }
 

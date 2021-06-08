@@ -140,8 +140,8 @@ foreach ($tabUser as $user => $detailsUser) {
 		}
 	}
 	
-	// Test Ping direct de l'adresse IP
-	if ($IP && !$OK) {
+	// Test Ping direct de l'adresse IP si lancement shedule
+	if (mg::declencheur('schedule') && $IP && !$OK) {
 		if (mg::getPingIP($IP, $user)) {
 			$OK .= " - PING";
 		}

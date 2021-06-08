@@ -7,7 +7,7 @@ La première ligne du tableau @TabConso doit OBLIGATOIREMENT commencer par le cp
 global $tabConso, $tabNomCol, $tabAff, $cmdMaj_Aff;
 
 // Infos, Commandes et Equipements :
-	// $equipEDF, $equipConso
+	// $equipConso
 
 // N° des scénarios : 
 
@@ -26,16 +26,16 @@ global $tabConso, $tabNomCol, $tabAff, $cmdMaj_Aff;
 /**********************************************************************************************************************
 **********************************************************************************************************************/
 $traitementPartiel = false;
-$cmdMaj_Aff = trim(mg::toID($equipEDF, 'Maj_Aff_'), '#'); // Pour relnce via JS
+$cmdMaj_Aff = trim(mg::toID($equipConso, 'Maj_Aff_'), '#'); // Pour relnce via JS
 
 // Gestion MàJ du widget (action à "JAMAIS REPETER")
-if (mg::declencheur('Maj_Aff') && mg::getCmd($equipEDF, 'Maj_Aff')) {
+if (mg::declencheur('Maj_Aff') && mg::getCmd($equipConso, 'Maj_Aff')) {
 	mg::messageT('', "! MàJ de l'affichage");
-	mg::setInf($equipEDF, 'Maj_Aff', 0);
+	mg::setInf($equipConso, 'Maj_Aff', 0);
 	goto maj;
 //	return;
 }
-mg::setInf($equipEDF, 'Maj_Aff', 0);
+mg::setInf($equipConso, 'Maj_Aff', 0);
 
 // Traitement normal
 if ($detail_Lignes == 3 && mg::getTag('#minute# ') % $periode != 0) { $traitementPartiel = true; }
@@ -330,7 +330,7 @@ function LigneMois($numLigne, $consoCoutKWH, &$script, $pathRef) {
 	$equiEtat = strtoupper($tabAffLgn['EquiEtat']);
 	$equiAction = $tabAffLgn['EquiAction'];
 
-	if ($puissance > 2) { $color = '-red'; } else { $color = ''; }
+	if ($puissance > 5) { $color = '-red'; } else { $color = ''; } // Signalement EN MARCHE
 
 	$btConso = ($equiConso ? "<button class='boutonConso Conso$equiConso'>Conso</button>" : ''); 
 	$btPuis = ($equiPuis ? "<button class='boutonPuis Puis$equiPuis'>Puis.</button>" : '');
