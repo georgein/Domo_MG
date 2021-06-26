@@ -418,7 +418,7 @@ mg::message('', $requete);
 			// =========================================== VOIX VoiceRSS (Online) ===========================================
 			$volume = $complement > 0 ? $complement : self::getParam('Media', 'googleCast_TTS_Vol');
 			if (self::getParam('Media', 'googleCast_TTS_Voix') == 'VoiceRSS') {
-				$nom_File_TTS = 'GoogleCast.mp3';
+				$nom_File_TTS = time().'.mp3';
 					self::VoiceRSS($nom_File_TTS, $message, self::getParam('Media', 'googleCastPathMedia'));
 					sleep(2);
 					$command_string = "cmd=notif|value=$nom_File_TTS";
@@ -427,6 +427,7 @@ mg::message('', $requete);
 					$command_string = "cmd=tts|value=$message";
 				}
 				self::_GoogleCast($equipGoogleCast, $uuid, $command_string, $volume);
+//				if (is_file($nom_File_TTS)) unlink($nom_File_TTS);
 		}
 
 		// --------------------------------------------------------- PLAY ------------------------------------------------
@@ -541,7 +542,7 @@ mg::message('', $requete);
 			// Uniquement si volet existe et volets dans le groupe
 			if (strpos($voletsGroupe, $groupe) !== false) {
 				// Si volet inversé
-				if ($voletInverse == '-') {
+				if ($voletInverse == 'true') {
 					// Si descente on inverse (store banne)
 					if( $slider == 0.1) { $slider = 99; }
 					// Sinon on passe au suivant
@@ -614,7 +615,7 @@ mg::message('', $requete);
 			$cdOuvert = self::getCmd($equipOuverture, 'Ouverture');
 		}
 		else {
-			$cdOuvert = 1;////////////////////////////////////////////////////////////////////
+			$cdOuvert = 1; ////////////////////////////////////////////////////////////////////
 		}
 
 		// ------------------------------- CALCUL DU TYPE ---------------------------------
@@ -818,14 +819,16 @@ function FONCTIONS_UTILITAIRES(){}
 * Usage :																												*
 *			Lancement de l'appel : mg::alerte($nom, $periodicite, $dureeTotale, $destinataires, $message);				*
 *			Rappel de l'alerte mg::alerte($nom);																		*
-*			Annulation de l'alerte mg::alerte($nom , 0);																*
+*			Annulation de l'alerte mg::alerte($nom , -1);																*
 ************************************************************************************************************************/
 	function alerte($nom, $periodicite = 0, $dureeTotale = 60, $destinataires = '', $message = '') {
 		if ($nom == '' ) { return; }
+		$nom = str_replace(' ', '_', $nom);
+		
 		$alertes = self::getVar('tabAlertes');
 
 		// Si heure de fin dépassée ou périodicité == 0, Annulation de l'alerte
-		if (($periodicite < 0 || (@$alertes[$nom]['fin'] && time() >= @$alertes[$nom]['fin']))) {
+		if ($periodicite < 0 || (@$alertes[$nom]['fin'] && time() >= @$alertes[$nom]['fin'])) {
 			// --------------------------------------------------------------------------------------------------------
 			self::messageT('', "! Fin de l'alerte : $nom");
 			// --------------------------------------------------------------------------------------------------------
@@ -846,9 +849,9 @@ function FONCTIONS_UTILITAIRES(){}
 			$alertes[$nom]['debut'] = time();
 			$alertes[$nom]['fin'] = time() + $dureeTotale*60;
 			$alertes[$nom]['last'] = time();
-			self::Message($destinataires, $alertes[$nom]['message']);
+			self::message($destinataires, $alertes[$nom]['message']);
 			self::setVar('tabAlertes', $alertes);
-			mg::setVar("_alerte$nom", time());
+			self::setVar("_alerte$nom", time());
 			self::setCron('', time() + $periodicite*60);
 			return;
 		}
@@ -864,7 +867,7 @@ function FONCTIONS_UTILITAIRES(){}
 			self::setCron('', time() + $alertes[$nom]['periodicite']*60);
 		}
 
-	mg::Message('', print_r($alertes, true));
+//	mg::Message('', print_r($alertes, true));
 }
 
 /************************************************************************************************************************
@@ -1179,7 +1182,7 @@ function dateIntervalle($depuis, $jusque='now', $nbVal =2, &$diff=0) {
 *************************************************************************************************************************
 * Retourne la distance en metre ou kilometre (si $unit = 'k') entre deux latitude et longitude fournies					*
 ************************************************************************************************************************/
-	function getDistance($lat1, $lng1, $lat2, $lng2, $unit ='k') {
+	function getDistance($lat1, $lng1, $lat2, $lng2, $unit ='k', &$azimut=0) {
 		$earth_radius = 6378137;   // Terre = sphère de 6378km de rayon
 		$rlo1 = deg2rad($lng1);
 		$rla1 = deg2rad($lat1);
@@ -1190,11 +1193,15 @@ function dateIntervalle($depuis, $jusque='now', $nbVal =2, &$diff=0) {
 		$a = (sin($dla) * sin($dla)) + cos($rla1) * cos($rla2) * (sin($dlo) * sin($dlo));
 		$d = 2 * atan2(sqrt($a), sqrt(1 - $a));
 		//
+		
+		$azimut = (rad2deg(atan2(sin(deg2rad($lng1) - deg2rad($lng2)) * cos(deg2rad($lat1)), cos(deg2rad($lat2)) * sin(deg2rad($lat1)) - sin(deg2rad($lat2)) * cos(deg2rad($lat1)) * cos(deg2rad($lng1) - deg2rad($lng2)))) + 360) % 360;
+		
 		$meter = ($earth_radius * $d);
 		if ($unit == 'k') {
 			//self::message('', self::$__log_SP . __FUNCTION__ . " : ($lat1, $lng1, $lat2, $lng2) => Distance calculée $meter m.");
 			return floatval($meter / 1000);
 		}
+		
 		return $meter;
 	}
 
@@ -2066,7 +2073,7 @@ function FONCTIONS_SCENARIOS(){}
 *	 - $action : action à effectuer: 'start', 'startsync', 'stop', 'deactivate', 'activate', 'resetRepeatIfStatus'		*
 *	 - $tags : Permets d’envoyer des tags au scénario, ex: 'montag=2' (uniquement valable avec les actions 'start' et	*
 *		'startsync')																									*
-* Exemple : mg::scenario(3, 'startsync', 'tag_1=oui tag_2=non');														*
+* Exemple : mg::setScenario(3, 'startsync', 'tag_1=oui tag_2=non');														*
 ************************************************************************************************************************/
 	function setScenario($scenario_id, $action, $tags = '') {
 		$scenario_id = intval($scenario_id);
@@ -2341,6 +2348,32 @@ function ConfigEquiLogic($typeName, $equipement, $name, $newValue='') {
 	}
 
 /************************************************************************************************************************
+* Jeedom												setRepeatCmd													*
+*************************************************************************************************************************
+* Positionne le repeatEventManagement de la commande à never ou always si nécessaire									*
+************************************************************************************************************************/
+function setRepeatCmd($cmd, $newRepeat) {
+	$cmd_obj = cmd::byString($cmd);
+
+	$actions = array('never', 'always');
+	if (!in_array($newRepeat, $actions)) {
+		self::message('', self::$__log_ERROR . __FUNCTION__ . " : L'action '$newRepeat' n'est pas valide (actions valides : " . implode(", ", $actions));
+		return false;
+	}
+	
+	$repeat = $cmd_obj->getConfiguration('repeatEventManagement', -1);
+	$cmd = self::toHuman($cmd);
+	if ($repeat != $newRepeat) {
+		$cmd_obj->setConfiguration('repeatEventManagement', $newRepeat);
+		$cmd_obj->save();
+		self::message('', self::$__log_SP . __FUNCTION__ . " : $cmd -> $repeat -> $newRepeat");
+    }
+	else {
+		self::message('', self::$__log_SP . __FUNCTION__ . " : $cmd -> $repeat -> Aucun changement");
+	}
+}
+
+/************************************************************************************************************************
 * Jeedom												MAKE CMD														*
 *************************************************************************************************************************
 * Renvoi le nom complet d'une commande avec les # encadrant à partir des paramètres :									*
@@ -2607,7 +2640,7 @@ function ConfigEquiLogic($typeName, $equipement, $name, $newValue='') {
 				self::message('', self::$__log_ERROR . __FUNCTION__ . " : La commande '$cmd' est de type info, utiliser getCmd() pour récupérer sa valeur");
 				return false;
 			}
-			self::message('', self::$__log_INF2 . __FUNCTION__ . " : Exécution d'une commande $cmd".(self::_getCmdWait() ? "" : " (sans attendre), ")." de type $type");
+			self::message('', self::$__log_INF2 . __FUNCTION__ . " : Exécution d'une commande $cmd".(self::_getCmdWait() ? "" : " (sans attendre), ")." de type $type => ".intval($value).".");
 
 			$type = $cmd_obj->getSubtype();
 			$options = array();
@@ -2643,7 +2676,7 @@ function ConfigEquiLogic($typeName, $equipement, $name, $newValue='') {
 				return false;
 			}
 
-			self::message('', self::$__log_SP . __FUNCTION__ . " : Commande de sous-type $type $logOptions");
+			//self::message('', self::$__log_INF . __FUNCTION__ . " : Commande de sous-type $type $logOptions");
 			if (!self::_getCmdWait()) {
 				$options['speedAndNoErrorReport'] = true;
 			}

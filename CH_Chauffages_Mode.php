@@ -72,7 +72,7 @@ mg::setVar('Saison', $saison);
 $bypassPonderation = (mg::getCmd($infTempExt) < $tempBypassPondertion ? 1 : 0);
 
 // Correction HeureRéveil si dépassée de 1 heures30
-if (time() > $heureReveil+2*3600) { //////////////////////////////////////////////////////////
+if (time() > $heureReveil+2.5*3600) { //////////////////////////////////////////////////////////
 	mg::setVar('_Heure_Reveil', $heureReveil + 24*3600);
 }
 

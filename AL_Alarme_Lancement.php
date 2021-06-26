@@ -16,9 +16,10 @@ deb:
 	$scen_GestionAlarme = 64;
 	$scenEclairageSalon = 44;
 	$scenModeChauffage = 104;
+	$svoletsJourNuit = 29;
 
 // Variables :
-	$alarme = mg::getVar('Alarme');
+	$alarme = mg::getVar('Alarme', 0);
 	$nuitExt = mg::getVar('NuitExt');
 	$nbPortes = mg::getCmd($equipGeneralMaison, 'NbPortes');
 
@@ -179,21 +180,21 @@ mg::MessageT('', "! ****************************************** ACTIVATION ******
 			mg::Message($destinatairesAlarme, $message, $prefixeAlarme);
 			goto fin;
 		}
-		if (mg::getCmd($infoPorteEntree)) {
+		if (mg::getCmd($infoPorteEntree) == 0) {
 			$message = "La porte d'entrée est ouverte. Armement de l'alarme impossible !";
 			mg::Message($destinatairesAlarme, $message, $prefixeAlarme);
 			goto fin;
 		}
 	}
 	// Passage en mode Alarme
-//	mg::setInf($equipAlarme, 'Perimetrique Etat', !$nbPortes > 0 ? 1 : 0);
 	$message = "Alarme activée par " . ($force ? 'le mode FORCE' : $nomUserSaisi);
 	if ($debugAlarme) { goto fin; }
 
 	mg::setVar('Alarme', 1);
 
-	// Stop Snaphot avant volet et Stop lumière	 relancement après les volets
-		mg::VoletsGeneral ('Salon, Chambre, Etage', 'D');
+	// Stop volets
+		mg::setScenario($svoletsJourNuit, 'stop');
+		mg::VoletsGeneral('Salon, Chambre, Etage', 'D', 1);
 
 		mg::setCmd($equipEcl, 'Lampe Générale Slider', 0);
 		mg::setScenario($scenEclairageSalon, 'stop');
@@ -219,27 +220,28 @@ mg::MessageT('', "! ***************************************** DESACTIVATION ****
 // --------------------------------------------------------------------------------------------------------------------
 	// Desactivation de l'alarme proprement dite
 	mg::unsetVar('Alarme');
-
+	
 	$message = "Alarme désactivée par " . ($inhibition ? 'le mode INHIBITION' : $nomUserSaisi);
 	mg::Message($logTimeLine, "Alarme - $message");
 	mg::Message($destinatairesAlarme, $message, $prefixeAlarme);
 	mg::LampeCouleur($equipLampeCouleur, 80, mg::VERT, '', 180);
 	mg::setScenario($scen_GestionAlarme, 'deactivate');
 		if ($debugAlarme) { goto fin; }
-
-	// Stop Snapshot avant volet (Alarme == 0) et relancement après les volets Lumière ON
+		
+	// Ouverture volets
 	if ($nuitExt == 0) {
-		mg::VoletsGeneral('Salon, Chambre, Etage', 'M');
+		mg::VoletsGeneral('Salon, Chambre, Etage', 'M', 1);
 	}
+	mg::setScenario($svoletsJourNuit, 'start'); 
 
 	// RAllumage salon
-	mg::setScenario($scenEclairageSalon, 'start');
 	mg::setCmd($equipEcl, 'Lampe Générale Slider', 99);
+	mg::setScenario($scenEclairageSalon, 'start');
 
 	// Retablissement chauffage
 	mg::setVar('_TypeChauffage', 'Auto');
 	mg::setScenario($scenModeChauffage, 'start');
-
+	
 	// Si alarme desactivée on supprime les variables
 	mg::unsetVar('_Alerte_Debut');
 	mg::unsetVar('_Alarme_Debut');

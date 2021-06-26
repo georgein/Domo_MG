@@ -41,7 +41,6 @@ global $debug;
 	$pathRef = mg::getParam('System', 'pathRef');	// Répertoire de référence de domoMG
 	$fileExportJS = getRootPath() . "$pathRef/util/tab_Reseau.js";
 	$fileExportHTML = getRootPath() . "$pathRef/util/tab_Reseau.html";
-	$alarme = mg::getVar('Alarme');
 	$tabUser = mg::getVar('tabUser');
 	$tabUserTmp = mg::getVar('_tabUser'); // Table des valeurs volatiles
 	$logAlarme = mg::getParam('Log', 'alarme');
@@ -148,9 +147,9 @@ foreach ($tabUser as $user => $detailsUser) {
 	}
 
 	// ******************************** Mise à jour config class plugin si renseignée *********************************
-		if ($class != '' && $config != '' && $IP) {
+/*		if ($class != '' && $config != '' && $IP) {
 		mg::ConfigEquiLogic($class, $user, $config, $IP);
-	}
+	}*/ // ??????????????????????????????????????????
 
  //************************************* CALCUL DE LA POSITION GLOBALE DU USER ****************************************
 	// RECALCUL DU USER OK D'AFFICHAGE
@@ -184,12 +183,15 @@ foreach ($tabUser as $user => $detailsUser) {
 // ********************************************************************************************************************
 // *********************************************** GESTION DE L'ALARME ************************************************
 // ********************************************************************************************************************
+// Attente fin Activation/Desactivation de l'alarme
+mg::wait("scenario($scen_LancementAlarme) == 0", 180);
+$alarme = mg::getVar('Alarme', 0);
 // Arrêt de l'alarme si présence OK et si elle est en route
 if ($nbPresences && $alarme == 1) {
 	mg::Message("$logAlarme/_TimeLine", "Alarme - Présence détectée. Arrêt de l'Alarme.");
 	mg::setScenario($scen_LancementAlarme, 'start');
 }
-// Mise en route de l'alarme si personne et pas déja active et si pas inhibée et si pas de mvmt depuis TimingAlarmeLastMvmt
+// Mise en route de l'alarme si personne et pas déja active
 elseif (!$nbPresences && $alarme == 0) {
 mg::Message("$logAlarme/_TimeLine", "Alarme - Aucune présence détectée. Lancement de l'alarme.");
 mg::setScenario($scen_LancementAlarme, 'start');

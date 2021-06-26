@@ -269,6 +269,8 @@ function MsgMeteoLocale($EquipMeteo, $equipMeteoFrance) {
 
 	// Construction du TTS des prévisions
 	mg::TranspoCap($direction_du_Vent, $direction_du_Vent_Libelle);
+	$température_Minimum = str_replace('.', ' virgule ', $température_Minimum);
+	$température_Maximum = str_replace('.', ' virgule ', $température_Maximum);
 	
 	$message .= "(...)\n(...) Prévisions détaillées pour la $periode (...) : $description, UV $indice_UV, Température : $température_Minimum à $température_Maximum degrés, (Le vent souflera à $vitesse_du_Vent kilomètres heure du $direction_du_Vent_Libelle avec des rafales à $force_Rafales kilomètres heure.)";
 	mg::message('', $message);

@@ -85,7 +85,7 @@ function EDF($nom, $numAlerte, $infPuissance, $seuilConso, $seuilHS, $seuilSansS
 	// FIN D'ALERTE
 	} else {
 		if (mg::getVar("_Alerte$nom")) {
-			mg::Alerte($nom, -999);
+			mg::Alerte($nom, -1);
 			mg::setInf($infAffAlerte, 'AlerteEDF', '');
 		}
 		else if (strpos(mg::getCmd($infAffAlerte, 'AlerteEDF'), "ALERTE") === false) {
@@ -112,7 +112,7 @@ function SuiviTempFrigo($infCmd, $tempMax, $destinataires, $infAffAlerte) {
 	// FIN D'ALERTE
 	} else {
 		if (mg::getVar("_Alerte$nom")) {
-			mg::Alerte($nom, -999);
+			mg::Alerte($nom, -1);
 			mg::setInf($infAffAlerte, 'AlerteFroid', '');
 		} else if (strpos(mg::getCmd($infAffAlerte, 'AlerteFroid'), "ALERTE") === false) {
 			mg::setInf($infAffAlerte, 'AlerteFroid', trim(trim(mg::getCmd($infAffAlerte, 'AlerteFroid'), '|')) . " | " . round($temp) . "°");

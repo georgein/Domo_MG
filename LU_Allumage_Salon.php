@@ -44,11 +44,11 @@ Le retour état du Stop dans le widget est à régler à TimeOut + 5 au minimum 
 mg::setCron('', time() + $cronSalon*60);
 
 $nomDeclencheur = mg::declencheur('', 3);
-//$nuitSalon = 1; $newIntensite = 50;/////////////////
+
 // Extinction lampes
-if ($alarme != 0 || $nuitSalon == 0 || $lastMvmt >= $timeOutSalon || $boutonEvent == 'double') {
+if ($alarme == 1 || $nuitSalon != 1 || $lastMvmt >= $timeOutSalon || $boutonEvent == 'double' || $newIntensite == 0) {
 		//=============================================================================================================
-		mg::MessageT('', "! EXTINCTION MANUELLE OU AUTOMATIQUE");
+		mg::MessageT('', "! EXTINCTION (MANUELLE OU AUTOMATIQUE)");
 		//=============================================================================================================
 		$newIntensite = 0;
 }
@@ -58,11 +58,11 @@ if (( $nuitSalon != 0 && $memoEtat < $intensiteMininimum && $nbMvmt >= $seuilNbM
 	//=====================================================================================================================
 	mg::MessageT('', "! ALLUMAGE MANUEL OU AUTOMATIQUE");
 	//=====================================================================================================================
-	$newIntensite = $intensiteMininimum;
+	$newIntensite = ($nuitSalon == 1 ? $intensiteMininimum : 0);
 }
 
-// gestion progressif si ambiance >= 1
-if ($memoEtat > 0 && $newIntensite > 0 && $ambiance >= 1) {
+// gestion progressif si ambiance > 0
+if ($memoEtat > 0 && $newIntensite > 0 && $ambiance > 0) {
 	if ($nbMvmt >= $seuilNbMvmt+1 || ($nomDeclencheur == 'schedule' && $lastMvmt < $timerProgressif)) {
 		//=====================================================================================================================
 		mg::MessageT('', "! AUGMENTATION AUTO. DE L'INTENSITE nbMvmtSalon ($nbMvmt) >= $seuilNbMvmt ou lastMvmtSalon ($lastMvmt) < $timerProgressif");
@@ -88,14 +88,13 @@ mg::MessageT('', "! MODIFICATION D'INTENSITE - memoEtat ==> $memoEtat : newInten
 //=====================================================================================================================
 mg::MessageT('', ". FIN DE PROCESS - newintensite : $newIntensite");
 //=====================================================================================================================
-mg::setInf($equipEcl, 'Memo Etat', $newIntensite);
 
 // Extinction finale
 if (($newIntensite < 1 && ($memoEtat > 0) || $boutonEvent == 'double')) {
 	// Attente absence de mouvement pendant 2 mn plus sleep(120) avant sortie finale et ainsi éviter une relance précoce par NuitSalon ou 'schedule'
 	mg::message('', "Attente de 5 mn sans mouvement ...");
 	mg::wait("$infNbMvmtSalon == 0", 300);
-	sleep(120);
+//	sleep(120);
 	mg::Message($logTimeLine, "Extinction du salon terminé.");
 
 // Au premier allumage complet
@@ -119,9 +118,11 @@ function PiloteLampes($equipEcl, $tabLampes, $intensite, $ambiance, $logTimeLine
 		$intensiteAmbiance = max(0, intval($details_Lampe[$ambiance + 1]));
 		$newIntensite = min($maxValue, round(($intensite/99 * $intensiteAmbiance/99 * $maxValue)));
 		mg::setLampe($details_Lampe[0], $newIntensite);
-		//mg::message('', $details_Lampe[0]."************************** $intensiteAmbiance - $intensite - $maxValue");
 	}
+//	mg::setInf($equipEcl, 'Memo Etat', $newIntensite);
+	mg::setInf($equipEcl, 'Memo Etat', $intensite);
 	mg::setCmd($equipEcl, 'Lampe Générale Slider', $intensite);
+	sleep(10); // ?????????????????????????????
 }
 
 ?>

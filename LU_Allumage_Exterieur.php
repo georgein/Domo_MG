@@ -50,7 +50,7 @@ suite:
 // =============================================== PASSAGE DES COMMANDES ===============================================
 mg::MessageT('', "! PASSAGE à $action des lampes");
 for ($i = 0; $i < count($tab_EquipLampes); $i++) {
-	if ($action == 'Off' || mg::getCmd($tab_EquipLampes[$i]) != ($action=='On' ? 1 : 0)) {
+	if (mg::getCmd($tab_EquipLampes[$i]) != ($action=='On' ? 1 : 0)) {
 		mg::setCmd(str_replace(' Etat', " $action", trim(mg::toHuman($tab_EquipLampes[$i]), '#')));
 	}
 }

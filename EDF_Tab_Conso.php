@@ -9,12 +9,12 @@ global $tabConso, $tabNomCol, $tabAff, $cmdMaj_Aff;
 // Infos, Commandes et Equipements :
 	// $equipConso
 
-// N° des scénarios : 
+// N° des scénarios :
 
 //Variables :
 	$pathRef = mg::getParam('System', 'pathRef');	// Répertoire de référence de domoMG
-	$fileExportHTML = (getRootPath() . "$pathRef/util/conso_EDF.html"); 
-	$fileExportJS = (getRootPath() . "$pathRef/util/conso_EDF.js"); 
+	$fileExportHTML = (getRootPath() . "$pathRef/util/conso_EDF.html");
+	$fileExportJS = (getRootPath() . "$pathRef/util/conso_EDF.js");
 	$width = 75;								// Largeur des colonnes numérique du tableau final, en px
 	$periode = 60;								// (minute % periode !=0) ou le traitement ne sera pas partiel (doit être un multiple du cron).
 	$detail_Lignes = mg::getCmd($equipConso, 'Detail_Lignes'); // Option Détaillé (1) ou Groupé (2), MàJ (3)
@@ -113,7 +113,7 @@ foreach ($tabConso as $equipement => $detailsConso) {
 		// Calcul pour On/Off si 'Etat' existe
 		$equiEtat = '';
 		if (mg::existCmd($equipement, 'Etat')) { $equiEtat = (mg::getCmd($equipement, 'Etat') > 0 ? 'ON' : 'OFF'); }
-		
+
 		$tabAff[$numLigne]['EquiEtat'] = $equiEtat;
 		$tabAff[$numLigne]['EquiAction'] = ($equiEtat == 'ON' ? mg::existCmd($equipement, 'Off') : mg::existCmd($equipement, 'On'));
 	}
@@ -138,7 +138,7 @@ $TxtHTML .= styleTab();
 mg::setInf($equipConso, 'Conso_HTML', $TxtHTML);
 
 file_put_contents($fileExportHTML, $TxtHTML); /* pour debug */
-file_put_contents($fileExportJS, $script); 
+file_put_contents($fileExportJS, $script);
 
 if (abs($tabAff[$idxAutre]['Puiss.']) < 500) {
 	mg::setInf($equipConso, 'Incertitude', $tabAff[$idxAutre]['Puiss.']);
@@ -166,7 +166,7 @@ function ExtraitConsoMois($mois, $annee, $detail_Lignes, $cpt_Mois, &$numLigne, 
 	foreach ($tabConso as $equipement => $detailsConso) {
 		$nomAff = mg::ExtractPartCmd($equipement, 2);
 		$type = trim($detailsConso['type']);
-		$typeResult = ($nomAff == 'Enedis' ? 'E' : 'D'); // EXCEPTION POUR RELEVE ENEDIS DE FIN DE JOURNEE 
+		$typeResult = ($nomAff == 'Enedis' ? 'E' : 'D'); // EXCEPTION POUR RELEVE ENEDIS DE FIN DE JOURNEE
 
 		if ($oldType != $type || $detail_Lignes != 2) {
 			$numLigne++;
@@ -181,7 +181,7 @@ function ExtraitConsoMois($mois, $annee, $detail_Lignes, $cpt_Mois, &$numLigne, 
 			// Si ENEDIS Correction du décalage horaire de la mesure via valueDate pour le mois courant
 			if ($typeResult == 'E' && date("m") == $mois) {
 				mg::getCmd($infCmdConsommation, '', $collectDate, $valueDate);
-				$consoMois = $consoMois / (date('d', $valueDate) *24) * (((date('d')+1) * 24));
+				$consoMois = $consoMois / (date('d', $valueDate) *24) * (((date('d', $valueDate)) * 24) + mg::getTag('#heure#'));
 			}
 
 		// Mémo Nom, Puissance et Consommation
@@ -260,17 +260,17 @@ function DebTableau($type, $width) {
 	$nbCol = count($tabNomCol);
 	$width = "width=$width";
 
-// Calcul valeur affiché décalé du mois courant	
+// Calcul valeur affiché décalé du mois courant
 	$moisCourant = (int)date('m')-1;
 	for ($i=1; $i<=12;$i++)
 	{
-		if ($moisCourant+$i == 12) { 
-			$mois[$i] = $tabNomCol[12]; 
+		if ($moisCourant+$i == 12) {
+			$mois[$i] = $tabNomCol[12];
 		} else {
 			$mois[$i] = $tabNomCol[($moisCourant+$i) % 12];
 		}
 	}
-	
+
 $HTML = "
 <div>
 	<strong>
@@ -315,7 +315,7 @@ function LigneMois($numLigne, $consoCoutKWH, &$script, $pathRef) {
 	$tabAffLgn = $tabAff[$numLigne];
 
 	$consoMoisCourantTotale = round($tabAff[1]['Mois courant'] / date('d') * date('t'));
-	$ConsoMoisCourant = round($tabAffLgn['Mois courant'] / date('d') * date('t')); 
+	$ConsoMoisCourant = round($tabAffLgn['Mois courant'] / date('d') * date('t'));
 	$PourCentMois = $consoMoisCourantTotale > 0 ? round($ConsoMoisCourant / $consoMoisCourantTotale * 100, 1) : 0;
 
 	$consoAnnuelleTotale = $tabAff[1]['Kw Ann.'];
@@ -332,7 +332,7 @@ function LigneMois($numLigne, $consoCoutKWH, &$script, $pathRef) {
 
 	if ($puissance > 5) { $color = '-red'; } else { $color = ''; } // Signalement EN MARCHE
 
-	$btConso = ($equiConso ? "<button class='boutonConso Conso$equiConso'>Conso</button>" : ''); 
+	$btConso = ($equiConso ? "<button class='boutonConso Conso$equiConso'>Conso</button>" : '');
 	$btPuis = ($equiPuis ? "<button class='boutonPuis Puis$equiPuis'>Puis.</button>" : '');
 	$btAction = ($equiAction ? "<img src=\"$pathRef/img/img_Binaire/boutons/$equiEtat.png\" class='Action$equiAction'></button>" : '');
 
@@ -341,12 +341,12 @@ function LigneMois($numLigne, $consoCoutKWH, &$script, $pathRef) {
 	if ($numLigne == $nbLignes+2 || $numLigne == 1) { $lgn = 'Recap'; }
 	if ($numLigne == $nbLignes || $numLigne == 1) { $lgn = 'Recap'; } // ENEDIS
 
-	// Calcul valeurs affichées décalées du mois courant	
+	// Calcul valeurs affichées décalées du mois courant
 	$moisCourant = (int)date('m')-1;
 	for ($i=1; $i<=12;$i++)
 	{
-		if ($moisCourant+$i == 12) { 
-			$mois[$i] = $tabAffLgn[12]; 
+		if ($moisCourant+$i == 12) {
+			$mois[$i] = $tabAffLgn[12];
 		} else {
 			$mois[$i] = $tabAffLgn[($moisCourant+$i) % 12];
 		}
@@ -381,7 +381,7 @@ $HTML = "
 		<td class=colNomD>		$btConso $btPuis $btAction	</td>
 	</tr>
 	";
-	
+
 	$script .= "
 	$('.Conso$equiConso').on('click',function(){ graph('$tabAffLgn[Nom]', $equiConso);});
 	$('.Puis$equiPuis').on('click',function(){ graph('$tabAffLgn[Nom]', $equiPuis);});
@@ -390,7 +390,7 @@ $HTML = "
 		setTimeout('jeedom.cmd.execute({id: $cmdMaj_Aff})', 1000);
 	});
 	";
-	
+
 return $HTML;
 }
 
@@ -401,17 +401,17 @@ function FinTableau($width) {
 	global $tabNomCol;
 	$width = "width=$width";
 
-	// Calcul valeurs affichées décalées du mois courant	
+	// Calcul valeurs affichées décalées du mois courant
 	$moisCourant = (int)date('m')-1;
 	for ($i=1; $i<=12;$i++)
 	{
-		if ($moisCourant+$i == 12) { 
-			$mois[$i] = $tabNomCol[12]; 
+		if ($moisCourant+$i == 12) {
+			$mois[$i] = $tabNomCol[12];
 		} else {
 			$mois[$i] = $tabNomCol[($moisCourant+$i) % 12];
 		}
 	}
-	
+
 	$HTML =	"
 	   <tr height=30px>
  		  <td 			class=colNomG> 	Nom				</td>
@@ -453,23 +453,23 @@ $fontLigne = 'font-size:12px; font-family: Arial;';
 $STYLE = "
 	<style>
 		.boutonConso {
-		  user-appearance: none; 
+		  user-appearance: none;
 		  border: none;
 		  font-weight: bold;
 		  font-size: 1.2rem;
 		  color: white;
 		  background: darkblue;
-		}	
-	
+		}
+
 		.boutonPuis {
-		  user-appearance: none; 
+		  user-appearance: none;
 		  border: none;
 		  font-weight: bold;
 		  font-size: 1.2rem;
 		  color: white;
 		  background: darkgreen;
-		}	
-		
+		}
+
 		.titre{
 			text-align: center;
 			font-size:22px;

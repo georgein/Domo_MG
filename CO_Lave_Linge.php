@@ -46,7 +46,7 @@ if ($puissanceMoyenne <= $seuilMarche && $nuitSalon != 2 && mg::getVar('_laveLin
 // Fin des Alertes et annulation process
 if ($puissanceMoyenne <= $seuilStop && mg::getVar('_laveLingeOn')) {
 	mg::unsetVar('_laveLingeOn');
-	mg::Alerte('LaveLinge', -99);
+	mg::Alerte('LaveLinge', -1);
 	return;
 }
 

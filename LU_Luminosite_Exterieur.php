@@ -54,7 +54,6 @@ elseif ( $nuitExt == 1 && $cdAurore ) {
 
 // Si changement
 if ( $oldNuitExt != $nuitExt) {
-//	mg::unsetVar('_VoletGeneral'); // Pour 'forcer' le prochain mouvement de voletsGeneral
 	mg::setVar('NuitExt', $nuitExt);
 	mg::Message($logTimeLine, $message);
 }
