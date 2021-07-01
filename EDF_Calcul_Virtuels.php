@@ -35,16 +35,14 @@ foreach ($tabConso as $equipement => $detailsConso) {
 
 	// ------------------------------------- GESTION DES MIN / MAX DE CONSOMMATION ------------------------------------
 	if ($timerMinMax && $gestionMinMax == 'true' && mg::existCmd($equipement, 'Consommation')) {
-	$infConso = mg::mkCmd($equipement, 'Consommation');
-	$consommation = ($recalculConso == 'true') ? $consoCalculee : floatval(mg::getCmd($infConso));
-		$consoDay = floatval(mg::getExp("minBetween($infConso,7 day ago, now)"));
-		$consoDay = max(($consommation - $consoDay)/7, 2);
-		$min = max(round($consommation-5), 0);
-		$max = round($consommation+$consoDay+5, 0) * ($consoDay <= 0 ? 3 : 1); // REequerrage/rattrapage quotidien ????
+		$infConso = mg::mkCmd($equipement, 'Consommation');
+		$consommation = ($recalculConso == 'true') ? $consoCalculee : floatval(mg::getCmd($infConso));
+		$minConsoWeek = floatval(mg::getExp("minBetween($infConso, 7 day ago, now)"));
+		$consoDay = ($consommation - $minConsoWeek) / 7;
+		$min = max(round($consommation - 5), 0);
+		$max = round($consommation + $consoDay + 5, 0) + ($consoDay < 1 ? 10 : 0); // REequerrage/rattrapage quotidien ????
 		mg::setMinMaxCmd($equipement, 'Consommation', $min, $max);
 		if (!$recalculConso) { $tabConso[$equipement]['consoCalculee'] = ''; }
-		if ($recalculPuissance || $recalculConso) {
-		}
 	}
 
 	if (!mg::existCmd($equipement, 'Puissance')) continue;

@@ -21,7 +21,6 @@ global $IP_Jeedom, $API_Jeedom;
 	$timingSOS = 900;						// Durée de pause 'normale' avant envoi d'un SOS
 
 	$destinataires = 'Log, TTS:GOOGLECAST';	// Destinataire du message d'annonce de proximité
-	$coeffDist = 0.9;						// Annonce de proximité faite si DistCouranteUser * $CoeffDist < OldDistUser
 
 	$refreshCalcul = 60;					// Période de rafraichissement du recalcul de la carte
 	$refresh = 5;							// Période de contrôle de rafraichissement de la page HTML en seconde
@@ -34,6 +33,7 @@ global $IP_Jeedom, $API_Jeedom;
 	$colorVoiture = 'green';
 	$colorEntrainement = 'red';
 	$pauseMin = 2;							// Durée minimum de la Pause en mn pour l'afficher
+	$coeffDist = 0.9;						// Annonce de proximité faite si DistCouranteUser * $CoeffDist < OldDistUser
 	$coeffDeniveles = 1.0;					// Coeff à appliquer aux dénivelés
 
 
@@ -655,8 +655,8 @@ return $geofence;
 function makeLatLng(&$tabGeofence, $user, &$lastLatLng_User, $dateSQL, $id, $pauseMin, $coeffDeniveles, $destinatairesSOS, $timingSOS, &$SSID, &$latlng, &$nbLignes) {
 	global $scenario;
 
-	$tabGeofence_L = mg::getVar("tabGeofence_L_$user", '');
-	$tabGeofence_C = mg::getVar("tabGeofence_C_$user", '');
+	$tabGeofence_L = ''; // mg::getVar("tabGeofence_L_$user", '');
+	$tabGeofence_C = ''; // mg::getVar("tabGeofence_C_$user", '');
 
 
 	$values = array();
@@ -716,8 +716,8 @@ function makeLatLng(&$tabGeofence, $user, &$lastLatLng_User, $dateSQL, $id, $pau
 
 		$timeCourante = strtotime($result[$i]['datetime']);
 		$latlng_ = explode(',',$result[$i]['value']); // Decomposition de value
-		$latitude = round(floatval(trim($latlng_[0])), 6);
-		$longitude = round(floatval(trim($latlng_[1])), 6) . ($i == 1 ? '1': ''); // Pour avoir une dif. minimum pour la carte
+		$latitude = round(floatval(trim($latlng_[0])), 7);
+		$longitude = round(floatval(trim($latlng_[1])), 7) . ($i == 1 ? '1': ''); // Pour avoir une dif. minimum pour la carte
 		$altitude = round(($latlng_[2]));
 
 		$activite = (strpos($latlng_[5], 'XX') !== false) ? 'X' : strtoupper(trim($latlng_[5])[0]);
@@ -726,7 +726,7 @@ function makeLatLng(&$tabGeofence, $user, &$lastLatLng_User, $dateSQL, $id, $pau
 		$SSID = trim(trim($latlng_[4]));
 
 		if ($i > 0) {
-			$ecart = abs(round(mg::getDistance($oldLatitude, $oldLongitude, $latitude, $longitude, 'k', $azimut), 4));
+			$ecart = abs(round(mg::getDistance($oldLatitude, $oldLongitude, $latitude, $longitude, 'k', $azimut), 3));
 			$dureeEcart = $timeCourante - $oldTimeCourante;
 			$vitesseEcart = round($ecart / $dureeEcart*3600, 1);
 
@@ -790,7 +790,8 @@ function makeLatLng(&$tabGeofence, $user, &$lastLatLng_User, $dateSQL, $id, $pau
 						// Pause en cours
 						} else {
 							// *************** ENVOIS D'UN SOS AUTOMATIQUE ***************
-							if ($dureePause > $timingSOS / 60 && (time() - $timeCourante) < 2*$timingSOS && !$alerteEnCours) {
+//							if ($dureePause > $timingSOS / 60 && (time() - $timeCourante) < 2*$timingSOS && !$alerteEnCours) {
+							if ($dureePause > $timingSOS / 60 && abs(time() - $timeCourante) < 1*60 && !$alerteEnCours) {
 								mg::message($destinatairesSOS, "SOS AUTOMATIQUE de $user, Aucun mouvement depuis " . ($timeCourante - $alerteEnCours)/60 . " mn, Coordonnées ($latlng). VOIR :  https://georgein.dns2.jeedom.com/mg/util/geofence.html");
 								$alerteEnCours = $timeCourante;
 							}

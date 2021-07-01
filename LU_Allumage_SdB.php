@@ -18,19 +18,11 @@ Déclencheur nbMvmt à "toujours répéter"
 	$lastMvmt = round(mg::lastMvmt($infMvmtRdCSdB, $nbMvmt)/60);
 
 //Paramètres :
-	$timer = 3; // Durée en mn avant extinction sans mouvement si porte ouverte
+	$timer = 2; // Durée en mn avant extinction sans mouvement si porte ouverte
 	
 /**********************************************************************************************************************
 **********************************************************************************************************************/
 mg::setRepeatCmd($infMvmtRdCSdB, 'always');
-
-
-// Radio SdB
-if (mg::declencheur('Ouverture') && $nuitSalon < 2 && !$nePasDeranger) {
-	$tabUser = mg::getVar('tabUser');
-	$IP_JPI = 'HTTP://'.$tabUser['JPI']['IP'].':8080';
-	file_get_contents("$IP_JPI/?action=_radioSdB");
-}
 
 // Lumière
 
@@ -40,7 +32,7 @@ if ($etatPorte == 1 || $lastMvmt <= $timer) {
 	// La nuit OU PasDéranger
     if ($nuitSalon == 2 || $nePasDeranger) { 
 		mg::setCmd($equipVeilleuse, 'Slider Intensité', 10); 
-		mg::setCmd($equipLampes, 'Slider Intensité', 0); 
+		mg::setCmd($equipLampes, 'Off');
 	// La journée
 	} else { 
 		mg::setCmd($equipVeilleuse, 'Slider Intensité', 254); 
@@ -51,13 +43,19 @@ if ($etatPorte == 1 || $lastMvmt <= $timer) {
 	mg::setCron('', time() + $timer*60);
 }
 
-// Porte ouverte et sans mouvement	on éteint
+// Porte ouverte ET sans mouvement	on éteint
 else {
-//	mg::setCmd($equipLampes, 'Off');
-	mg::setCmd($equipVeilleuse, 'Slider Intensité', 0); 
-//	mg::setCmd($equipVeilleuse, 'Off');
-	mg::setCmd($equipLampes, 'Slider Intensité', 0);
+	mg::setCmd($equipLampes, 'Off');
+	mg::setCmd($equipVeilleuse, 'Off');
+	
 	mg::messageT('', "NuitSalon : $nuitSalon - nePasDeranger : $nePasDeranger - Porte : $etatPorte - lastMvmt : $lastMvmt mn. => EXTINCTION");
+}
+
+// Radio SdB pour finir
+if (mg::declencheur('Ouverture') && $nuitSalon < 2 && !$nePasDeranger) {
+	$tabUser = mg::getVar('tabUser');
+	$IP_JPI = 'HTTP://'.$tabUser['JPI']['IP'].':8080';
+	file_get_contents("$IP_JPI/?action=_radioSdB");
 }
 
 ?>

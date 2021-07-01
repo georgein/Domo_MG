@@ -825,10 +825,10 @@ function FONCTIONS_UTILITAIRES(){}
 		if ($nom == '' ) { return; }
 		$nom = str_replace(' ', '_', $nom);
 		
-		$alertes = self::getVar('tabAlertes');
+		$alertes = self::getVar('tabAlertes', '');
 
 		// Si heure de fin dépassée ou périodicité == 0, Annulation de l'alerte
-		if ($periodicite < 0 || (@$alertes[$nom]['fin'] && time() >= @$alertes[$nom]['fin'])) {
+		if ($alertes && $periodicite < 0 || (@$alertes[$nom]['fin'] && time() >= @$alertes[$nom]['fin'])) {
 			// --------------------------------------------------------------------------------------------------------
 			self::messageT('', "! Fin de l'alerte : $nom");
 			// --------------------------------------------------------------------------------------------------------

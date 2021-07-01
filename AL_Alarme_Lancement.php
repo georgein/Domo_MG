@@ -213,7 +213,7 @@ mg::MessageT('', "! ****************************************** ACTIVATION ******
 } // Fin d'activation
 
 //Si Inhibée ou demande de désactivation et user OK on Désactive
-elseif (!$alarme || mg::getCmd($equipAlarme, 'Inhibition Etat') || ($alarme == 1 && $nomUserSaisi && $nomUserSaisi != '!' && $nomUserSaisi != 'Options')) {
+elseif ($alarme == 1 || mg::getCmd($equipAlarme, 'Inhibition Etat') || ($alarme == 1 && $nomUserSaisi && $nomUserSaisi != '!' && $nomUserSaisi != 'Options')) {
 
 // --------------------------------------------------------------------------------------------------------------------
 mg::MessageT('', "! ***************************************** DESACTIVATION ****************************************");

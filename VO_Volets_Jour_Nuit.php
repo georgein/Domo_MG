@@ -85,7 +85,7 @@ mg::message('', "cdInhibVoletsReveil ==> $cdInhibVoletsReveil");
 
 if ($alarme || $cdVoletsNuit ) {
 	//=====================================================================================================================
-	mg::messageT('', ". FERMETURE VOLETS DE NUIT | ALARME.");
+	mg::messageT('', ". FERMETURE VOLETS DE NUIT || ALARME.");
 	//=====================================================================================================================
 	if (mg::getVar('_VoletGeneral') != 'D') {
 		mg::Message($logTimeLine, "Volets - Fermeture générale, time > $timeVoletsNuit | Alarme.");
@@ -153,7 +153,7 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 	$cdOuvert = 1;
 	if ($alerteOuvert != '!') {
 		$cdOuvert = mg::getCmd($equipOuverture, 'Ouverture');
-	} elseif ($sliderCourant < 99) { $cdOuvert = 0; }
+	} elseif ($sliderCourant <= 99) { $cdOuvert = 0; } /////////////////////////////////////////////////////////////////////
 	
 	mg::message('', "CdOuvert ==> $cdOuvert");
 

@@ -50,6 +50,7 @@ global $debug;
 /***********************************************************************************************************************/
 /***********************************************************************************************************************/
 /***********************************************************************************************************************/
+$declencheurShedule = mg::declencheur('schedule');
 $nbTentatives = 0;
 $nbPresences = 0;
 
@@ -64,10 +65,6 @@ if (mg::declencheur('Maj_Aff')&& mg::getCmd($equipTabReseau, 'Maj_Aff')) {
 }
 mg::setInf($equipTabReseau, 'Maj_Aff', 0);
 
-// Scan du réseau
-/*if (mg::declencheur('schedule') || mg::declencheur('user')) { 
-	ScanReseau($interfaceReseau, $scanReseau);
-}*/
 
 // --------------------------------------------------------------------------------------------------------------------
 // Parcours de la table des Users
@@ -90,7 +87,7 @@ foreach ($tabUser as $user => $detailsUser) {
 	$OK = null;
 
 	// ******** On saute si pas 'schedule' et (pas user ********
-	if (!mg::declencheur('schedule') && !mg::declencheur('user') && $type != 'user') continue; 
+	if (!$declencheurShedule && !mg::declencheur('user') && $type != 'user') continue; 
 	// Scan du réseau sinon
 	else ScanReseau($interfaceReseau, $scanReseau); 
 	// ------------------------------------------------------------------------------------------------------------------
@@ -140,7 +137,7 @@ foreach ($tabUser as $user => $detailsUser) {
 	}
 	
 	// Test Ping direct de l'adresse IP si lancement shedule
-	if (mg::declencheur('schedule') && $IP && !$OK) {
+	if ($declencheurShedule && $IP && !$OK) {
 		if (mg::getPingIP($IP, $user)) {
 			$OK .= " - PING";
 		}
@@ -187,12 +184,12 @@ foreach ($tabUser as $user => $detailsUser) {
 mg::wait("scenario($scen_LancementAlarme) == 0", 180);
 $alarme = mg::getVar('Alarme', 0);
 // Arrêt de l'alarme si présence OK et si elle est en route
-if ($nbPresences && $alarme == 1) {
+if ($nbPresences > 0 && $alarme == 1) {
 	mg::Message("$logAlarme/_TimeLine", "Alarme - Présence détectée. Arrêt de l'Alarme.");
 	mg::setScenario($scen_LancementAlarme, 'start');
 }
 // Mise en route de l'alarme si personne et pas déja active
-elseif (!$nbPresences && $alarme == 0) {
+elseif ($nbPresences == 0 && $alarme == 0) {
 mg::Message("$logAlarme/_TimeLine", "Alarme - Aucune présence détectée. Lancement de l'alarme.");
 mg::setScenario($scen_LancementAlarme, 'start');
 }
