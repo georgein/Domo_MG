@@ -180,8 +180,6 @@ foreach ($tabUser as $user => $detailsUser) {
 // ********************************************************************************************************************
 // *********************************************** GESTION DE L'ALARME ************************************************
 // ********************************************************************************************************************
-// Attente fin Activation/Desactivation de l'alarme
-mg::wait("scenario($scen_LancementAlarme) == 0", 180);
 $alarme = mg::getVar('Alarme', 0);
 // Arrêt de l'alarme si présence OK et si elle est en route
 if ($nbPresences > 0 && $alarme == 1) {

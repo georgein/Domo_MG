@@ -825,16 +825,17 @@ function FONCTIONS_UTILITAIRES(){}
 		if ($nom == '' ) { return; }
 		$nom = str_replace(' ', '_', $nom);
 		
-		$alertes = self::getVar('tabAlertes', '');
+		$alertes = self::getVar('tabAlertes', array());
+		if (!array_key_exists('nom', $alertes)) return; //////////////////////////////
 
 		// Si heure de fin dépassée ou périodicité == 0, Annulation de l'alerte
-		if ($alertes && $periodicite < 0 || (@$alertes[$nom]['fin'] && time() >= @$alertes[$nom]['fin'])) {
+		if ($periodicite < 0 || time() >= @$alertes[$nom]['fin']) {
 			// --------------------------------------------------------------------------------------------------------
 			self::messageT('', "! Fin de l'alerte : $nom");
 			// --------------------------------------------------------------------------------------------------------
 			mg::unsetVar("_alerte$nom");
 			unset($alertes[$nom]);
-			self::unsetVar('tabAlertes', $alertes);
+			//self::unsetVar('tabAlertes');
 			self::setCron('', time()-60);
 			return;
 		}

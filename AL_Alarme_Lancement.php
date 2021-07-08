@@ -193,16 +193,15 @@ mg::MessageT('', "! ****************************************** ACTIVATION ******
 	mg::setVar('Alarme', 1);
 
 	// Stop volets
-		mg::setScenario($svoletsJourNuit, 'stop');
+		mg::setScenario($svoletsJourNuit, 'deactivate');
 		mg::VoletsGeneral('Salon, Chambre, Etage', 'D', 1);
 
 		mg::setCmd($equipEcl, 'Lampe Générale Slider', 0);
-		mg::setScenario($scenEclairageSalon, 'stop');
+		mg::setScenario($scenEclairageSalon, 'deactivate');
 
 	// Gestion des chauffages
-	sleep(10); // Pour donner le temps à la var 'Alarme' de neutraliser le mode 
-	mg::setScenario($scenModeChauffage, 'stop'); 
 	mg::setVar('_TypeChauffage', 'Eco');
+	mg::setScenario($scenModeChauffage, 'deactivate'); 
 
 	mg::Message($logTimeLine, "Alarme - $message");
 	mg::Message($destinatairesAlarme, $message, $prefixeAlarme);
@@ -219,7 +218,7 @@ elseif ($alarme == 1 || mg::getCmd($equipAlarme, 'Inhibition Etat') || ($alarme 
 mg::MessageT('', "! ***************************************** DESACTIVATION ****************************************");
 // --------------------------------------------------------------------------------------------------------------------
 	// Desactivation de l'alarme proprement dite
-	mg::unsetVar('Alarme');
+//	mg::unsetVar('Alarme');
 	
 	$message = "Alarme désactivée par " . ($inhibition ? 'le mode INHIBITION' : $nomUserSaisi);
 	mg::Message($logTimeLine, "Alarme - $message");
@@ -232,20 +231,24 @@ mg::MessageT('', "! ***************************************** DESACTIVATION ****
 	if ($nuitExt == 0) {
 		mg::VoletsGeneral('Salon, Chambre, Etage', 'M', 1);
 	}
-	mg::setScenario($svoletsJourNuit, 'start'); 
+	mg::setScenario($svoletsJourNuit, 'activate'); 
 
 	// RAllumage salon
 	mg::setCmd($equipEcl, 'Lampe Générale Slider', 99);
-	mg::setScenario($scenEclairageSalon, 'start');
+	mg::setScenario($scenEclairageSalon, 'activate');
 
 	// Retablissement chauffage
 	mg::setVar('_TypeChauffage', 'Auto');
-	mg::setScenario($scenModeChauffage, 'start');
+	mg::setScenario($scenModeChauffage, 'activate');
 	
 	// Si alarme desactivée on supprime les variables
 	mg::unsetVar('_Alerte_Debut');
 	mg::unsetVar('_Alarme_Debut');
 	mg::unsetVar('_Alarme_Perimetrique');
+
+	// Desactivation de l'alarme proprement dite
+	mg::unsetVar('Alarme');
+	sleep(180);
 } // Fin de désactivation
 
 fin:

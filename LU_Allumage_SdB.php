@@ -47,6 +47,7 @@ if ($etatPorte == 1 || $lastMvmt <= $timer) {
 else {
 	mg::setCmd($equipLampes, 'Off');
 	mg::setCmd($equipVeilleuse, 'Off');
+		mg::setCmd($equipLampes, 'Slider Intensité', 0); 
 	
 	mg::messageT('', "NuitSalon : $nuitSalon - nePasDeranger : $nePasDeranger - Porte : $etatPorte - lastMvmt : $lastMvmt mn. => EXTINCTION");
 }

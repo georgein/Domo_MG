@@ -19,6 +19,7 @@ Si le réveil démarre avec nuitSalon != 2 (levé prématuré) on ouvre la chamb
 
 	$heure_Reveil = mg::getVar('_Heure_Reveil');
 	$nuitSalon = mg::getVar('NuitSalon');
+	$lastMvmt = round(mg::lastMvmt($infNbMvmtSalon, $nbMvmt)/60);
 
 	$alarme = mg::getVar('Alarme');
 
@@ -65,7 +66,8 @@ if (!$reveilOnLine) {
 	//=================================================================================================================
 	mg::messageT('', ". ON ENTROUVRE LE VOLET CHAMBRE");
 	//=================================================================================================================
-	if 	($nuitSalon == 2 || time() > ($heure_Reveil)) {
+//	if 	($nuitSalon == 2 || time() > ($heure_Reveil)) {
+	if 	( time() >= ($heureRelance) || ($nuitSalon == 2 && $lastMvmt > 60)) {
 		mg::VoletRoulant('Chambre', 'Volet Chambre', 'Slider', 10);
 		mg::VoletRoulant('RdCSdB', 'Volet RdCSdB', 'Slider', 99);
 	}
@@ -80,7 +82,6 @@ if (!$reveilOnLine) {
 	//=================================================================================================================
 	if (mg::getCmd($infVoletChambre) > 1) {
 		mg::VoletsGeneral ('Chambre', 'M', 1);
-//		mg::setVar('_VoletGeneral', 'D'); // Pour éviter volets jour nuit ne redescende ???????????????????????
 		
 		mg::setVar('_ReveilOnLine', 3);
 		mg::setCron('', ($heure_Reveil + $reveilDureeRadio * 60));
@@ -116,7 +117,7 @@ if (!$reveilOnLine) {
 	//=================================================================================================================
 	mg::messageT('', ". TITRE DU MONDE");
 	//=================================================================================================================
-	$message .= "(...)\n(...) " . MondeALaUne($urlMonde, $reveilDestinataires);
+	$message .= "(...)\n(...) " . MondeALaUne($urlMonde, $reveilDestinataires); 
 
 	mg::Message("$reveilDestinataires", "@$message");
 
@@ -125,7 +126,7 @@ if (!$reveilOnLine) {
 	//=================================================================================================================
 	shell_exec("sudo rm -f /var/www/html/log/scenarioLog/scenario48.log"); // Pour éviter les "error" de monitoring
 	
-	// REMet la radio
+	// REMet la radio 
 	mg::setCmd($equipSonos, 'Volume', $reveilVolumeRadio);
 	$infVolSonos = mg::mkCmd($equipSonos, 'Volume Status');
 	self::wait ("$infVolSonos == $reveilVolumeRadio", 5);
@@ -137,7 +138,6 @@ if (!$reveilOnLine) {
 	// ***** SI volets chambre baissés on relance le réveil *****
 	if (mg::getCmd($infVoletChambre) < 1) {
 		mg::Message($logTimeLine, "Reveil - RELANCE DU REVEIL POUR $heureRelance.");
-		$heureRelance = strtotime($heureRelance);
 		mg::setVar('_Heure_Reveil', $heureRelance);
 		mg::unsetVar('_ReveilOnLine');
 		mg::setCron('', $heureRelance);

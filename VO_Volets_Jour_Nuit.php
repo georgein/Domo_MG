@@ -90,7 +90,6 @@ if ($alarme || $cdVoletsNuit ) {
 	if (mg::getVar('_VoletGeneral') != 'D') {
 		mg::Message($logTimeLine, "Volets - Fermeture générale, time > $timeVoletsNuit | Alarme.");
 		mg::VoletsGeneral('Salon, Chambre, Etage', 'D', 1); 
-		return;
 	}
 	
 } elseif ( !$alarme && $nbMvmtSalon >= $seuilNbMvmt  && $cdInhibVoletsReveil) {
@@ -135,13 +134,13 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 	$equipVolet = "[$nomZone][$cmd]";
 	$equipOuverture = "[$nomZone][$ouvrant".']';
 
-	$sliderCourant = 0;
+	$sliderCourant = 0.1;
 	if ($duree > 0) {
 		$sliderCourant = mg::getCmd("#[$nomZone][Ouvertures][$cmd"." Etat]#");
 		if ($sliderCourant > 99) { $sliderCourant = $sliderCourant - 100; }
 		
-		$slider =  $sliderCourant >= 99 ? 99 : $sliderCourant;
-		$slider = $sliderCourant <= 0.1 ? 0.1 : $sliderCourant;
+		$slider =  $sliderCourant > 99 ? 99 : $sliderCourant;
+		$slider = $sliderCourant < 0.1 ? 0.1 : $sliderCourant;
 		$messageAff = "Rien faire - Courant = $sliderCourant";
 	}
 
@@ -153,11 +152,11 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 	$cdOuvert = 1;
 	if ($alerteOuvert != '!') {
 		$cdOuvert = mg::getCmd($equipOuverture, 'Ouverture');
-	} elseif ($sliderCourant <= 99) { $cdOuvert = 0; } /////////////////////////////////////////////////////////////////////
+	} elseif ($sliderCourant <= 99) { $cdOuvert = 0; }
 	
 	mg::message('', "CdOuvert ==> $cdOuvert");
 
-	if ( !$alarme && !$nuitExt && $nbMvmtSalon >= $seuilNbMvmt && $cdInhibVoletsReveil ) { /////////////////////////////////////////////
+	if ( !$alarme && !$nuitExt && $nbMvmtSalon >= $seuilNbMvmt && $cdInhibVoletsReveil ) {
 		//=============================================================================================================
 		mg::messageT('', ". OUVERTURE INDIVIDUELLE SALON APRES LE REVEIL AU PREMIER MOUVEMENT");
 		//=============================================================================================================
