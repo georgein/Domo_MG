@@ -18,7 +18,7 @@ global $IP_Jeedom, $API_Jeedom;
 	$homeSSID = ' Livebox-MG';					// Valeur contenue dans le SSID de 'HOME'
 
 	$destinatairesSOS = "Log, SMS:@MG, Mail:MG";// Destinataires du SOS
-	$timingSOS = 5;						// Durée max de pause 'normale' EN MINUTE en Entrainement au delà de laquelle on envoi un SOS
+	$timingSOS = 30;						// Durée max de pause 'normale' EN MINUTE en Entrainement au delà de laquelle on envoi un SOS
 
 	$destinataires = 'Log, TTS:GOOGLECAST';	// Destinataire du message d'annonce de proximité
 
@@ -56,7 +56,7 @@ $values = array();
 $result = array();
 
 $dateSQL = date('Y\-m\-d', time()); // Date du jour au format SQL
-$userAppel = 'NR'; // Par defaut
+$userAppel = 'MG'; // Par defaut
 
 // Gestion du déclencheur avec enregistrement éventuel en BdD
 if (mg::declencheur('Position') || mg::declencheur('SSID')) {
@@ -72,19 +72,23 @@ if (mg::declencheur('Position') || mg::declencheur('SSID')) {
 		$userAppel = str_replace('_SSID)', '', $userAppel);
 	}
 
-	$GeofenceSSID = mg::getVar($userAppel.'_SSID', 'Pas de SSID');
-	
 	$PositionJeedomConnect = mg::getCmd("#[Sys_Comm][Tel-$userAppel][Position]#", '', $collectDate, $valueDate);
 	$ActiviteJeedomConnect = mg::getCmd("#[Sys_Comm][Tel-$userAppel][Activité]#");
 	$GeofencepcBat = mg::getCmd("#[Sys_Comm][Tel-$userAppel][Batterie]#");
+
+	if (mg::declencheur('SSID')) { $valueDate = time(); }
+	$GeofenceSSID = mg::getVar($userAppel.'_SSID', 'Pas de SSID');
+	
+	
 	//  SI at HOME
 	if (strpos(" $GeofenceSSID", $homeSSID) !== false) {
 		$PositionJeedomConnect = $latLng_Home;
-		$valueDate = time();
+//		$valueDate = time();
 		mg::setVar("dist_Tel-$userAppel", -1);
 		mg::unsetVar("_OldDist_$userAppel");
 		if (mg::declencheur('SSID')) { $ActiviteJeedomConnect = 'I_HOME'; }
 	}
+		mg::message('',"========> $GeofenceSSID - $homeSSID - $ActiviteJeedomConnect");
 
 	// Mise en forme de l'Activité
 	if ($ActiviteJeedomConnect == 'still') { $ActiviteJeedomConnect = "I_$ActiviteJeedomConnect"; }
@@ -93,7 +97,7 @@ if (mg::declencheur('Position') || mg::declencheur('SSID')) {
 	elseif ($ActiviteJeedomConnect == 'running') { $ActiviteJeedomConnect = "E_$ActiviteJeedomConnect"; }
 	elseif ($ActiviteJeedomConnect == 'on_bicycle') { $ActiviteJeedomConnect = "E_$ActiviteJeedomConnect"; }
 	elseif ($ActiviteJeedomConnect == 'in_vehicle') { $ActiviteJeedomConnect = "V_$ActiviteJeedomConnect"; }
-	elseif (!mg::declencheur('SSID') && $GeofenceSSID != 'Pas de SSID') { $ActiviteJeedomConnect = "I_still_X"; }
+//	elseif (!mg::declencheur('SSID') && $GeofenceSSID != 'Pas de SSID') { $ActiviteJeedomConnect = "I_still_X"; }
 
 	// ENREGISTREMENT DU NOUVEAU POINT
 	$newValue = "$PositionJeedomConnect,$GeofencepcBat,$GeofenceSSID,$ActiviteJeedomConnect";
@@ -797,7 +801,7 @@ function makeLatLng(&$tabGeofence, $user, &$lastLatLng_User, $dateSQL, $id, $pau
 							$deltaI_Pause++;
 							
 							// *************** ENVOIS D'UN SOS AUTOMATIQUE ***************
-							if ($tabGeofence[$user]['distanceTotale'] > 1 && $dureePause > $timingSOS && $tabGeofence[$user]['alerteEnCours'] == 0 && abs(time() - $timeCourante) < 1*60) {
+							if ($tabGeofence[$user]['cloture'] == 0 && $tabGeofence[$user]['distanceTotale'] > 1 && $dureePause > $timingSOS && $tabGeofence[$user]['alerteEnCours'] == 0 && abs(time() - $timeCourante) < 1*60) {
 								mg::message($destinatairesSOS, "SOS AUTOMATIQUE de $user, Aucun mouvement depuis ".round($dureePause)." mn, Coordonnées ($latlng). VOIR :  https://georgein.dns2.jeedom.com/mg/util/geofence.html");
 								$tabGeofence[$user]['alerteEnCours'] = $timeCourante;
 							}
