@@ -35,6 +35,7 @@ if ($puissanceMoyenne > $seuilMarche && !mg::getVar('_laveLingeOn')) {
 if ($puissanceMoyenne <= $seuilMarche && $nuitSalon != 2 && mg::getVar('_laveLingeOn')) {
 	if (mg::getVar('_laveLingeOn') == 1) {
 		mg::Alerte('LaveLinge', $periodicite, $timeoutLaveLinge, $destinataires, 'Le lave linge est terminé');
+		mg::message('', 'Le lave linge est terminé'); ////////////////////////////////////////////////////
 		mg::setVar('_laveLingeOn', time()); // Mémo de l'heure de fin du LaveLinge
 
 	// Rappel tous les $periodicite mn.

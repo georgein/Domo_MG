@@ -56,7 +56,7 @@ $values = array();
 $result = array();
 
 $dateSQL = date('Y\-m\-d', time()); // Date du jour au format SQL
-$userAppel = 'MG'; // Par defaut
+$userAppel = 'NR'; // Par defaut
 
 // Gestion du déclencheur avec enregistrement éventuel en BdD
 if (mg::declencheur('Position') || mg::declencheur('SSID')) {
@@ -76,19 +76,20 @@ if (mg::declencheur('Position') || mg::declencheur('SSID')) {
 	$ActiviteJeedomConnect = mg::getCmd("#[Sys_Comm][Tel-$userAppel][Activité]#");
 	$GeofencepcBat = mg::getCmd("#[Sys_Comm][Tel-$userAppel][Batterie]#");
 
-	if (mg::declencheur('SSID')) { $valueDate = time(); }
 	$GeofenceSSID = mg::getVar($userAppel.'_SSID', 'Pas de SSID');
 	
 	
+	if (mg::declencheur('SSID')) {
+		$valueDate = time();
 	//  SI at HOME
-	if (strpos(" $GeofenceSSID", $homeSSID) !== false) {
-		$PositionJeedomConnect = $latLng_Home;
-//		$valueDate = time();
-		mg::setVar("dist_Tel-$userAppel", -1);
-		mg::unsetVar("_OldDist_$userAppel");
-		if (mg::declencheur('SSID')) { $ActiviteJeedomConnect = 'I_HOME'; }
+		if( strpos(" $GeofenceSSID", $homeSSID) !== false) {
+			$PositionJeedomConnect = $latLng_Home;
+			mg::setVar("dist_Tel-$userAppel", -1);
+			mg::unsetVar("_OldDist_$userAppel");
+			$ActiviteJeedomConnect = 'I_HOME';
+		}
+		mg::message('',"Déclencheur SSID ==> $GeofenceSSID - $homeSSID - $ActiviteJeedomConnect");
 	}
-		mg::message('',"========> $GeofenceSSID - $homeSSID - $ActiviteJeedomConnect");
 
 	// Mise en forme de l'Activité
 	if ($ActiviteJeedomConnect == 'still') { $ActiviteJeedomConnect = "I_$ActiviteJeedomConnect"; }
@@ -97,7 +98,6 @@ if (mg::declencheur('Position') || mg::declencheur('SSID')) {
 	elseif ($ActiviteJeedomConnect == 'running') { $ActiviteJeedomConnect = "E_$ActiviteJeedomConnect"; }
 	elseif ($ActiviteJeedomConnect == 'on_bicycle') { $ActiviteJeedomConnect = "E_$ActiviteJeedomConnect"; }
 	elseif ($ActiviteJeedomConnect == 'in_vehicle') { $ActiviteJeedomConnect = "V_$ActiviteJeedomConnect"; }
-//	elseif (!mg::declencheur('SSID') && $GeofenceSSID != 'Pas de SSID') { $ActiviteJeedomConnect = "I_still_X"; }
 
 	// ENREGISTREMENT DU NOUVEAU POINT
 	$newValue = "$PositionJeedomConnect,$GeofencepcBat,$GeofenceSSID,$ActiviteJeedomConnect";
