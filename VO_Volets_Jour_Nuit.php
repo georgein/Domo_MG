@@ -153,7 +153,7 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 	if ($alerteOuvert != '!') {
 		$cdOuvert = mg::getCmd($equipOuverture, 'Ouverture');
 	} elseif ($sliderCourant <= 99) { $cdOuvert = 0; }
-	
+
 	mg::message('', "CdOuvert ==> $cdOuvert");
 
 	if ( !$alarme && !$nuitExt && $nbMvmtSalon >= $seuilNbMvmt && $cdInhibVoletsReveil ) {
@@ -221,7 +221,7 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 		mg::messageT('', ". FERMETURE VOLET SI VENT FORT");
 		//=============================================================================================================
 
-		if ($voletInverse == 'true') { $slider = 110; } else { $slider = -10; }
+		if ($voletInverse) { $slider = 110; } else { $slider = -10; }
 		$messageAff = "Vent fort > $vitesseVent km/h / Nuit";
 	}
 

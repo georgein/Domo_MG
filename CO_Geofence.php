@@ -56,7 +56,7 @@ $values = array();
 $result = array();
 
 $dateSQL = date('Y\-m\-d', time()); // Date du jour au format SQL
-$userAppel = 'NR'; // Par defaut
+$userAppel = 'MG'; // Par defaut
 
 // Gestion du déclencheur avec enregistrement éventuel en BdD
 if (mg::declencheur('Position') || mg::declencheur('SSID')) {

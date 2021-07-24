@@ -49,8 +49,8 @@ else if ($typeChauffage == 'Eco') {
 	mg::message($logChauffage, "Passage forcé des chauffages en Eco");
 
 	// Préparation relance dans $timingHG en mode HG
-	mg::setVar('_TypeChauffage', 'HG');
-	mg::setCron('', time() + ($timingHG * 3600));
+//	mg::setVar('_TypeChauffage', 'HG');
+//	mg::setCron('', time() + ($timingHG * 3600));
 }
 
 // Passage en mode HG 
