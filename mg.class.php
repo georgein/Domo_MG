@@ -1032,8 +1032,6 @@ function minuterie($equipEcl, $infNbMvmt, $timer=2, $cdExtinction, $cdAllumage, 
 ************************************************************************************************************************/
 function setLampe($equipLampe, $intensite) {
 	$type = strtolower(self::getTypeEqui($equipLampe));
-	// Si type == openzwave on attend queue Zwave == 0
-	//if ($type == 'openzwave') { self::ZwaveBusy(1, 5); }
 
 	// Lampe avec réglage intensité
 	if (self::existCmd($equipLampe, 'Slider Intensité')) {
@@ -1043,11 +1041,12 @@ function setLampe($equipLampe, $intensite) {
 			$etatLampe = self::getCmd($equipLampe, 'Etat');
 		}
 
-		self::setCmd($equipLampe, 'Slider Intensité', $intensite);
+		//self::setCmd($equipLampe, 'Slider Intensité', $intensite);
 		if ($intensite == 0 && $etatLampe >= 1) {
 			self::setCmd($equipLampe, 'Off');
-		} elseif ($intensite > 0 && $etatLampe != $intensite) {
-			self::setCmd($equipLampe, 'On');
+		} //elseif (/*$intensite > 0 &&*/ $etatLampe != $intensite) {
+		if (/*$intensite > 0 &&*/ $etatLampe != $intensite) {
+			self::setCmd($equipLampe, 'Slider Intensité', $intensite);
 		}
 		self::messageT('', "Equipement : ".trim(self::toHuman($equipLampe))." - Intensité : $etatLampe => $intensite - type : $type");
 
@@ -1064,12 +1063,12 @@ function setLampe($equipLampe, $intensite) {
 /************************************************************************************************************************
 * UTIL											GET CONFIG JEEDOM														*
 *************************************************************************************************************************
-* Récupère une config du core																							*
+* Récupère une config du core (par defaut)																				*
 *	Paramètres :																										*
 *		$plugin : Le nom du plugin																						*
 *		$key La clef recherché ('api' par defaut, 'internalAddr' pour l'ip, etc)										*
 ************************************************************************************************************************/
-function getConfigJeedom($plugin, $key='api') {
+function getConfigJeedom($plugin='core', $key='api') {
 	$values = array();
 	$sql = "SELECT value FROM `config` WHERE `plugin` = '$plugin' AND `key` = '$key'";
 	$result = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);

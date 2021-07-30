@@ -34,6 +34,8 @@ if ( $nuitSalon == 2 || $alarme) {
 		return;
 	}
 
+$consigne = mg::getCmd("#[Salon][Températures][Consigne]#");
+
 // Pause pour éviter les faux signaux en cas d'ouverture/fermeture ponctuelle
 if (mg::declencheur('NbPortes') && mg::getCmd($infNbPortesSalon) > 0) {
 	sleep (30);
@@ -44,9 +46,10 @@ $demandeFaite = mg::getVar('_DemandeFaite');
 $nbPortesSalon = mg::getCmd($infNbPortesSalon);
 $tempSalon = mg::getCmd($infTempSalon);
 $tempExt = mg::getCmd($infTempExt);
-$difference = $tempSalon - $tempExt;
+//$difference = $tempSalon - $tempExt;
+$difference = $consigne - $tempExt;
 
-mg::MessageT('', "Saison : $saison - (TempExtérieure : $tempExt - TempSalon : $tempSalon) => (TempSeuilPorte : $tempSeuilPorte - Différence avec Ext. : $difference");
+mg::MessageT('', "Saison : $saison - (TempExtérieure : $tempExt - TempSalon/Consigne : $tempSalon / $consigne) => (TempSeuilPorte : $tempSeuilPorte - Différence avec Ext. : $difference");
 
 // Sortie si différence non significative ou trop élevé
 if ($difference < $tempSeuilPorte) {
@@ -56,7 +59,7 @@ if ($difference < $tempSeuilPorte) {
 }
 
 // Demande d'ouverture de porte
-if ( ($saison == 'ETE' && $difference >= $tempSeuilPorte) || ($saison == 'HIVER' && $difference <= $tempSeuilPorte) ) {
+if ( ($saison == 'ETE' && $difference >= $tempSeuilPorte /*&& $tempSalon > $consigne*/) || ($saison == 'HIVER' && $difference <= $tempSeuilPorte && $tempSalon < $consigne) ) {
 	if ($nbPortesSalon == 0) {
 	mg::Message('', "---------------------------- DEMANDE OUVERTURE PORTE ------------------------------------");
 		mg::LampeCouleur($equipLampeCouleur, $intensiteSignalPorte, mg::VERT);
@@ -68,7 +71,7 @@ if ( ($saison == 'ETE' && $difference >= $tempSeuilPorte) || ($saison == 'HIVER'
 	}
 
 // Demande de fermeture de porte
-} else if ( ($saison == 'ETE' && $difference < $tempSeuilPorte) || ($saison == 'HIVER' && $difference > $tempSeuilPorte) ) {
+} else if ( ($saison == 'ETE' && $difference < $tempSeuilPorte &&  $tempSalon < $consigne) || ($saison == 'HIVER' && $difference > $tempSeuilPorte /*&& $tempSalon > $consigne*/) ) {
 	if ($nbPortesSalon > 0) {
 	mg::Message('', "---------------------------- DEMANDE FERMETURE PORTE ------------------------------------");
 		mg::LampeCouleur($equipLampeCouleur, $intensiteSignalPorte, mg::ROUGE);
