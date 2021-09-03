@@ -46,7 +46,6 @@ $demandeFaite = mg::getVar('_DemandeFaite');
 $nbPortesSalon = mg::getCmd($infNbPortesSalon);
 $tempSalon = mg::getCmd($infTempSalon);
 $tempExt = mg::getCmd($infTempExt);
-//$difference = $tempSalon - $tempExt;
 $difference = $consigne - $tempExt;
 
 mg::MessageT('', "Saison : $saison - (TempExtérieure : $tempExt - TempSalon/Consigne : $tempSalon / $consigne) => (TempSeuilPorte : $tempSeuilPorte - Différence avec Ext. : $difference");
@@ -85,7 +84,7 @@ if ( ($saison == 'ETE' && $difference >= $tempSeuilPorte /*&& $tempSalon > $cons
 
 if ($nbPortesSalon == 0) {
 	mg::LampeCouleur($equipLampeCouleur, 0);
-	mg::unsetVar('_DemandeFaite');
+//	mg::unsetVar('_DemandeFaite');
 }
 
 ?>

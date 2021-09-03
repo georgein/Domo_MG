@@ -104,6 +104,7 @@ if (!$reveilOnLine) {
 	//=================================================================================================================
 	mg::messageT('', ". MESSAGES DES RDV");
 	//=================================================================================================================
+//	$message .= "(...)\n(...) " . MessageRdV(mg::getParam('Global', 'ICS_VACANCES'), 'Vacances scolaires');
 	$message .= "(...)\n(...) " . MessageRdV(mg::getParam('Global', 'ICS_FERIES'), 'fériés');
 	$message .= "(...)\n(...) " . MessageRdV(mg::getParam('Global', 'ICS_NR'), 'N R');
 	$message .= "(...)\n(...) " . MessageRdV(mg::getParam('Global', 'ICS_MG'), 'M G');
@@ -152,6 +153,8 @@ if (!$reveilOnLine) {
 	mg::setCron('', time()-1);
 	mg::setCmd($equipSonos, 'Stop');
 	mg::unsetVar('_ReveilOnLine');
+
+	mg::VoletsGeneral('Etage', 'M', 1); 
 }
 
 /**********************************************************************************************************************

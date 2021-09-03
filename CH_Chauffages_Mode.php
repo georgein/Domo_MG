@@ -43,11 +43,14 @@ global $tabChauffages_, $saison, $logChauffage, $logTimeLine, $nomChauffage, $Sc
 	$logTimeLine = mg::getParam('Log', 'timeLine');
 	$logChauffage = mg::getParam('Log', 'chauffage');
 	$tempHG = mg::getParam('Temperatures', 'tempHG');
+	$salonETE = mg::getParam('Temperatures', 'SalonETE');					// Température confort du salon pour l'été.
+	$salonHIVER = mg::getParam('Temperatures', 'SalonHIVER');				// Température confort du salon pour l'été.
 	$heureChaufChambre = mg::getParam('Chauffages','heureChaufChambre');	// Heure de lancement chauffage chambre
 	$heureChaufEtgChb = mg::getParam('Chauffages','heureChaufEtgChb');		// Heure de lancement chauffage chambre etg
 	$dureeChaufSdB = mg::getParam('Chauffages','dureeChaufSdB');			// Durée du chauffage SdB en mn
 	$pcDeltaTempExt = mg::getParam('Chauffages','pcDeltaTempExt');			// % du delta Consigne-TempExt à ajouter à la consigne
 	$tempBypassPondertion = mg::getParam('Chauffages','tempBypassPondertion');	// Température extérieur en dessous de laquelle on ne passe plus en mode eco la nuit
+	$pcDeltaTempExt = mg::getParam('Chauffages','pcDeltaTempExt');			// % du delta Consigne-TempExt à ajouter à la consigne
 	$tempSalonConfort = mg::getCmd("#[Salon][Températures][Consigne]#"); 	// Température confort du salon
 
 /*********************************************************************************************************************/
@@ -65,7 +68,10 @@ mg::messageT('', "Temp Extérieure Moyenne 7 jours: $tempMoyExt ° ==> $saison")
 if ($saison != mg::getVar('Saison')) {
 	mg::message($logChauffage, "Passage en '$saison' (temp extérieure moyenne sur 7 jours : $tempMoyExt °)");
 	mg::message($logTimeLine, "Chauffage - Passage en '$saison' (temp extérieure moyenne sur 7 jours : $tempMoyExt °)");
-}
+	mg::setCmd("#[Salon][Températures]#", 'Consigne_', $saison == 'ETE' ? $salonETE : $salonHIVER); 
+} 
+
+
 mg::setVar('Saison', $saison);
 
 // Bypass du passage en eco la nuit par grand froid

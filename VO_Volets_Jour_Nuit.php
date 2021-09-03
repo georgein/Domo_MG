@@ -56,6 +56,7 @@ global $debug; $debugVolet; $debugVolet = false; // Pour neutraliser l'action su
 //=====================================================================================================================
 mg::messageT('', "! CALCUL DES CONDITIONS DE BASE");
 //=====================================================================================================================
+mg::setCron('', '*/5 * * * *'); 
 
 // Condition Saison
 $cdEte = ($saison == 'ETE') ? 1 : 0;
@@ -268,7 +269,5 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 } //Fin boucle Volets
 
 mg::MessageT('', ". cdSoleil : $cdSoleil ==> HauteurSoleil : $hauteurMinSoleil < ($hauteurSoleil) < $hauteurMaxSoleil - Azimuth : $azimuthMinSoleil < ($azimutSoleil) < $azimuthMaxSoleil");
-
-mg::setCron('', '*/5 * * * * *'); // En dernière ligne pour écraser cron des alertes
 
 ?>

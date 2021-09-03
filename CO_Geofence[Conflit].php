@@ -53,7 +53,7 @@ global $layerDefaut, $epaisseur, $sizePoint, $pauseSize, $colorVoiture, $refresh
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 
-//RecalculBase ('MG');////////////////////////////////////
+//recupGPX ();////////////////////////////////////
 //return;//////////////////////////////////////
 
 	$typeGPX = '';
@@ -233,7 +233,6 @@ function calculDetailsUser($user, $dateSQL, $idUser) {
 	$tabGeofence[$user]['SSID_Org'] = 'xxx';
 	$tabGeofence[$user]['nameActivite'] = '';
 
-	$name = '';
 	$datetime = 0;
 	$pcBatterie = 0;
 	$tabGeofence_L = '';
@@ -276,7 +275,7 @@ ORDER BY `datetime` ASC
 
 	// Si pas de donnée ou pas date du jour et .gpx existe on le récupère
 	if ((count($result) == 0 || $dateSQL != date('Y\-m\-d', time())) && file_exists($fileHisto))///////////////////
-		$result = getGPX($user, $fileHisto, $name);
+		$result = getGPX($user, $fileHisto);
 
 	for($i=0; $i<count($result); $i++) {
 		$inhibe = 0;
@@ -469,7 +468,7 @@ ORDER BY `datetime` ASC
 	}
 
 	// **************************************** ENREGISTREMENT DONNEES DU JOUR ****************************************
-		setActivites($user, $dateSQL, $fileHisto, $name);
+		setActivites($user, $dateSQL, $fileHisto);
 
 	// **************************** MEMO POUR AFFICHAGE  DE LA SYNTHESE DE L'ENTRAINEMENT *****************************
 	if ($tabGeofence[$user]['debTime'] != 0) {
@@ -510,11 +509,11 @@ function setPoint($tabGeofence, $user, $valueDate, $PositionJeedomConnect, $Geof
 	else { $dateMin = $tabGeofence[$user]['debTime']; }
 	$DateMinTxt = date($formatDate, $dateMin);
 
-	$sql = "DELETE from `history` WHERE `cmd_id` = '$idUser' AND `value` REGEXP '$position' and `datetime` < '$valueDateTxt' and `datetime` > '$DateMinTxt'   ORDER BY `datetime` DESC limit 1";
+	$sql = "DELETE from `history` WHERE `cmd_id` = '$idUser' AND `value` REGEXP '$position' and `datetime` <= '$valueDateTxt' and `datetime` > '$DateMinTxt'   ORDER BY `datetime` DESC limit 1";
 	mg::message('', $sql);
 	$result = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
 	
-if (count($result) > 0 ) 	mg::message('Log:/_JC', "$user - ".count($result)." suppression de doublon : $sql"); ////////////////////////
+if ($result > 0 ) 	mg::message('Log:/_JC', "$user - ".count($result)." suppression de doublon : $sql"); ////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
@@ -620,9 +619,9 @@ function setActivites($user, $dateSQL, $fileHisto, $name='', $verrouille=0) {
 
 		// ******************* MàJ $tabGeofence **************
 		$tabGeofence[$user]['nameActivite'] = $name;
-		if ($km_V > 1) $tabGeofence[$user]['urlIBP'] = "https://www.ibpindex.com/ibpindex/ibp_analisis_completo.php?REF=$reference&amp;LAN=fr&amp;MOD=HKG";
+		$tabGeofence[$user]['urlIBP'] = "https://www.ibpindex.com/ibpindex/ibp_analisis_completo.php?REF=$reference&amp;LAN=fr&amp;MOD=HKG";
 
-		mg::messageT('', "$user - $km_V - Calcul index IBP (".$lgnActivite[$user]['IBP'].") au $dateSQL pour $name");
+		mg::messageT('', "$user - $km_V - Calcul index IBP (".$lgnActivite[$user]['IBP'].") au $dateSQL pour $name - $reference");
 	}
 }
 
@@ -657,12 +656,13 @@ function getActivites($user, $dateSQL, $name='') {
 /*********************************************************************************************************************/
 /************************************************************* RECUP D'UN GPX ****************************************/
 /*********************************************************************************************************************/
-function getGPX($user, $fileGPX, &$name) {
-	global $tabGeofence, $lgnActivite, $typeGPX;
-	$result = array();
+function getGPX($user, $fileGPX) {
+	global $tabGeofence, $typeGPX;
 
 	$index = 0;
 	$obj = simplexml_load_file($fileGPX);
+
+//	if ($tabGeofence[$user]['nameActivite'] == '') $tabGeofence[$user]['nameActivite'] = strval($obj->trk[0]->name);
 
  	foreach($obj->trk->trkseg->trkpt as $trkpt) {
 		$datetime = $trkpt->time;
@@ -674,90 +674,66 @@ function getGPX($user, $fileGPX, &$name) {
 
 		$datetime = str_replace('T', ' ', $datetime);
 		$datetime = str_replace('.000Z', '', $datetime);
+	//	$result[$index]['datetime'] = $datetime;
+//				$result[$index]['datetime'] = date('Y-m-d H:i:s', strtotime($datetime));
+		//mg::message('', $trkpt->time." => $datetime ==> ".date('Y-m-d H:i:s', strtotime($datetime)).' ===> '.strtotime($datetime));
 	}
 	mg::messageT('', "Recup du .GPX $fileGPX de $user,  ($typeGPX) nb de lignes ".count($result));
-
-//	$lgnActivite[$user]['name'] = getNomGPX($fileGPX);
-	$name = getNomGPX($fileGPX);
 	return $result;
 }
 
 /*********************************************************************************************************************/
-/************************************************* NOMMAGE D'UN GPX **************************************************/
+/****************************************************** RECUP DES GPX D'UN REPERTOIRE ********************************/
 /*********************************************************************************************************************/
-function getNomGPX($fileGPX) {
-	$nomRando = '';
-	$oldName = '';
-
-// Table des lieux nommé
-	$latitudeHome = round(mg::getConfigJeedom('core', 'info::latitude'), 5);
-	$longitudeHome = round(mg::getConfigJeedom('core', 'info::longitude'), 5);
-	$lieux = array(
-//			'HOME' 			=> array( 	'lat' => $latitudeHome, 'lon' => $longitudeHome),
-			'Creux du Loup' 	=> array( 	'lat' => 43.3562332, 'lon' => 5.2258779),
-			'Vallon Erevine'	 => array( 	'lat' => 43.3374468, 'lon' => 5.237383),
-			'Erevine' 			=> array( 	'lat' => 43.332062, 'lon' => 5.236458),
-			'Cotier'	 		=> array( 	'lat' => 43.3291776, 'lon' => 5.2263175),
-			'Foret'	 			=> array( 	'lat' => 43.3473627, 'lon' => 5.2224471),
-			'Crete' 			=> array( 	'lat' => 43.3402468, 'lon' => 5.2279768),
-			'Perussier' 		=> array( 	'lat' => 43.3432297, 'lon' => 5.2315516),
-			'Casemate' 			=> array( 	'lat' => 43.3318662, 'lon' => 5.2264952),
-			'Jonquier' 			=> array(	'lat' => 43.3423934, 'lon' => 5.2501678),
-			'Poudriere' 		=> array( 	'lat' => 43.3391935, 'lon' => 5.2488579),
-			'Bourgailles' 		=> array( 	'lat' => 43.3462147, 'lon' => 5.2177986),
-			'Table Orientation'	=> array( 	'lat' => 43.34163, 'lon' => 5.21943),
-			'Vallon Violette'	=> array( 	'lat' => 43.34805, 'lon' => 5.20536),
-			'Besquens'			=> array( 	'lat' => 43.35003, 'lon' => 5.19564),
-			'Valmejeanne'		=> array( 	'lat' => 43.34350, 'lon' => 5.18720),
-			'Eaux Salees'		=> array( 	'lat' => 43.33276, 'lon' => 5.18585),
-			'Port Redonne'		=> array( 	'lat' => 43.33382, 'lon' => 5.19872),
-			'Puits St Antoine'	=> array( 	'lat' => 43.33786, 'lon' => 5.20433),
-			'Carbonnier' 		=> array( 	'lat' => 43.34205, 'lon' => 5.20937)
-			);
-
-	$obj = simplexml_load_file($fileGPX);
- 	foreach($obj->trk->trkseg->trkpt as $trkpt) {
-		$datetime = $trkpt->time;
-		$latGPX = round($trkpt['lat'], 7);
-		$lonGPX = round($trkpt['lon'], 7);
-
-		foreach($lieux as $name => $latlngs) {
-			$dist = round(mg::getDistance($latGPX, $lonGPX, round($latlngs['lat'], 7), round($latlngs['lon'], 7)));
-			if ($dist < 150) {
-				mg::message('', "xx $name - $dist ==> $datetime - $latGPX, $lonGPX, ".round($latlngs['lat'], 7).' - '.round($latlngs['lon'], 7));
-				if ($name != $oldName) $nomRando .= " - $name";
-				$oldName = $name;
-			}
-		}
-	}
-	$nomRando = trim(trim(trim($nomRando), '-'));
-	mg::messageT('', "Nom rando $datetime : $nomRando");
-	return $nomRando;
-}
-
-// ********************************************************************************************************************
-// ********************************************************************************************************************
-// ********************************************************************************************************************
-function RecalculBase ($user = 'MG') {
-	global $pathGeofence, $equipMapPresence;
-	
+function recupGPX ($user = 'MG') {
+	global $pathGeofence;
 	$pathHisto = $pathGeofence."histo_$user/";
-	$idUser = trim(mg::toID($equipMapPresence, $user), '#');
+	$pathHisto = $pathGeofence;
 
-	// Lecture de la liste des gpx du rep
-	$i = 0;
+	// Recup des gpx existant dans le rep
+/*	$i = 0;
 	foreach (new DirectoryIterator($pathHisto) as $fileInfo) {
 		if($fileInfo->isDot()) continue;
-		
-		$fileGPX = $fileInfo->getFilename();
-		$date = str_replace('.gpx', '', $fileGPX);
 
-		calculDetailsUser($user, $date, $idUser); 
-		mg::message('', "$i : $date - $pathHisto/$fileGPX ==> '$name'");
+		$fileHisto = $fileInfo->getFilename();
+		$date = str_replace('.gpx', '', $fileHisto);
+		 setActivites($user, $date, $pathHisto.'/'.$fileHisto, '', 1);
+		mg::message('', "$i : $date - $fileHisto");
 		$i++;
+	}*/
+
+	$row = 1;
+	// recup depuis la liste d'excel
+
+
+	if (($handle = fopen($pathGeofence. "Activities.csv", "r")) !== FALSE) {
+		while (($data = fgetcsv($handle, 10000, ",")) !== FALSE) {
+			$name = $data[3];
+			$date = substr($data[1], 0, 10);
+
+			$fileHisto = $pathGeofence."histo_$user/$date.gpx";
+			if (file_exists($fileHisto) ) {
+				setActivites($user, $date, $fileHisto, $name, 1);
+				$row++;
+			} else {/*
+
+				$result = getActivites($user, '', $name);
+				$datetime = $result[$user]['datetime'];
+			// Ajout des activités et des gpx inexistant
+				if ($datetime != '') {
+					$fileHistoOrg = $pathHisto.substr($datetime,0 , 10).".gpx";
+					copy($fileHistoOrg, $fileHisto);
+					setActivites($user, $date, $fileHisto, $name, 1);
+					$row++;
+					mg::message('', "$row ++++++++++++ $user, $type, $date, ==> $fileHisto, $name, 1 ==> $fileHistoOrg");
+				}*/
+			}
+
+		}
+		fclose($handle);
 	}
-}		
-	
+}
+
 // ********************************************************************************************************************
 // ********************************************************************************************************************
 // ********************************************************************************************************************
@@ -893,7 +869,7 @@ return "
 		}
 
 			.leaflet-control-layers-toggle {
-			/*	margin-top: -$tailleBoutons; */
+				margin-top: -$tailleBoutons;
 		}
 
 		.leaflet-bar button, .leaflet-bar button:hover, .leaflet-bar a, .leaflet-bar a:hover, .leaflet-control-layers-toggle {
@@ -944,16 +920,15 @@ return "
 		}
 
 		.form_date {
-			z-index: 9999!important;
+			z-index: 99999!important;
 			position: absolute;
 		}
 
 		.input_date {
-			position: relative;
 			font-size: 55px;
 			color: black;
 			background-color: darkorange;	
-			   width: 100%;
+			    width: 100%;
 		}
 
 		.borneKm, borneKmMG, borneKmNR {
@@ -973,13 +948,12 @@ return "
 
 		.barre_button {
 		text-align: end;
-			z-index: 9999!important; 
-			position: relative; 
-		    height: 1px;
+		/*	z-index: 99999!important; */
+		/*	position: absolute; */
 		}
 
 		.button {
-			 background-color:grey;
+			 background-color:grey; /*  #1c87c9; */
 			 border: none;
 			 color: white;
 			 text-align: center;
@@ -989,31 +963,31 @@ return "
 			 padding: 10px 15px;
 			 margin: 4px 2px;
 			 cursor: pointer;
+			z-index: 999
 		}
 
 		/* Styles spécifiques aux users */
 		$styleUser
 	</style>
 
-	<body onload=\"__initialize()\">
-		
-		<div class='form_date'>
-			<form >
-				<!-- label for='date_geofence'>Veuillez choisir la date :</label -->
-				<input class='input_date' type='date' id='date_geofence' name='date_geofence' min='$dateMin' max='$dateMax' size='30'>
-			</form>
-		</div>
+	<div class='form_date'>
+		<form >
+			<!-- label for='date_geofence'>Veuillez choisir la date :</label -->
+			<input class='input_date' type='date' id='date_geofence' name='date_geofence' min='$dateMin' max='$dateMax' size='30'>
+		</form>
+	</div>
 
-		<div class='barre_button'>
-		  <a href='https://georgein.dns2.jeedom.com//mg/util/synthese_MG.html' class='button'>Synthese MG</a>
-		  <a href='https://georgein.dns2.jeedom.com//mg/util/synthese_NR.html' class='button'>Synthese NR</a>
-		  <a href='https://georgein.dns2.jeedom.com//mg/util/geo__histo.html' class='button'>Historique</a>
-		</div>
+	<div class='barre_button'>
+      <a href='https://georgein.dns2.jeedom.com//mg/util/synthese_MG.html' class='button'>Synthese MG</a>
+      <a href='https://georgein.dns2.jeedom.com//mg/util/synthese_NR.html' class='button'>Synthese NR</a>
+      <a href='https://georgein.dns2.jeedom.com//mg/util/geo__histo.html' class='button'>Historique</a>
+	</div>
 
-		<!-- <button class='bt-reload' value='Reload' id='reload' onclick='reload();' title='Recharge la page.'>--- Reload ---</button> -->
+	<button class='bt-reload' value='Reload' id='reload' onclick='reload();' title='Recharge la page.'>--- Reload ---</button>
 
-		<div id=\"map\" style=\"width:100%; height:100%\"></div>
-	</body>
+		<body onload=\"__initialize()\">
+			<div id=\"map\" style=\"width:100%; height:100%;\"></div>
+		</body>
 	</html>
 
 "; }

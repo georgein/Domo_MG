@@ -1041,11 +1041,10 @@ function setLampe($equipLampe, $intensite) {
 			$etatLampe = self::getCmd($equipLampe, 'Etat');
 		}
 
-		//self::setCmd($equipLampe, 'Slider Intensité', $intensite);
-		if ($intensite == 0 && $etatLampe >= 1) {
+		if ($intensite == 0 /*&& $etatLampe >= 1*/) {
 			self::setCmd($equipLampe, 'Off');
-		} //elseif (/*$intensite > 0 &&*/ $etatLampe != $intensite) {
-		if (/*$intensite > 0 &&*/ $etatLampe != $intensite) {
+		}
+		if ($etatLampe != $intensite) {
 			self::setCmd($equipLampe, 'Slider Intensité', $intensite);
 		}
 		self::messageT('', "Equipement : ".trim(self::toHuman($equipLampe))." - Intensité : $etatLampe => $intensite - type : $type");
@@ -1182,7 +1181,7 @@ function dateIntervalle($depuis, $jusque='now', $nbVal =2, &$diff=0) {
 *************************************************************************************************************************
 * Retourne la distance en metre ou kilometre (si $unit = 'k') entre deux latitude et longitude fournies					*
 ************************************************************************************************************************/
-	function getDistance($lat1, $lng1, $lat2, $lng2, $unit ='k', &$azimut=0) {
+	function getDistance($lat1, $lng1, $lat2, $lng2, $unit ='', &$azimut=0) {
 		$earth_radius = 6378137;   // Terre = sphère de 6378km de rayon
 		$rlo1 = deg2rad($lng1);
 		$rla1 = deg2rad($lat1);
@@ -1192,13 +1191,12 @@ function dateIntervalle($depuis, $jusque='now', $nbVal =2, &$diff=0) {
 		$dla = ($rla2 - $rla1) / 2;
 		$a = (sin($dla) * sin($dla)) + cos($rla1) * cos($rla2) * (sin($dlo) * sin($dlo));
 		$d = 2 * atan2(sqrt($a), sqrt(1 - $a));
-		//
+		$meter = ($earth_radius * $d);
 		
 		$azimut = (rad2deg(atan2(sin(deg2rad($lng1) - deg2rad($lng2)) * cos(deg2rad($lat1)), cos(deg2rad($lat2)) * sin(deg2rad($lat1)) - sin(deg2rad($lat2)) * cos(deg2rad($lat1)) * cos(deg2rad($lng1) - deg2rad($lng2)))) + 360) % 360;
 		
-		$meter = ($earth_radius * $d);
 		if ($unit == 'k') {
-			//self::message('', self::$__log_SP . __FUNCTION__ . " : ($lat1, $lng1, $lat2, $lng2) => Distance calculée $meter m.");
+//			self::message('', self::$__log_SP . __FUNCTION__ . " : ($lat1, $lng1, $lat2, $lng2) => Distance calculée $meter m.");
 			return floatval($meter / 1000);
 		}
 		
@@ -1985,6 +1983,156 @@ function frameTV($nom, $zone, $action='on') {
 	self::messageT('', '! '.self::$__log_SP . __FUNCTION__ . " : $nom de $zone est à '$action'");
 }
 
+/************************************************************************************************************************
+* Util													Get AltitudeGoogle												*
+*************************************************************************************************************************
+* renvoie la l'altitude d'un point en utilisant les api google															*
+* Paramétres :																											*
+* $coordonnees : 'logitude,latitude'																					*
+* L'API google DOIT etre renseignée ET valide cf :																		*
+* doc google du service 'elevation' 																					*
+* https://console.cloud.google.com/google/maps-apis/overview;onboard=true?project=geofence-mg							*
+* REMARQUES Temps d'acquisition d'une altitude Google # 0.1 sec															*
+************************************************************************************************************************/
+function getAltitudeGoogle($coordonnees) {
+	$API_Google = "AIzaSyB1S0nxgzTgLxS2NAjnAniVOEx0pnJ29Qk";
+	$requete = "https://maps.googleapis.com/maps/api/elevation/json?locations=$coordonnees&key=$API_Google";
+
+	$result = file_get_contents($requete);
+	$json = json_decode($result, true);
+	$altitude = round($json['results'][0]['elevation'] ,2);
+	$resolution = round($json['results'][0]['resolution'], 2);
+
+	self::message('', self::$__log_SP . __FUNCTION__ . " : Altitude de '$coordonnees' => $altitude m, (precision $resolution m)");
+	return $altitude;
+}
+
+/************************************************************************************************************************
+* Util													Get Altitude													*
+*************************************************************************************************************************
+* renvoie la l'altitude d'un point en utilisant les api geoservice														*
+* Paramétres :																											*
+* $coordonnees : 'logitude,latitude'																					*
+* doc du service 'elevation de GeoServices																				*
+* https://geoservices.ign.fr/documentation/services/api-et-services-ogc/calcul-altimetrique-rest						*
+* REMARQUES Temps d'acquisition d'une altitude GeoServices # 0.25 sec													*
+************************************************************************************************************************/
+function getAltitude($latitude, $longitude) {
+	$clef = 'essentiels';
+	$requete = "https://wxs.ign.fr/$clef/alti/rest/elevation.xml?lon=$longitude&lat=$latitude&zonly=true";
+	$result = self::get_fcontent($requete);
+	$altitude = strip_tags($result[0]);
+
+	self::message('', self::$__log_SP . __FUNCTION__ . " : Altitude de '$latitude', '$longitude' => $altitude m ");
+	// if (is_float($altitude) 
+	if (strpos('bad', " $altitude") === false) return $altitude; else return -999;
+}
+
+/************************************************************************************************************************
+* Util													Get get_fcontent												*
+*************************************************************************************************************************
+* Remplace la fonction file_getcontents du PHP quand elle fonctionne mal												*
+************************************************************************************************************************/
+function get_fcontent( $url,  $javascript_loop = 0, $timeout = 5 ) {
+    $url = str_replace( "&amp;", "&", urldecode(trim($url)) );
+
+    $cookie = tempnam ("/tmp", "CURLCOOKIE");
+    $ch = curl_init();
+    curl_setopt( $ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; rv:1.7.3) Gecko/20041001 Firefox/0.10.1" );
+    curl_setopt( $ch, CURLOPT_URL, $url );
+    curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookie );
+    curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+    curl_setopt( $ch, CURLOPT_ENCODING, "" );
+    curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+    curl_setopt( $ch, CURLOPT_AUTOREFERER, true );
+    curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );    # required for https urls
+    curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, $timeout );
+    curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
+    curl_setopt( $ch, CURLOPT_MAXREDIRS, 10 );
+    $content = curl_exec( $ch );
+    $response = curl_getinfo( $ch );
+    curl_close ( $ch );
+
+    if ($response['http_code'] == 301 || $response['http_code'] == 302) {
+        ini_set("user_agent", "Mozilla/5.0 (Windows; U; Windows NT 5.1; rv:1.7.3) Gecko/20041001 Firefox/0.10.1");
+
+        if ( $headers = get_headers($response['url']) ) {
+            foreach( $headers as $value ) {
+                if ( substr( strtolower($value), 0, 9 ) == "location:" )
+                    return get_url( trim( substr( $value, 9, strlen($value) ) ) );
+            }
+        }
+    }
+
+    if (    ( preg_match("/>[[:space:]]+window\.location\.replace\('(.*)'\)/i", $content, $value) || preg_match("/>[[:space:]]+window\.location\=\"(.*)\"/i", $content, $value) ) && $javascript_loop < 5) {
+        return get_url( $value[1], $javascript_loop+1 );
+    } else {
+        return array( $content, $response );
+    }
+}
+
+/************************************************************************************************************************
+* Util														clean_text													*
+*************************************************************************************************************************
+ * Fonction qui permet de traiter de différentes manières un texte														*
+ * @param  string $str     Chaine de caractères à traiter																*
+ * @param  array  $options Listes des options à effectuées sous forme de tableau										*
+ * @return string          Chaine de caractères transformées en fonction des options									*
+************************************************************************************************************************/
+ function clean_text($str,$options = array('TOUT')){
+
+	if(in_array('TOUT',$options)):
+		$options = array('HTML','TRIM','MAJUSCULE','MINUSCULE','ACCENT','PONCTUATION','TABULATION','ENTER','DOUBLE');
+	endif;
+
+	foreach($options as $option):
+		switch($option){
+			// Suppression des espaces vides en debut et fin de chaque ligne
+			case 'TRIM':
+				$str = preg_replace("#^[\t\f\v ]+|[\t\f\v ]+$#m",'',$str);
+			break;
+			// Remplacement des caractères accentués par leurs équivalents non accentués
+			case 'ACCENT':
+				$str = htmlentities($str, ENT_NOQUOTES, 'utf-8');
+				$str = preg_replace('#&([A-za-z])(?:acute|cedil|caron|circ|grave|orn|ring|slash|th|tilde|uml);#', '\1', $str);
+				$str = preg_replace('#&([A-za-z]{2})(?:lig);#', '\1', $str); // pour les ligatures e.g. 'œ'
+				$str = html_entity_decode($str); 
+			break;
+			// Transforme tout le texte en minuscule
+			case 'MINUSCULE':
+				$str = mb_strtolower($str, 'UTF-8');
+			break;
+			// Transforme tout le texte en majuscule
+			case 'MAJUSCULE':
+				$str = mb_strtoupper($str, 'UTF-8');
+			break;
+			// Remplace toute la ponctuation par des espaces
+			case 'PONCTUATION':
+				$str = preg_replace('#([[:punct:]])#',' ',$str);
+				$exceptions = array("’");
+				$str = str_replace($exceptions,' ',$str);
+			break;
+			// Remplace les tabulations par des espaces
+			case 'TABULATION':
+				$str = preg_replace("#\h#u", " ", $str);
+			break;
+			// Remplace les espaces multiples par des espaces simples
+			case 'DOUBLE':
+				$str = preg_replace('#[" "]{2,}#',' ',$str);
+			break;
+			// Remplace 1 entrée (\r\n) par 1 espace
+			case 'ENTER':
+				$str = str_replace(array("\r","\n"),' ',$str);
+			break;
+			// Supprime toutes les balises html
+			case 'HTML':
+				$str = strip_tags($str);
+			break;
+		}
+	endforeach;
+	
+	return $str;
+}
 
 /************************************************************************************************************************
 *																														*

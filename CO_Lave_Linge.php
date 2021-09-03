@@ -24,7 +24,11 @@ Messages inhibés la nuit et après TimeOut.
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
+mg::setCron('', "*/$periodicite * * * *");
+
 $puissanceMoyenne = mg::getExp("average(#$infPuissanceLaveLinge#, $periodicite min)");
+
+mg::messageT('', "Puissance moyenne : $puissanceMoyenne w / $periodicite min - Lave linge ". (mg::getVar('_laveLingeOn') ? 'En route' : 'Arrété'));
 
 // Mise en route
 if ($puissanceMoyenne > $seuilMarche && !mg::getVar('_laveLingeOn')) {
@@ -35,8 +39,7 @@ if ($puissanceMoyenne > $seuilMarche && !mg::getVar('_laveLingeOn')) {
 if ($puissanceMoyenne <= $seuilMarche && $nuitSalon != 2 && mg::getVar('_laveLingeOn')) {
 	if (mg::getVar('_laveLingeOn') == 1) {
 		mg::Alerte('LaveLinge', $periodicite, $timeoutLaveLinge, $destinataires, 'Le lave linge est terminé');
-		mg::message('', 'Le lave linge est terminé'); ////////////////////////////////////////////////////
-		mg::setVar('_laveLingeOn', time()); // Mémo de l'heure de fin du LaveLinge
+		mg::setVar('_laveLingeOn', time()); // Mémo de l'heure de fin du LaveLinge ///////////////////////////////////
 
 	// Rappel tous les $periodicite mn.
 	} else if (mg::getVar("_alerteLaveLinge")) {
@@ -48,7 +51,6 @@ if ($puissanceMoyenne <= $seuilMarche && $nuitSalon != 2 && mg::getVar('_laveLin
 if ($puissanceMoyenne <= $seuilStop && mg::getVar('_laveLingeOn')) {
 	mg::unsetVar('_laveLingeOn');
 	mg::Alerte('LaveLinge', -1);
-	return;
 }
 
 ?>
