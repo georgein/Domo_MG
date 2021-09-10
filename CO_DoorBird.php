@@ -8,7 +8,7 @@ snaphot url : http://192.168.2.2/bha-api/image.cgi?http-user=ghbbgw0001&http-pas
 **********************************************************************************************************************/
 
 //Infos, Commandes et Equipements :
-	// $infAffDoorbird
+	// $infAffDoorbird, $cmdAffCamJC_PC_MG, $cmdAffCamJC_JPI
 
 // N° des scénarios :
 
@@ -17,6 +17,8 @@ snaphot url : http://192.168.2.2/bha-api/image.cgi?http-user=ghbbgw0001&http-pas
 // Paramètres :
 	$nePasDeranger = mg::getVar('nePasDeranger', 0);
 	$designCam = 24;
+	$camJC = 369;
+	$salonJC = 220;
 	$designPrincipal = mg::getParam('Media', 'designGeneral');
 
 	$volumeSonnette = 80;					// Volume du son de la sonnette
@@ -42,10 +44,12 @@ if ($camIP) {
 if (mg::declencheur('user') || mg::declencheur('schedule')) {
 	mg::MessageT('', "! RIEN A SIGNALER");
 	if (mg::getVar('_designActif') != $designPrincipal) {
-		mg::JPI('DESIGN', $designPrincipal);
-		if (mg::getVar('_designActif') != $designPrincipal) {
-			mg::setVar('_designActif', $designPrincipal);
-		}
+		mg::setVar('_designActif', $designPrincipal);
+			
+		// mg::JPI('DESIGN', $designPrincipal);
+				
+		mg::setCmd($cmdAffCamJC_PC_MG, '', $salonJC);
+		mg::setCmd($cmdAffCamJC_JPI, '', $salonJC);
 	}
 
 // Déclenchement Doorbird	
@@ -64,9 +68,13 @@ if (mg::declencheur('user') || mg::declencheur('schedule')) {
 	
 	// Affichage cam sur JPI
 	if (mg::getVar('_designActif') != $designCam) {
-		mg::JPI('DESIGN', $designCam);
 		mg::setVar('_designActif', $designCam);
 		mg::setCron('', time() + $timerRetour*60);
+		
+		// mg::JPI('DESIGN', $designCam);
+
+		mg::setCmd($cmdAffCamJC_PC_MG, '', $camJC);
+		mg::setCmd($cmdAffCamJC_JPI, '', $salonJC);
 	}
 }
 

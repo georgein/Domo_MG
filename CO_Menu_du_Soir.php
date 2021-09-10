@@ -21,8 +21,8 @@ Envoi des proposition de menu par SMS le soir
 	);
 
 	$tab_Legumes = array(
-				'Pattes au beurre (200 grammes.)', // avec 2 t pour TTS ....
-				'Pattes champignons (200 grammes.)',
+				'Pate au beurre (200 grammes.)', // avec 2 t pour TTS ....
+				'Pate champignons (200 grammes.)',
 				'Purée de pomme de terre (200 grammes.)',
 				'Pomme de terre à l\'eau (200 grammes.)',
 				'Ecrasé de pomme de terre (200 grammes.)',

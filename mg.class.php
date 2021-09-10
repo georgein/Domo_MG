@@ -1995,7 +1995,7 @@ function frameTV($nom, $zone, $action='on') {
 * REMARQUES Temps d'acquisition d'une altitude Google # 0.1 sec															*
 ************************************************************************************************************************/
 function getAltitudeGoogle($coordonnees) {
-	$API_Google = "AIzaSyB1S0nxgzTgLxS2NAjnAniVOEx0pnJ29Qk";
+	$API_Google = "*** clef API google ***";
 	$requete = "https://maps.googleapis.com/maps/api/elevation/json?locations=$coordonnees&key=$API_Google";
 
 	$result = file_get_contents($requete);

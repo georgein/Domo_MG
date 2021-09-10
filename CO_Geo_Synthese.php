@@ -3,12 +3,14 @@
 Geo_Synthese - 202
 
 **********************************************************************************************************************/
+global $tabActivite, $tableau, $tableau0, $color, $cptLgn, $idUser, $dateOrg, $dateOrgTxt;
 
 // Infos, Commandes et Equipements =>
 
 // N° des scénarios =>
 
 // Variables =>
+	$tabActivite = '_activites';
 	$pathRef = mg::getParam('System', 'pathRef');	// Répertoire de référence de domoMG
 
 // Paramètres =>
@@ -16,16 +18,15 @@ Geo_Synthese - 202
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-global $tableau, $color, $cptLgn, $idUser, $dateOrg;
 
 synthese('MG', $pathRef);
 synthese('NR', $pathRef);
 
 /********************************************************************************************************************/
-/********************************************************************************************************************/
+/*********************************************** EDITION SYNTHES $USER **********************************************/
 /********************************************************************************************************************/
 function synthese($user, $pathRef) {
-global $tableau, $color, $cptLgn, $idUser, $dateOrg;
+global $tableau, $tableau0, $color, $cptLgn, $idUser, $dateOrg, $dateOrgTxt;
 	$fileSynthese = getRootPath() . "$pathRef/util/synthese_$user.html";
 
 	// Calcul de la date minimum entre les Activité et le poids
@@ -38,17 +39,6 @@ global $tableau, $color, $cptLgn, $idUser, $dateOrg;
 	$dateOrgTxt = date('d\/m\/Y', $dateOrg);
 
 	/*****************************************************************************************************************/
-	/*****************************************************************************************************************/
-	/*****************************************************************************************************************/
-
-	$tete = "
-	<!DOCTYPE html PUBLIC '-//W3C//DTD HTML 4.01//EN' 'http://www.w3.org/TR/html4/strict.dtd'>
-	<html>
-	  <head>
-		  <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
-		  <meta name='author' content='Michel Georgein' />
-	";
-
 	$style = "
 		<style type='text/css'>
 			html { font-family:Calibri, Arial, Helvetica, sans-serif; font-size:11pt; background-color:white }
@@ -98,26 +88,75 @@ global $tableau, $color, $cptLgn, $idUser, $dateOrg;
 
 			td.style23 { vertical-align:bottom; border-bottom:2px solid #000000 !important; border-top:none #000000; border-left:3px solid #000000 !important; border-right:3px solid #000000 !important; color:#000000; font-family:'Calibri'; font-size:11pt; background-color:white }
 
+			.barre_button {
+/*			text-align: end;
+				z-index: 9999!important; 
+				position: relative;  */
+				position: absolute;
+				/* display: contents; */
+				height: 1px;
+				 margin-left:30%;
+				 margin-right:20%;
+				     margin-top: -50px;
+			}
+
+			.button {
+				 background-color:grey;
+				 border: none;
+				 color: white;
+				 text-align: center;
+				 text-decoration: none;
+				 display: inline-block;
+				 font-size: 30px;
+				 padding: 8px 15px 8px 15px;
+				 margin: 4px 2px;
+				 cursor: pointer;
+			}
+		
 	</style>
 	";
 
 	// ***************************************************** TABLEAU ******************************************************
-	//$tableau = $tete;
-	//$tableau .= $style;
+	
+	$tete = "
+	<!DOCTYPE html PUBLIC '-//W3C//DTD HTML 4.01//EN' 'http://www.w3.org/TR/html4/strict.dtd'>
+	<html>
+	  <head>
+		  <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
+		  <meta name='author' content='Michel Georgein' />
+	</head>
+	";
+	
+	$buttons = "
+		<div class='barre_button'>
+		  <a href='https://georgein.dns2.jeedom.com//mg/util/geofence.html' class='button'>Geofence</a>
+		  <a href='https://georgein.dns2.jeedom.com//mg/util/synthese_MG.html' class='button'>Synthese MG</a>
+		  <a href='https://georgein.dns2.jeedom.com//mg/util/synthese_NR.html' class='button'>Synthese NR</a>
+		  <a href='https://georgein.dns2.jeedom.com//mg/util/geo__histo.html' class='button'>Historique</a>
+		</div>
+		<br>";
 
+	
+//	$tete Tableau
 	$tableau = "
-	  </head>
-	  <body>
-	<style>
-	@page { margin-left: 0.7in; margin-right: 0.7in; margin-top: 0.75in; margin-bottom: 0.75in; }
-	body { margin-left: 0.7in; margin-right: 0.7in; margin-top: 0.75in; margin-bottom: 0.75in; }
-	</style>
-		<table border='0' cellpadding='0' cellspacing='0' id='sheet0' class='sheet0 gridlines'>
-			<tbody>
+		<body>
+		<style>
+			@page { margin-left: 10px; margin-right: 10px; margin-top: 10px; margin-bottom: 10px; }
+			body { margin-left: 10px; margin-right: 10px; margin-top: 10px; margin-bottom: 10px;padding-top:50px; }
+		</style>
+			<table border='0' cellpadding='0' cellspacing='0' id='sheet0' class='sheet0 gridlines'>
+				<tbody>
 	";
 
+	// Tableau de tête
+	$tableau0 = $tableau;
+	$tableau0 .= titre("SYNTHESE STATISTIQUES de $user depuis le $dateOrgTxt.");
+	$tableau0 .= ligneSousTitre1();
+	$tableau0 .= ligneSousTitre2();
+
+
+	// Tableau principal
 	$cptLgn = 0;
-//	$tableau .= titre("SYNTHESE ACTIVITES DE $user au .".date('d\/m\/Y \à H\hi\m\n', time()));
 	$tableau .= titre("Stat. Hebdomadaires sur les 4 dernières semaines de $user.");
 	$tableau .= ligneSousTitre1();
 	$tableau .= ligneSousTitre2();
@@ -146,12 +185,17 @@ global $tableau, $color, $cptLgn, $idUser, $dateOrg;
 	$tableau .= "
 			</tbody>
 		</table>
-	  </body>
-	</html>
 	";
+	
+	// ********** Sortie finale **********
+	$HTML = '';
+	$HTML .= $tete;
+	$HTML .= $style;
+	$HTML .= $buttons;
+	$HTML .= "<div>$tableau0</div>";
+	$HTML .= ligneVide('40px');
+	$HTML .= "<div>$tableau</div> </body></html>";
 
-
-	$HTML = "$tete $style $tableau </body></html>";
 	mg::message('', $HTML);
 	file_put_contents($fileSynthese, $HTML);
 
@@ -224,12 +268,12 @@ function ligneSousTitre2() {
 	";
 }
 
-function ligneVide() {
+function ligneVide($height='10px') {
 	global $cptLgn;
 	$cptLgn++;
 	return "
 	<tr class=\"row$cptLgn\">
-		<td class='lgnVide' colspan='21'></td>
+		<td class='lgnVide' style='height:$height;' colspan='21'></td>
 	</tr>
 	";
 }
@@ -298,8 +342,18 @@ function ligne($aff) {
 /*************************************************** CALCUL HEBDO ****************************************************/
 /*********************************************************************************************************************/
 function hebdo($user) {
-	global $tableau, $cptLgn, $color;
+	global $tableau, $tableau0, $cptLgn, $color;
 	$affLgn = '';
+
+	// Journée courante
+	$cptLgn++;
+	$dateMax = strtotime("today");
+	$dateMin = strtotime("today");
+	$result = getActivites($user, $dateMin, $dateMax);
+	$aff = valLigne($result, $dateMin, $dateMax);
+		$aff['titreLigne'] = 'Journée courante';
+	$color = 'colorP';
+	$tableau0 .= ligne($aff);
 
 	// Semaine glissante
 	$cptLgn++;
@@ -307,10 +361,9 @@ function hebdo($user) {
 	$dateMin = strtotime("- 6 day", $dateMax);
 	$result = getActivites($user, $dateMin, $dateMax);
 	$aff = valLigne($result, $dateMin, $dateMax);
-//		$aff['titreLigne'] = 'Semaine glissante';
+		$aff['titreLigne'] = 'Semaine glissante';
 	$color = 'colorP';
-	$tableau .= ligne($aff);
-	$tableau .= ligneVide();
+	$tableau0 .= ligne($aff);
 
 	// 4 dernières semaines
 	$dateMin = strtotime("last Monday");
@@ -331,7 +384,7 @@ function hebdo($user) {
 /************************************************** CALCUL MENSUEL ***************************************************/
 /*********************************************************************************************************************/
 function mensuel($user) {
-	global $tableau, $cptLgn, $color;
+	global $tableau, $tableau0, $cptLgn, $color;
 	$affLgn = '';
 
 	// Mois glissant
@@ -339,10 +392,9 @@ function mensuel($user) {
 	$dateMin = strtotime("- 1 month", $dateMax + 1440*60);
 	$result = getActivites($user, $dateMin, $dateMax);
 	$aff = valLigne($result, $dateMin, $dateMax);
-//	$aff['titreLigne'] = 'Mois glissant';
+	$aff['titreLigne'] = 'Mois glissant';
 	$color = 'colorP';
-	$tableau .= ligne($aff);
-	$tableau .= ligneVide();
+	$tableau0 .= ligne($aff);
 
 	// 12 derniers mois
 	$dateMin = strtotime("first day of this month");
@@ -363,7 +415,7 @@ function mensuel($user) {
 /*************************************************** CALCUL ANNUEL ***************************************************/
 /*********************************************************************************************************************/
 function annuel($user) {
-	global $tableau, $cptLgn, $dateOrg, $color;
+	global $tableau, $tableau0, $cptLgn, $dateOrg, $color;
 	$affLgn = '';
 
 	// Année glissante
@@ -371,10 +423,9 @@ function annuel($user) {
 	$dateMin = strtotime("- 1 year", $dateMax + 1440*60);
 	$result = getActivites($user, $dateMin, $dateMax);
 	$aff = valLigne($result, $dateMin, $dateMax);
-//	$aff['titreLigne'] = 'Année glissante';
+	$aff['titreLigne'] = 'Année glissante';
 	$color = 'colorP';
-	$tableau .= ligne($aff);
-	$tableau .= ligneVide();
+	$tableau0 .= ligne($aff);
 
 	// x dernières années
 	$dateMin = strtotime("first day of january");
@@ -396,12 +447,16 @@ function annuel($user) {
 /************************************************ CALCUL ALL PERIODES ************************************************/
 /*********************************************************************************************************************/
 function ALL($user) {
-	global $cptLgn, $idUser, $dateOrg;
-		$cptLgn++;
-		$result = getActivites($user, $dateOrg, time());
+	global $tableau0, $cptLgn, $idUser, $dateOrg, $dateOrgTxt, $color;
+	$result = getActivites($user, $dateOrg, time());
+	$aff = valLigne($result, $dateOrg, time());
 
-		$aff = valLigne($result, $dateOrg, time());
-		$affLgn = ligne($aff);
+	$aff['titreLigne'] = "Depuis le $dateOrgTxt";
+	$color = 'colorP';
+	$tableau0 .= ligne($aff);
+
+	$cptLgn++;
+	$affLgn = ligne($aff);
 	return $affLgn;
 }
 
@@ -443,28 +498,28 @@ function valLigne($result, $dateMin, $dateMax) {
 
 	// Gestion du poids
 	$result_P = getPoids($idUser, $dateMin, $dateMax);
-	for ($i=0; $i<count($result_P); $i++) {
-		if ($result_P[$i]['value'] <=0) continue;
+	for ($i=0; $i<=count($result_P); $i++) {
+		if (!isset($result_P[$i]['value']) || $result_P[$i]['value'] <=0) continue;
 		$aff['s_poids'] += $result_P[$i]['value'];
 		$nbVal_P++;
 	}
 	$aff['j_poids'] = ($nbVal_P > 0 ? round($aff['s_poids'] / $nbVal_P, 1).' kg' : 0);
 
-	for ($i=0; $i<count($result); $i++) {
+	for ($i=0; $i<=count($result); $i++) {
 
 		// Gestion Entrainements
-		if ($result[$i]['km_E'] > 0) $nbVal_E++;
+		if (isset($result[$i]['km_E']) && $result[$i]['km_E'] > 0) $nbVal_E++;
 
 		if ($nbVal_E > 0) {
 			// Calcul TOTALISATIONS
-			$aff['s_IBP'] += $result[$i]['IBP'];
-			$aff['s_km_E'] += $result[$i]['km_E'];
-			$aff['s_km_Effort'] += $result[$i]['km_Effort'];
-			$aff['s_deniv_P'] += $result[$i]['deniv_P'];
-			$aff['s_deniv_M'] += $result[$i]['deniv_M'];
-			$aff['s_duree_Mvmt'] += TimeToSec($result[$i]['duree_Mvmt']);
-			$aff['s_duree_Pause'] += TimeToSec($result[$i]['duree_Pause']);
-			$aff['s_duree_Glob'] += TimeToSec($result[$i]['duree_Glob']);
+			if (isset($result[$i]['IBP'])) $aff['s_IBP'] += $result[$i]['IBP'];
+			if (isset($result[$i]['km_E'])) $aff['s_km_E'] += $result[$i]['km_E'];
+			if (isset($result[$i]['km_Effort'])) $aff['s_km_Effort'] += $result[$i]['km_Effort'];
+			if (isset($result[$i]['deniv_P'])) $aff['s_deniv_P'] += $result[$i]['deniv_P'];
+			if (isset($result[$i]['deniv_M'])) $aff['s_deniv_M'] += $result[$i]['deniv_M'];
+			if (isset($result[$i]['duree_Mvmt'])) $aff['s_duree_Mvmt'] += TimeToSec($result[$i]['duree_Mvmt']);
+			if (isset($result[$i]['duree_Pause'])) $aff['s_duree_Pause'] += TimeToSec($result[$i]['duree_Pause']);
+			if (isset($result[$i]['duree_Glob'])) $aff['s_duree_Glob'] += TimeToSec($result[$i]['duree_Glob']);
 
 			// Affichage des MOYENNE JOURS ACTIFS
 			$aff['j_IBP'] = round($aff['s_IBP'] / $nbVal_E);
@@ -477,14 +532,18 @@ function valLigne($result, $dateMin, $dateMax) {
 			$aff['j_duree_Pause'] = $aff['s_duree_Pause'] / $nbVal_E -3600; // ???????????????????????????????????
 			$aff['j_duree_Glob'] = $aff['s_duree_Glob'] / $nbVal_E;
 
-			$aff['j_vitesse_Mvmt'] = ($aff['j_duree_Mvmt'] > 0 ? round($aff['s_km_E'] / $nbVal_E / $aff['j_duree_Mvmt']*3600, 1).' km/h' : 0);
-			$aff['j_vitesse_Glob'] = ($aff['j_duree_Mvmt'] > 0 ? round($aff['s_km_E'] / $nbVal_E / $aff['j_duree_Glob']*3600, 1).' km/h' : 0);
+			$tmp = '';
+//			$tmp = ($aff['j_duree_Mvmt'] > 0 ? round($aff['s_km_Effort'] / $nbVal_E / $aff['j_duree_Mvmt']*3600, 1).' km/h' : 0);
+			$aff['j_vitesse_Mvmt'] = ($aff['j_duree_Mvmt'] > 0 ? round($aff['s_km_E'] / $nbVal_E / $aff['j_duree_Mvmt']*3600, 1)."/$tmp km/h" : 0);
+			
+//			$tmp = ($aff['j_duree_Mvmt'] > 0 ? round($aff['s_km_Effort'] / $nbVal_E / $aff['j_duree_Glob']*3600, 1).' km/h' : 0);
+			$aff['j_vitesse_Glob'] = ($aff['j_duree_Mvmt'] > 0 ? round($aff['s_km_E'] / $nbVal_E / $aff['j_duree_Glob']*3600, 1)."/$tmp km/h" : 0);
 		}
 
 		// Gestion Voiture
-		if ($result[$i]['km_V'] > 0) $nbVal_V++;
+		if (isset($result[$i]['km_V']) && $result[$i]['km_V'] > 0) $nbVal_V++;
 		if ($nbVal_V > 0) {
-			$aff['s_km_V'] += $result[$i]['km_V'];
+			if (isset($result[$i]['km_V'])) $aff['s_km_V'] += $result[$i]['km_V'];
 			$aff['j_km_V'] = round($aff['s_km_V'] / $nbVal_V).' km';
 		}
 	}
@@ -500,7 +559,7 @@ function valLigne($result, $dateMin, $dateMax) {
 function TimeToSec($time) {
 //date_default_timezone_set('Europe/Paris');
 //	$time = "$time.000Z";
-    $sec = 0;
+    $sec = 0; $k=0; $v=0;
     foreach (array_reverse(explode(':', $time)) as $k => $v) $sec += pow(60, $k) * $v;
     return $sec-3600*0; //($sec > 3600 ? $sec-3600 : $sec);
 }
@@ -509,12 +568,13 @@ function TimeToSec($time) {
 /************************************ LIT LES DONNEES ACTIVITES ENTRE DEUX DATES *************************************/
 /*********************************************************************************************************************/
 function getActivites($user, $dateMin, $dateMax, $limit=10000, $sens='ASC') {
+	global $tabActivite;
 	$values = array();
 	$dateMin = date('Y\-m\-d', $dateMin);
 	$dateMax = date('Y\-m\-d', $dateMax);
 
 	$sql = "SELECT *
-		FROM `geofence_users`
+		FROM `$tabActivite`
 		WHERE `user` = '$user' AND `datetime` >= '$dateMin' AND `datetime` <= '$dateMax' AND (`km_E` > 0 OR `km_V` > 0)
 		ORDER BY `datetime` $sens LIMIT $limit";
 
@@ -535,14 +595,13 @@ function getPoids($idUser, $dateMin, $dateMax, $limit=10000, $sens='ASC') {
 		FROM (
 			SELECT *
 				FROM history
-				WHERE cmd_id = $idUser AND `datetime` >= '$dateMin' AND `datetime` <= '$dateMax' AND `value` > 0
+				WHERE cmd_id = $idUser AND `datetime` >= '$dateMin' AND `datetime` <= '$dateMax 23:59:59' AND `value` > 0
 			UNION ALL
 				SELECT *
 					FROM historyArch
-					WHERE cmd_id = $idUser AND `datetime` >= '$dateMin' AND `datetime` <= '$dateMax' AND `value` > 0
+					WHERE cmd_id = $idUser AND `datetime` >= '$dateMin' AND `datetime` <= '$dateMax 23:59:59' AND `value` > 0
 		) as dt
 		ORDER BY `datetime` $sens LIMIT $limit";
-
 	$result = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
 	return $result;
 }
