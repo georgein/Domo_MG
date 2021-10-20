@@ -41,8 +41,10 @@ global $debug;
 	$pathRef = mg::getParam('System', 'pathRef');	// Répertoire de référence de domoMG
 	$fileExportJS = getRootPath() . "$pathRef/util/tab_Reseau.js";
 	$fileExportHTML = getRootPath() . "$pathRef/util/tab_Reseau.html";
-	$tabUser = mg::getVar('tabUser');
-	$tabUserTmp = mg::getVar('_tabUser'); // Table des valeurs volatiles
+
+	$tabUser = mg::getTabSql('_tabUsers');
+	$tabUserTmp = mg::getVar('tabUsersTmp'); // Table des valeurs volatiles
+
 	$logAlarme = mg::getParam('Log', 'alarme');
 
 	$timingAlarmeLastMvmt = mg::getParam('Alarme', 'timingLastMvmt'); // Temps minimum (en mn depuis LastMvmtAll pour autoriser le lancement de l'alarme si AutoPrésence.
@@ -69,7 +71,7 @@ mg::setInf($equipTabReseau, 'Maj_Aff', 0);
 // --------------------------------------------------------------------------------------------------------------------
 // Parcours de la table des Users
 foreach ($tabUser as $user => $detailsUser) {
-	if ($tabUser[$user]['visible'] == 'false') { continue; }
+	if ($tabUser[$user]['visible'] == 0) { continue; }
 	if (!isset($tabUserTmp[$user]['lastNOK'])) { $tabUserTmp[$user]['lastNOK'] = 0; }
 	if (!isset($tabUserTmp[$user]['OK'])) { $tabUserTmp[$user]['OK'] = 0; }
 
@@ -171,8 +173,12 @@ foreach ($tabUser as $user => $detailsUser) {
 	// ================================================================================================================
 
 	$tabUserTmp[$user]['equipStat'] = $cmd_id;
-	if ($IP) { $tabUser[$user]['IP'] = $IP; }
+	if ($IP) { 
+		$tabUser[$user]['IP'] = $IP; 
+		mg::setValSql('_tabUsers', $user, '', 'IP', $IP);//////////////////////////////////
+	}
 	$tabUser[$user]['MAC'] = strtolower($MAC);
+	mg::setValSql('_tabUsers', $user, '', 'MAC', $MAC); /////////////////////////////////////
 } // Fin boucle user
 
 	mg::messageT('', "! Il y a $nbPresences user(s) sur le site.");
@@ -196,8 +202,7 @@ mg::setScenario($scen_LancementAlarme, 'start');
 //************************************** Fabrication du tableau des users *********************************************
 // ********************************************************************************************************************
 ksort($tabUser, SORT_STRING);
-mg::setVar('tabUser', $tabUser);
-mg::setVar('_tabUser', $tabUserTmp);
+mg::setVar('tabUsersTmp', $tabUserTmp);
 mg::setVar('Présence', $nbPresences);
 
 $HTML = MakeTabReseau($tabUser, $tabUserTmp, $script, $pathRef);
@@ -332,8 +337,8 @@ $HTML = "
 	// Boucle des Users
 	$lgn = 0; $Size = '25px';
 	foreach ($tabUser as $user => $detailsUser) {
-		if ($tabUser[$user]['visible'] == 'false') { continue; }
-		if (@isset($tabUser[$user]['visible']) && $tabUser[$user]['visible'] == 'non') { continue; }
+		if ($tabUser[$user]['visible'] == 0) { continue; }
+//		if (@isset($tabUser[$user]['visible']) && $tabUser[$user]['visible'] == 0) { continue; }
 		$IP = @isset($tabUser[$user]['IP']) ? trim($tabUser[$user]['IP']) : '';
 		$MAC = @isset($tabUser[$user]['MAC']) ? trim($tabUser[$user]['MAC']) : '';
 		$port = @isset($tabUser[$user]['port']) ? trim($tabUser[$user]['port']) : '';

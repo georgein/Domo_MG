@@ -12,7 +12,7 @@ Enchaîne au final le scénario ChauffageMode
 // N° des scénarios :
 
 //Variables :
-	$tabChauffages_ = mg::getVar('_tabChauffages');
+	$tabChauffagesTmp = mg::getVar('tabChauffagesTmp');
 
 	$saison = mg::getVar('Saison');
 	$alarme = mg::getVar('Alarme');

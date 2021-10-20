@@ -19,7 +19,7 @@ Gestion du mode des chauffages selon les heures et conditions.
 
 Le ratio de préchauffage (en °/h) est recalculé à chaque fois si > 0.1 et durée > 2mn.
 **********************************************************************************************************************/
-global $tabChauffages_, $saison, $logChauffage, $logTimeLine, $nomChauffage, $ScenRegulation, $tempZone, $tempConfort, $correction, $tempEco, $heureReveil;
+global $tabChauffagesTmp, $saison, $logChauffage, $logTimeLine, $nomChauffage, $ScenRegulation, $tempZone, $tempConfort, $correction, $tempEco, $heureReveil;
 
 // Infos, Commandes et Equipements :
 	//	$infTempExt,
@@ -29,8 +29,9 @@ global $tabChauffages_, $saison, $logChauffage, $logTimeLine, $nomChauffage, $Sc
 //	$ScenRegulation = 115;
 
 //Variables :
-	$tabChauffages = mg::getVar('tabChauffages');
-	$tabChauffages_ = mg::getVar('_tabChauffages');
+	$nomTabChauffage = '_tabChauffages';
+	$tabChauffages = mg::getTabSql($nomTabChauffage);
+	$tabChauffagesTmp = mg::getVar('tabChauffagesTmp');
 
 	$alarme = mg::getVar('Alarme');
 	$nuitSalon = mg::getVar('NuitSalon');
@@ -49,7 +50,7 @@ global $tabChauffages_, $saison, $logChauffage, $logTimeLine, $nomChauffage, $Sc
 	$heureChaufEtgChb = mg::getParam('Chauffages','heureChaufEtgChb');		// Heure de lancement chauffage chambre etg
 	$dureeChaufSdB = mg::getParam('Chauffages','dureeChaufSdB');			// Durée du chauffage SdB en mn
 	$pcDeltaTempExt = mg::getParam('Chauffages','pcDeltaTempExt');			// % du delta Consigne-TempExt à ajouter à la consigne
-	$tempBypassPondertion = mg::getParam('Chauffages','tempBypassPondertion');	// Température extérieur en dessous de laquelle on ne passe plus en mode eco la nuit
+	$tempBypassPonderation = mg::getParam('Chauffages','tempBypassPonderation');// Température extérieur en dessous de laquelle on ne passe plus en mode eco la nuit
 	$pcDeltaTempExt = mg::getParam('Chauffages','pcDeltaTempExt');			// % du delta Consigne-TempExt à ajouter à la consigne
 	$tempSalonConfort = mg::getCmd("#[Salon][Températures][Consigne]#"); 	// Température confort du salon
 
@@ -61,8 +62,9 @@ $zone = mg::declencheur('', 1);
 //=====================================================================================================================
 mg::messageT('', ". GESTION ETE/HIVER");
 //=====================================================================================================================
-$tempMoyExt = round(scenarioExpression::averageBetween($infTempExt, '7 days ago', 'today') +0.5, 1)      +10; ////////////////////// A SUPPRIMER !!!!!!
-$saison = $tempMoyExt >= $tempSalonConfort ? 'ETE' : 'HIVER';
+$tempMoyExt = round(scenarioExpression::averageBetween($infTempExt, '7 days ago', 'today') +0.5, 1);
+$saison = $tempMoyExt >= $salonHIVER ? 'ETE' : 'HIVER';
+//$saison = $tempMoyExt >= $tempSalonConfort ? 'ETE' : 'HIVER';
 mg::messageT('', "Temp Extérieure Moyenne 7 jours: $tempMoyExt ° ==> $saison");
 
 if ($saison != mg::getVar('Saison')) {
@@ -75,7 +77,7 @@ if ($saison != mg::getVar('Saison')) {
 mg::setVar('Saison', $saison);
 
 // Bypass du passage en eco la nuit par grand froid
-$bypassPonderation = (mg::getCmd($infTempExt) < $tempBypassPondertion ? 1 : 0);
+$bypassPonderation = (mg::getCmd($infTempExt) < $tempBypassPonderation ? 1 : 0);
 
 // Correction HeureRéveil si dépassée de 2 heures30
 if (time() > $heureReveil+2.5*3600) { 
@@ -87,27 +89,26 @@ if (time() > $heureReveil+2.5*3600) {
 //---------------------------------------------------------------------------------------------------------------------
 foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	if (!mg::declencheur('schedule') && !mg::declencheur('user') && $zone != $nomChauffage) {continue; }
-	if (!$nomChauffage || !$detailsZone['chauffage'] || !$detailsZone['equip']) { continue; }
+	if (!$nomChauffage || !$detailsZone['chauffage'] || !$detailsZone['equipement']) { continue; }
 		//=============================================================================================================
 		mg::messageT('', "! $nomChauffage");
 		//=============================================================================================================
 	$tempZone = mg::getCmd("#[$nomChauffage][Températures][Température]#");
 	$tempConfort = mg::getCmd("#[$nomChauffage][Températures][Consigne]#"); // issu du widget
 	$tempEco = mg::getParam('Temperatures', $nomChauffage . 'Eco');
-
 	$correction = $tabChauffages[$nomChauffage]['correction']; // Correction/Offset à aporter à la consigne
-	$tabChauffages_[$nomChauffage]["tempConfort"] = $tempConfort;
+	$tabChauffagesTmp[$nomChauffage]["tempConfort"] = $tempConfort;
 
 /*	// init tableau secondaire
-	if (!isset($tabChauffages_[$nomChauffage]['timeDeb'])) { $tabChauffages_[$nomChauffage]['timeDeb'] = 0; }
-	if (!isset($tabChauffages_[$nomChauffage]['tempDeb'])) { $tabChauffages_[$nomChauffage]['tempDeb'] = 0; }
-	if (!isset($tabChauffages_[$nomChauffage]['histoRatio'][0])) { $tabChauffages_[$nomChauffage]['histoRatio'] = array(0, 0, 0, 0, 0, 0, 0); }*/
+	if (!isset($tabChauffagesTmp[$nomChauffage]['timeDeb'])) { $tabChauffagesTmp[$nomChauffage]['timeDeb'] = 0; }
+	if (!isset($tabChauffagesTmp[$nomChauffage]['tempDeb'])) { $tabChauffagesTmp[$nomChauffage]['tempDeb'] = 0; }
+	if (!isset($tabChauffagesTmp[$nomChauffage]['histoRatio'][0])) { $tabChauffagesTmp[$nomChauffage]['histoRatio'] = array(0, 0, 0, 0, 0, 0, 0); }*/
 
 	//-----------------------------------------------------------------------------------------------------------------
 	//-------------------------------------------------------- SALON --------------------------------------------------
 	//-----------------------------------------------------------------------------------------------------------------
 	if ( $nomChauffage == 'Salon' ) {
-		if (!isset($tabChauffages_[$nomChauffage]['ratio'])) { $tabChauffages_[$nomChauffage]['ratio'] = 4.47; }
+		if (!isset($tabChauffagesTmp[$nomChauffage]['ratio'])) { $tabChauffagesTmp[$nomChauffage]['ratio'] = 4.47; }
 //		$timeDebConfort = HeureConfort($heureReveil);
 		$timeDebConfort = HeureConfort(($nbMvmtSalon == 0 ? $heureReveil : time()-60)); ////////////////////////////////
 		
@@ -123,7 +124,7 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	//------------------------------------------------------- CHAMBRE -------------------------------------------------
 	//-----------------------------------------------------------------------------------------------------------------
 	else if ( $nomChauffage == 'Chambre' ) {
-		if (!isset($tabChauffages_[$nomChauffage]['ratio'])) { $tabChauffages_[$nomChauffage]['ratio'] = 8.01; }
+		if (!isset($tabChauffagesTmp[$nomChauffage]['ratio'])) { $tabChauffagesTmp[$nomChauffage]['ratio'] = 8.01; }
 		$timeDebConfort = HeureConfort(strtotime($heureChaufChambre));
 		$timeFinConfort = $heureReveil;
 		LancementMode($timeDebConfort, $timeFinConfort);
@@ -132,7 +133,7 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	//------------------------------------------------------- RDC SDB -------------------------------------------------
 	//-----------------------------------------------------------------------------------------------------------------
 	else if ( $nomChauffage == 'RdCSdB' ) {
-		if (!isset($tabChauffages_[$nomChauffage]['ratio'])) { $tabChauffages_[$nomChauffage]['ratio'] = 1.85; }
+		if (!isset($tabChauffagesTmp[$nomChauffage]['ratio'])) { $tabChauffagesTmp[$nomChauffage]['ratio'] = 1.85; }
 		$timeDebConfort = HeureConfort($heureReveil);
 		$timeFinConfort = $heureReveil + $dureeChaufSdB * 60;
 		LancementMode($timeDebConfort, $timeFinConfort);
@@ -146,33 +147,33 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 			$timeFinConfort = $heureReveil + 3600;
 		LancementMode($timeDebConfort, $timeFinConfort);
 		} else {
-			$tabChauffages_[$nomChauffage]['mode'] = 'Eco';
+			$tabChauffagesTmp[$nomChauffage]['mode'] = 'Eco';
 		}
 	}
 	//-----------------------------------------------------------------------------------------------------------------
 	//--------------------------------------------------- ETAGE CHAMBRE 2 (ouest) -------------------------------------
 	//-----------------------------------------------------------------------------------------------------------------
 	else if ( $nomChauffage == 'EtgChb2' ) {
-		if (!isset($tabChauffages_[$nomChauffage]['ratio'])) { $tabChauffages_[$nomChauffage]['ratio'] = 1.00; }
+		if (!isset($tabChauffagesTmp[$nomChauffage]['ratio'])) { $tabChauffagesTmp[$nomChauffage]['ratio'] = 1.00; }
 		if ($presenceEtage) {
 			$timeDebConfort = HeureConfort(strtotime($heureChaufEtgChb));
 			$timeFinConfort = $heureReveil + 3600;
 			LancementMode($timeDebConfort, $timeFinConfort);
 		} else {
-			$tabChauffages_[$nomChauffage]['mode'] = 'Eco';
+			$tabChauffagesTmp[$nomChauffage]['mode'] = 'Eco';
 		}
 	}
 	//-----------------------------------------------------------------------------------------------------------------
 	//------------------------------------------------------ ETAGE SDB ------------------------------------------------
 	//-----------------------------------------------------------------------------------------------------------------
 	else if ( $nomChauffage == 'EtgSdB' ) {
-		if (!isset($tabChauffages_[$nomChauffage]['ratio'])) { $tabChauffages_[$nomChauffage]['ratio'] = 1.17; }
+		if (!isset($tabChauffagesTmp[$nomChauffage]['ratio'])) { $tabChauffagesTmp[$nomChauffage]['ratio'] = 1.17; }
 		if ($presenceEtage) {
 			$timeDebConfort = HeureConfort($heureReveil);
 			$timeFinConfort = $timeDebConfort + $dureeChaufSdB * 60;
 			LancementMode($timeDebConfort, $timeFinConfort);
 		} else {
-			$tabChauffages_[$nomChauffage]['mode'] = 'Eco';
+			$tabChauffagesTmp[$nomChauffage]['mode'] = 'Eco';
 		}
 	}
 //=====================================================================================================================
@@ -182,20 +183,27 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	CalculRatio();
 
 	// Pose de la consigne textuelle du chauffage
-	$modeCourant = $tabChauffages_[$nomChauffage]['mode'];
+	$modeCourant = $tabChauffagesTmp[$nomChauffage]['mode'];
 	$colorCourante = ($modeCourant == 'Confort') ? 'Yellow' : (($modeCourant == 'Eco') ? 'lightGreen' : 'lightBlue');
 	$ConsigneCourante = ($modeCourant == 'Confort') ? $tempConfort : (($modeCourant == 'Eco') ? $tempEco : $tempHG);
 	$chaufLib = "<font color='$colorCourante'>Mode $modeCourant ($ConsigneCourante °)</font><br><br>Confort :";
 
 	mg::setInf("#[$nomChauffage][Températures][Consigne Chauffage]#", '', $chaufLib);
+
+/* ///////////////////////////////// AVEC THERMOSTAT JEEDOM
+	mg::setCmd("#[$nomChauffage][Thermostat $nomChauffage][".$tabChauffagesTmp[$nomChauffage]['mode']."]#");
+	$modeClim = ($saison == 'HIVER' ? 'Chauffage' : 'Climatisation') . ' seulement';
+	mg::setCmd("#[$nomChauffage][Thermostat $nomChauffage][$modeClim]#");
+//	mg::setCmd("#[$nomChauffage][Chauffage $nomChauffage][Consigne]#", '', $ConsigneCourante);
+///////////////////////////////// */
 }
 
 //=====================================================================================================================
 mg::messageT('', ". FIN");
 //=====================================================================================================================
-mg::setVar('_tabChauffages', $tabChauffages_);
+mg::setVar('tabChauffagesTmp', $tabChauffagesTmp);
 if ( $scenario->getConfiguration('logmode') == 'realtime') {
-	mg::message('', print_r($tabChauffages_, true));
+	mg::message('', print_r($tabChauffagesTmp, true));
 }
 
 /**********************************************************************************************************************
@@ -206,9 +214,9 @@ if ( $scenario->getConfiguration('logmode') == 'realtime') {
 											CALCUL HEURE DE CONFORT PONDEREE EN HIVER
 ---------------------------------------------------------------------------------------------------------------------*/
 function HeureConfort($heureDebTheorique) {
-	global $saison, $logChauffage, $tabChauffages_, $nomChauffage, $tempZone, $tempConfort, $correction;
+	global $saison, $logChauffage, $tabChauffagesTmp, $nomChauffage, $tempZone, $tempConfort, $correction;
 	// Calcul de l'heure de DebConfort pondérée
-	$deltaHeure = ($tabChauffages_[$nomChauffage]['ratio'] > 0.5) ? ($tempConfort + $correction - $tempZone) / $tabChauffages_[$nomChauffage]['ratio'] * 3600 : 0;
+	$deltaHeure = ($tabChauffagesTmp[$nomChauffage]['ratio'] > 0.5) ? ($tempConfort + $correction - $tempZone) / $tabChauffagesTmp[$nomChauffage]['ratio'] * 3600 : 0;
 	if ($deltaHeure < 0 || $saison != 'HIVER') { $deltaHeure = 0; }
 	$timeDebConfort = $heureDebTheorique - $deltaHeure;
 	return $timeDebConfort;
@@ -221,31 +229,31 @@ function HeureConfort($heureDebTheorique) {
 												LANCEMENT DES MODES
 ---------------------------------------------------------------------------------------------------------------------*/
 function LancementMode($timeDebConfort, $timeFinConfort) {
-	global $tempZone, $logChauffage, $tabChauffages_, $nomChauffage, $ScenRegulation, $nomChauffage, $heureReveil;
+	global $tempZone, $logChauffage, $tabChauffagesTmp, $nomChauffage, $ScenRegulation, $nomChauffage, $heureReveil;
 	//=================================================================================================================
 	mg::messageT('', ". LANCEMENT DES MODES");
 	//=================================================================================================================
-	$oldMode = $tabChauffages_[$nomChauffage]['mode'];
+	$oldMode = $tabChauffagesTmp[$nomChauffage]['mode'];
 	mg::message('', 'Confort ==> Debut : ' . date('d\/m\/Y \à H\hi\m\n', $timeDebConfort) . ' - Fin : ' . date('d\/m\/Y \à H\hi\m\n', $timeFinConfort));
 
 	// Calcul du mode
 	if (mg::TimeBetween( $timeDebConfort, time(), $timeFinConfort)) {
-		$tabChauffages_[$nomChauffage]['mode'] = 'Confort';
+		$tabChauffagesTmp[$nomChauffage]['mode'] = 'Confort';
 
-	} elseif ($tabChauffages_[$nomChauffage]['timeDeb'] == 0) { // on ne passe pas en eco si calcul ratio en cours
-			$tabChauffages_[$nomChauffage]['mode'] = 'Eco';
+	} elseif ($tabChauffagesTmp[$nomChauffage]['timeDeb'] == 0) { // on ne passe pas en eco si calcul ratio en cours
+			$tabChauffagesTmp[$nomChauffage]['mode'] = 'Eco';
 	}
-	mg::messageT('', ". MODE ".strtoupper($tabChauffages_[$nomChauffage]['mode']));
+	mg::messageT('', ". MODE ".strtoupper($tabChauffagesTmp[$nomChauffage]['mode']));
 
 	// Si changement de mode
-	if ($oldMode != $tabChauffages_[$nomChauffage]['mode']) {
+	if ($oldMode != $tabChauffagesTmp[$nomChauffage]['mode']) {
 			// Init variables pour ratio si confort et pas de calcul en cours (timedeb == 0)
-		if ($tabChauffages_[$nomChauffage]['mode'] == 'Confort' && $tabChauffages_[$nomChauffage]['timeDeb'] == 0) {
-			$tabChauffages_[$nomChauffage]['timeDeb'] = time();
-			$tabChauffages_[$nomChauffage]['tempDeb'] = $tempZone;
+		if ($tabChauffagesTmp[$nomChauffage]['mode'] == 'Confort' && $tabChauffagesTmp[$nomChauffage]['timeDeb'] == 0) {
+			$tabChauffagesTmp[$nomChauffage]['timeDeb'] = time();
+			$tabChauffagesTmp[$nomChauffage]['tempDeb'] = $tempZone;
 			mg::message($logChauffage, "$nomChauffage : RATIO ==> Init du calcul du ratio.");
 		}
-		mg::message($logChauffage, "$nomChauffage - Passage en mode ".$tabChauffages_[$nomChauffage]['mode']." ==> Debut : " . date('d\/m\/Y \à H\hi\m\n', $timeDebConfort) . ' - Fin : ' . date('d\/m\/Y \à H\hi\m\n', $timeFinConfort));
+		mg::message($logChauffage, "$nomChauffage - Passage en mode ".$tabChauffagesTmp[$nomChauffage]['mode']." ==> Debut : " . date('d\/m\/Y \à H\hi\m\n', $timeDebConfort) . ' - Fin : ' . date('d\/m\/Y \à H\hi\m\n', $timeFinConfort));
 	}
 }
 
@@ -253,32 +261,32 @@ function LancementMode($timeDebConfort, $timeFinConfort) {
 												CALCUL DU RATIO
 ---------------------------------------------------------------------------------------------------------------------*/
 function CalculRatio() {
-	global $saison, $logChauffage, $logTimeLine, $tabChauffages_, $nomChauffage, $tempZone, $tempConfort, $correction;
+	global $saison, $logChauffage, $logTimeLine, $tabChauffagesTmp, $nomChauffage, $tempZone, $tempConfort, $correction;
 		// init tableau secondaire
-		if (!isset($tabChauffages_[$nomChauffage]['ratio'])) { $tabChauffages_[$nomChauffage]['ratio'] = 1.0; }
-		if (!isset($tabChauffages_[$nomChauffage]['timeDeb'])) { $tabChauffages_[$nomChauffage]['timeDeb'] = 0; }
-		if (!isset($tabChauffages_[$nomChauffage]['tempDeb'])) { $tabChauffages_[$nomChauffage]['tempDeb'] = 0; }
-		if (!isset($tabChauffages_[$nomChauffage]['histoRatio'][0])) { $tabChauffages_[$nomChauffage]['histoRatio'] = array(0, 0, 0, 0, 0, 0, 0); }
+		if (!isset($tabChauffagesTmp[$nomChauffage]['ratio'])) { $tabChauffagesTmp[$nomChauffage]['ratio'] = 1.0; }
+		if (!isset($tabChauffagesTmp[$nomChauffage]['timeDeb'])) { $tabChauffagesTmp[$nomChauffage]['timeDeb'] = 0; }
+		if (!isset($tabChauffagesTmp[$nomChauffage]['tempDeb'])) { $tabChauffagesTmp[$nomChauffage]['tempDeb'] = 0; }
+		if (!isset($tabChauffagesTmp[$nomChauffage]['histoRatio'][0])) { $tabChauffagesTmp[$nomChauffage]['histoRatio'] = array(0, 0, 0, 0, 0, 0, 0); }
 	 // Rien à traiter
-	if ($tabChauffages_[$nomChauffage]['timeDeb'] == 0 || $saison != 'HIVER') { return; }
+	if ($tabChauffagesTmp[$nomChauffage]['timeDeb'] == 0 || $saison != 'HIVER') { return; }
 
 	// Si température confort atteinte ou trop de temps passé, calcul/memo du ratio
-	if ($tempZone > ($tempConfort + $correction) || $tabChauffages_[$nomChauffage]['timeDeb'] < time()-6*3600) {
-		$deltaTemp = abs($tempZone - $tabChauffages_[$nomChauffage]['tempDeb']);
-		$deltaTime = time() - $tabChauffages_[$nomChauffage]['timeDeb'];
+	if ($tempZone > ($tempConfort + $correction) || $tabChauffagesTmp[$nomChauffage]['timeDeb'] < time()-6*3600) {
+		$deltaTemp = abs($tempZone - $tabChauffagesTmp[$nomChauffage]['tempDeb']);
+		$deltaTime = time() - $tabChauffagesTmp[$nomChauffage]['timeDeb'];
 		if ($deltaTime > 1800 && $deltaTemp > 0.5) {
 			$ratio = round($deltaTemp / ($deltaTime / 3600), 2);
 			$moyenne = getMoyenne($ratio);
 
 			// Enregistrement final du ratio
-			$tabChauffages_[$nomChauffage]['ratio'] = $moyenne;
+			$tabChauffagesTmp[$nomChauffage]['ratio'] = $moyenne;
 			mg::message($logChauffage . trim($logTimeLine, 'Log:'), "$nomChauffage : RATIO ==> Delta température : $deltaTemp - Durée : " . date('H\hi\m\n', $deltaTime - 3600). " ==> RatioJour : $ratio - NewratioMoyen : $moyenne (sur les 7 derniers jours)");
 		}
 
 		// RaZ après calcul
-		if ($tabChauffages_[$nomChauffage]['timeDeb'] != 0) {
-			$tabChauffages_[$nomChauffage]['timeDeb'] = 0;
-			$tabChauffages_[$nomChauffage]['tempDeb'] = 0;
+		if ($tabChauffagesTmp[$nomChauffage]['timeDeb'] != 0) {
+			$tabChauffagesTmp[$nomChauffage]['timeDeb'] = 0;
+			$tabChauffagesTmp[$nomChauffage]['tempDeb'] = 0;
 			mg::message($logChauffage, "$nomChauffage : RATIO ==> RAZ du calcul courant du ratio après calcul.");
 		}
 	}
@@ -289,15 +297,15 @@ function CalculRatio() {
 								CALCULE LA MOYENNE DES X DERNIERES VALEURS DU TABLEAU
 ---------------------------------------------------------------------------------------------------------------------*/
 function getMoyenne($ratioJour) {
-	global $tabChauffages_, $nomChauffage;
+	global $tabChauffagesTmp, $nomChauffage;
 
 	$jour = date('w');
-	$tabChauffages_[$nomChauffage]['histoRatio'][$jour] = $ratioJour;
+	$tabChauffagesTmp[$nomChauffage]['histoRatio'][$jour] = $ratioJour;
 
 	$ratioMin = 1;
 	$nb = 0;
 	$somme = 0;
-	foreach($tabChauffages_[$nomChauffage]['histoRatio'] as $key => $ratio) {
+	foreach($tabChauffagesTmp[$nomChauffage]['histoRatio'] as $key => $ratio) {
 		if ($ratio < $ratioMin) {continue; }
 		$somme += $ratio;
 		$nb++;

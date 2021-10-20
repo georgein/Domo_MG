@@ -31,7 +31,7 @@ Si le réveil démarre avec nuitSalon != 2 (levé prématuré) on ouvre la chamb
 	$reveilDureeRadio = mg::getParam('Reveil', 'dureeRadio');			// Durée en mn avant l'arrêt de la radio
 	$reveilVolumeRadio = mg::getParam('Reveil', 'volumeRadio');		// Volume de la radio
 	$reveilStationRadio = mg::getParam('Reveil', 'stationRadio');		// Station de radio à lancer
-	
+	 
 	$heureRelance = strtotime('08:30');
 
 /*********************************************************************************************************************/
@@ -66,7 +66,6 @@ if (!$reveilOnLine) {
 	//=================================================================================================================
 	mg::messageT('', ". ON ENTROUVRE LE VOLET CHAMBRE");
 	//=================================================================================================================
-//	if 	($nuitSalon == 2 || time() > ($heure_Reveil)) {
 	if 	( time() >= ($heureRelance) || ($nuitSalon == 2 && $lastMvmt > 60)) {
 		mg::VoletRoulant('Chambre', 'Volet Chambre', 'Slider', 10);
 		mg::VoletRoulant('RdCSdB', 'Volet RdCSdB', 'Slider', 99);
@@ -81,11 +80,11 @@ if (!$reveilOnLine) {
 	mg::messageT('', "! 2 OUVERTURE TOTALE CHAMBRE");
 	//=================================================================================================================
 	if (mg::getCmd($infVoletChambre) > 1) {
-		mg::VoletsGeneral ('Chambre', 'M', 1);
-		
-		mg::setVar('_ReveilOnLine', 3);
-		mg::setCron('', ($heure_Reveil + $reveilDureeRadio * 60));
+		mg::VoletsGeneral ('Chambre', 'M');
 	}
+		
+	mg::setVar('_ReveilOnLine', 3);
+	mg::setCron('', ($heure_Reveil + $reveilDureeRadio * 60));
 
 } elseif ($reveilOnLine == 3) {
 	part3:
@@ -132,7 +131,6 @@ if (!$reveilOnLine) {
 	$infVolSonos = mg::mkCmd($equipSonos, 'Volume Status');
 	self::wait ("$infVolSonos == $reveilVolumeRadio", 5);
 	mg::setCmd($equipSonos, 'Jouer une radio', '.', $reveilStationRadio);
-
 	mg::setCron('', $heure_Reveil + 1.5*3600);
 	mg::setVar('_ReveilOnLine', 4);
 

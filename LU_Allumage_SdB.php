@@ -44,7 +44,8 @@ if ($etatPorte == 1 || $lastMvmt <= $timer) {
 }
 
 // Porte ouverte ET sans mouvement	on éteint
-else {
+if ($etatPorte == 0 && ($lastMvmt > $timer || $nuitSalon == 2 || $nePasDeranger)) {
+//else {
 	mg::setCmd($equipLampes, 'Off');
 	mg::setCmd($equipVeilleuse, 'Off');
 		mg::setCmd($equipLampes, 'Slider Intensité', 0); 
@@ -54,8 +55,7 @@ else {
 
 // Radio SdB pour finir
 if (mg::declencheur('Ouverture') && $nuitSalon < 2 && !$nePasDeranger) {
-	$tabUser = mg::getVar('tabUser');
-	$IP_JPI = 'HTTP://'.$tabUser['JPI']['IP'].':8080';
+	$IP_JPI = 'HTTP://'.mg::getValSql('_tabUsers', 'JPI', '', 'IP').':8080';
 	file_get_contents("$IP_JPI/?action=_radioSdB");
 }
 

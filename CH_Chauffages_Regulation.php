@@ -17,8 +17,8 @@ Le booster se déclenche si la température du salon est inférieur à (consigne
 // N° des scénarios :
 
 //Variables :
-	$tabChauffages = mg::getVar('tabChauffages');
-	$tabChauffages_ = mg::getVar('_tabChauffages');
+	$tabChauffages = mg::getTabSql('_tabChauffages');
+	$tabChauffagesTmp = mg::getVar('tabChauffagesTmp');
 
 	$saison = mg::getVar('Saison');
 	$temp_Ext = mg::getCmd($infTempExt);
@@ -57,7 +57,7 @@ foreach ($tabChauffages as $nomChauffage => $details_Chauffage) {
 	//=================================================================================================================
 	$chauffage = intval($details_Chauffage['chauffage']);
 	$clim =	 intval($details_Chauffage['clim']);
-	$equipChauf = trim($details_Chauffage['equip']);
+	$equipChauf = trim($details_Chauffage['equipement']);
 	//$correction = $tabChauffages[$nomChauffage]['correction']; // Correction/Offset à aporter à la consigne
 	
 	// ON NE GERE LE CHAUFFAGE QUE SI NECESSAIRE
@@ -68,7 +68,7 @@ foreach ($tabChauffages as $nomChauffage => $details_Chauffage) {
 	if (array_key_exists('equipBooster', $details_Chauffage)) {
 		$equipBooster =	trim($details_Chauffage['equipBooster']);
 	}
-	$mode = $tabChauffages_[$nomChauffage]['mode'];
+	$mode = $tabChauffagesTmp[$nomChauffage]['mode'];
 	$nbPortesZone = mg::getCmd("#[$nomChauffage][Ouvertures][NbPortes]");
 
 	$tempZone = mg::getCmd("#[$nomChauffage][Températures][Température]#");
@@ -76,7 +76,7 @@ foreach ($tabChauffages as $nomChauffage => $details_Chauffage) {
 	if ($mode == 'HG') {
 		$consigne = $tempHG;
 	} else {
-		$consigne = $tabChauffages_[$nomChauffage]["temp$mode"];
+		$consigne = $tabChauffagesTmp[$nomChauffage]["temp$mode"];
 	}
 	$boosterOK = ($equipBooster && $saison == 'HIVER') ? true : false;
 

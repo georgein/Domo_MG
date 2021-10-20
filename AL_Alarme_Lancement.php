@@ -31,8 +31,8 @@ deb:
 	$prefixeMessage = date('d/m/Y H:i:s', time());
 
 // Paramètres :
-	$tabUser = mg::getVar('tabUser');
-	$tab_Password = mg::getVar('tabPassword');
+	$tabUser = mg::getTabSql('_tabUsers');
+	$tabPassword = mg::getTabSql('_tabPassword');
 
 	$logAlarme = mg::getParam('Log', 'alarme');					// Pour debug
 	$logTimeLine = mg::getParam('Log', 'timeLine');
@@ -46,7 +46,7 @@ deb:
 $debugAlarme = 0;
 
 /*// ***** INIT de la table PASSWORD *****
-$tab_Password = array(
+$tabPassword = array(
 'Options' => array('mdp' => '31416#'),
 'MG' => array('mdp' => '#31416'),
 'NR' => array('mdp' => '121060'),
@@ -56,8 +56,7 @@ $tab_Password = array(
 'RETOUR' => array('mdp' => '!')
 );
 
-mg::setVar('tabPassword', $tab_Password);
-mg::message('', print_r($tab_Password, true));
+mg::message('', print_r($tabPassword, true));
 return;*/
 
 // Nettoyage si rien à faire
@@ -94,8 +93,7 @@ mg::MessageT('', "! CHANGEMENT MOT DE PASSE $nomUserModif => $codeSaisi");
 	// ****************************************************************************************************************
 	$message = "Le Code de '$nomUserModif' à été modifié en '$codeSaisi'.";
 	mg::setInf($equipAlarme, 'MessageAlarme', $message);
-	$tab_Password[$nomUserModif] = $codeSaisi;
-	mg::setVar('tabPassword', $tab_Password);
+	mg::setValSql('_tabPassword', $nomUserModif, '', 'mdp', $codeSaisi);
 	mg::message($logTimeLine, "Alarme - $message");
 
 	// Nettoyage après changement de code
@@ -115,7 +113,7 @@ if (mg::declencheur('Sirène') || mg::declencheur('Inhibition') || mg::declenche
 	// ****************************************************************************************************************
 	// Actualisation après action bouton
 	MakeBoutonsHTML($equipAlarme);
-	MakeOptionsHTML($equipAlarme, $tabUser, $tab_Password, $equiNomUserModif);
+	MakeOptionsHTML($equipAlarme, $tabUser, $tabPassword, $equiNomUserModif);
 	mg::setInf($equipAlarme, 'CodeSaisi', '');
 	mg::setInf($equipAlarme, 'NomUserModif', '');
 	mg::setInf($equipAlarme, 'NomUserSaisi', '');
@@ -126,7 +124,7 @@ if (mg::declencheur('CodeSaisi') && $codeSaisi != '000000') {
 	// ****************************************************************************************************************
 	mg::MessageT('', "! VERIFICATIN LOGIN $codeSaisi");
 	// ****************************************************************************************************************
-	$nomUserSaisi = verifCode($tabUser, $tab_Password, $codeSaisi);
+	$nomUserSaisi = verifCode($tabUser, $tabPassword, $codeSaisi);
 	mg::setInf($equipAlarme, 'NomUserSaisi', $nomUserSaisi);
 	mg::MessageT('', ". CODE : $codeSaisi => user : $nomUserSaisi");
 
@@ -134,7 +132,7 @@ if (mg::declencheur('CodeSaisi') && $codeSaisi != '000000') {
 	// ****************************************************************************************************************
 		mg::MessageT('', "Gestion du user Options");
 	// ****************************************************************************************************************
-		MakeOptionsHTML($equipAlarme, $tabUser, $tab_Password, $equiNomUserModif);
+		MakeOptionsHTML($equipAlarme, $tabUser, $tabPassword, $equiNomUserModif);
 		MakeBoutonsHTML($equipAlarme);
 	} else {
 		// Nettoyage si pas Options
@@ -192,6 +190,10 @@ mg::MessageT('', "! ****************************************** ACTIVATION ******
 
 	mg::setVar('Alarme', 1);
 
+	// Verrouillage porte
+	if (mg::getcmd($equipVerrou, 'Nom etat') != 'Verrouillée') 
+		{ mg::setcmd($equipVerrou, 'Verrouiller'); }
+	
 	// Stop volets
 		mg::setScenario($svoletsJourNuit, 'deactivate');
 		mg::VoletsGeneral('Salon, Chambre, Etage', 'D', 1);
@@ -227,6 +229,10 @@ mg::MessageT('', "! ***************************************** DESACTIVATION ****
 	mg::setScenario($scen_GestionAlarme, 'deactivate');
 		if ($debugAlarme) { goto fin; }
 		
+	// Déverrouillage porte
+	if (mg::getcmd($equipVerrou, 'Nom etat') == 'Verrouillée') 
+	{ mg::setcmd($equipVerrou, 'Déverrouiller'); }
+
 	// Ouverture volets
 	if ($nuitExt == 0) {
 		mg::VoletsGeneral('Salon, Chambre, Etage', 'M', 1);
@@ -260,22 +266,17 @@ if ($message) { mg::setInf($equipAlarme, 'MessageAlarme', "$prefixeMessage<br>$m
 // --------------------------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------------
 
-function verifCode($tabUser, $tab_Password, $codeSaisi) {
+function verifCode($tabUser, $tabPassword, $codeSaisi) {
 	$nomUserSaisi = '!';
-	foreach ($tab_Password as $user => $detailsUser) {
+	foreach ($tabPassword as $user => $detailsUser) {
 		mg::message('', "====> $user - ". $detailsUser['mdp']);
 		if ($user == 'RETOUR'  || $user == '') { continue; }
 		if ($detailsUser['mdp'] != $codeSaisi) {
-		// nettoyage des users inutilisés ou supprimé.
-			//if ($tabUser["Tel-$user"]['type'] != 'user') {
-				//////////////////////////////////////////////////////
-			//}
 			continue;
 		}
 		$nomUserSaisi = $user;
 		mg::message('', "$nomUserSaisi -> $codeSaisi");
 	}
-	mg::setVar('tabPassword', $tab_Password);
 	return $nomUserSaisi;
 }
 
@@ -362,7 +363,7 @@ mg::setInf($equipAlarme, 'BoutonsHTML', $HTML);
 // --------------------------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------------
 
-function MakeOptionsHTML($equipAlarme, $tabUser, $tab_Password, $equiNomUserModif) {
+function MakeOptionsHTML($equipAlarme, $tabUser, $tabPassword, $equiNomUserModif) {
 
 $HTML = "
 	<div>
@@ -384,8 +385,8 @@ $HTML = "
 
 
 	$lgn = 0;
-	foreach ($tab_Password as $user => $detailsUser) {
-			$Code = $tab_Password[$user]['mdp'];
+	foreach ($tabPassword as $user => $detailsUser) {
+			$Code = $tabPassword[$user]['mdp'];
 			mg::message('', "************* $user - $Code");
 			if ($lgn == 0) { $lgn = 1; } else { $lgn = 0; }
 			$btAction = "class='bouton'></button>

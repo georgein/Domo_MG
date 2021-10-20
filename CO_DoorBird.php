@@ -8,7 +8,7 @@ snaphot url : http://192.168.2.2/bha-api/image.cgi?http-user=ghbbgw0001&http-pas
 **********************************************************************************************************************/
 
 //Infos, Commandes et Equipements :
-	// $infAffDoorbird, $cmdAffCamJC_PC_MG, $cmdAffCamJC_JPI
+	// $infAffDoorbird, $equipJC_PC_MG, $equipJC_JPI
 
 // N° des scénarios :
 
@@ -32,9 +32,10 @@ snaphot url : http://192.168.2.2/bha-api/image.cgi?http-user=ghbbgw0001&http-pas
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 mg::setCron('', time() + $timer*60);
+//		mg::setCmd($equipJC_PC_MG, 'Afficher page', $salonJC, $salonJC);
 
 // Rétablissement de l'IP dans les param de Doorbird et de Caméra
-$camIP = mg::getVar('tabUser')['Cam Doorbird']['IP'];
+$camIP = mg::getValSql('_tabUsers', 'Cam Doorbird', '', 'IP'); 
 if ($camIP) {
 	mg::ConfigEquiLogic('doorbird', 'DoorBird Ensues', 'addr', $camIP);
 	mg::ConfigEquiLogic('camera', 'Cam DoorBird', 'ip', $camIP);
@@ -48,8 +49,8 @@ if (mg::declencheur('user') || mg::declencheur('schedule')) {
 			
 		// mg::JPI('DESIGN', $designPrincipal);
 				
-		mg::setCmd($cmdAffCamJC_PC_MG, '', $salonJC);
-		mg::setCmd($cmdAffCamJC_JPI, '', $salonJC);
+		mg::setCmd($equipJC_PC_MG, 'Afficher page', $salonJC, '');
+		mg::setCmd($equipJC_JPI, 'Afficher page', $salonJC, '');   
 	}
 
 // Déclenchement Doorbird	
@@ -73,8 +74,8 @@ if (mg::declencheur('user') || mg::declencheur('schedule')) {
 		
 		// mg::JPI('DESIGN', $designCam);
 
-		mg::setCmd($cmdAffCamJC_PC_MG, '', $camJC);
-		mg::setCmd($cmdAffCamJC_JPI, '', $salonJC);
+		mg::setCmd($equipJC_PC_MG, 'Afficher page', $camJC, '');
+		mg::setCmd($equipJC_JPI, 'Afficher page', $camJC, '');
 	}
 }
 

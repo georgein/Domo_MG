@@ -44,7 +44,7 @@ if (mg::getCmd($infCinemaEtat)) { return; }
 
 // SOIR
 if ( ($nuitSalon == 2 && $nbMvmt >= $seuilNbMvmt)
-		|| ($nuitSalon != 1 && $lumSalon >= $seuilNuitSalon*1.25 && $lumSalon <= $seuilLumSalon)) {
+		|| ($nuitSalon != 1 && ($lumSalon >= $seuilNuitSalon*1.25 && $lumSalon <= $seuilLumSalon))) {
 	$nuitSalon = 1;
 	$message = "NuitSalon - Passage à SoirSalon (1).";
 }

@@ -18,11 +18,11 @@ Le nom de l'Inf du déclencheur doit être celui de la pièce, Valeur de linf : 
 /*********************************************************************************************************************/
 if (mg::declencheur('user')) { return; }
 
-mg::message('', "Volets général : declencheur " . mg::declencheur('' , 3));
-
+mg::message('', "Volets général : declencheur => " . mg::declencheur('' , 1));
 $zone = mg::declencheur('', 1);
 $sens = mg::getCmd(mg::declencheur()) == 1 ? 'M' : 'D';
-mg::messageT('', "!Volets général : $zone - $sens");
+mg::messageT('', "!Volets général : $zone - $sens - forcé.");
+
 mg::VoletsGeneral($zone, $sens, 1);
 
 ?>

@@ -48,7 +48,6 @@ else if ( $nuitExt > 0 && $Lum_Ext > $SeuilLumExterieureJour) {
 }
 elseif ( $nuitExt == 1 && $cdAurore ) {
 	$nuitExt = 2; // AURORE
-	mg::unsetVar('_VoletGeneral'); // Pour 'forcer' le prochain mouvement de voletsGeneral
 	$message = "NuitExt - Passage à l'AubeExt (2).";
 }
 

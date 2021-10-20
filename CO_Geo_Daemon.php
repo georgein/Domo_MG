@@ -35,7 +35,8 @@ if (mg::declencheur('Position')) {
 
 	// Si déclencheur SSID
 elseif (mg::declencheur('SSID')) {
-	$userAppel = str_replace('variable(', '', mg::declencheur('', 2));
+	$userAppel = str_replace('variable(', '', mg::declencheur('', 1));
+	mg::message('', mg::declencheur('SSID').' - '.$userAppel);
 	$userAppel = str_replace('_SSID)', '', $userAppel);
 }
 
@@ -76,8 +77,10 @@ if ($userAppel != '') {
 
 // ******************* ON appelle Geofence si plus de $refreshCalcul secondes depuis dernier point ********************
 $lastCalcul = mg::getVar("_GeoLastRun_$userAppel");
-if ((time() - $lastCalcul) > $refreshCalcul) { mg::setScenario($scenGeofence, 'start', "userAppel=$userAppel"); }
-mg::setVar("_GeoLastRun_$userAppel", time());
+if ((time() - $lastCalcul) > $refreshCalcul) { 
+	mg::setScenario($scenGeofence, 'start', "userAppel=$userAppel"); 
+	mg::setVar("_GeoLastRun_$userAppel", time());
+}
 
 // ********************************************************************************************************************
 // ******************************************* ENREGISTREMENT DU NOUVEAU POINT DANS LA COMMANDE ***********************
@@ -104,7 +107,7 @@ function setPoint($tabGeofence, $user, $valueDate, $PositionJeedomConnect, $Geof
 //	mg::message('', $sql);
 	$result = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Suppression doublon position courante
 		
 	if ($tabGeofence[$user]['cloture'] > 0) { $dateMin = $tabGeofence[$user]['cloture']; }
@@ -115,9 +118,9 @@ function setPoint($tabGeofence, $user, $valueDate, $PositionJeedomConnect, $Geof
 	mg::message('', $sql);
 	$result = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
 	
-if (count($result) > 0 ) 	mg::message('Log:/_JC', "$user - ".count($result)." suppression de doublon : $sql"); ////////////////////////
+if (count($result) > 0 ) 	mg::message('Log:/_JC', "$user - ".count($result)." suppression de doublon : $sql");
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////	
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 }
 

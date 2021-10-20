@@ -20,8 +20,9 @@ global $tabConso, $tabNomCol, $tabAff, $cmdMaj_Aff;
 	$detail_Lignes = mg::getCmd($equipConso, 'Detail_Lignes'); // Option Détaillé (1) ou Groupé (2), MàJ (3)
 
 // Paramètres :
-	$tabConso = (array)mg::getVar('tabConso');
+	$tabConso = mg::getTabSql('_tabConso', 'affichage', 'asc');
 	$consoCoutKWH = mg::getParam('EDF', 'consoCoutKWH');
+//mg::message('', print_r($tabConso, true)); return;
 
 /**********************************************************************************************************************
 **********************************************************************************************************************/
@@ -314,8 +315,8 @@ function LigneMois($numLigne, $consoCoutKWH, &$script, $pathRef) {
 	$nbLignes = count($tabConso);
 	$tabAffLgn = $tabAff[$numLigne];
 
-	$consoMoisCourantTotale = round($tabAff[1]['Mois courant'] / date('d') * date('t'));
-	$ConsoMoisCourant = round($tabAffLgn['Mois courant'] / date('d') * date('t'));
+	$consoMoisCourantTotale = round(intval($tabAff[1]['Mois courant']) / date('d') * date('t'));
+	$ConsoMoisCourant = round(intval($tabAffLgn['Mois courant']) / date('d') * date('t'));
 	$PourCentMois = $consoMoisCourantTotale > 0 ? round($ConsoMoisCourant / $consoMoisCourantTotale * 100, 1) : 0;
 
 	$consoAnnuelleTotale = $tabAff[1]['Kw Ann.'];

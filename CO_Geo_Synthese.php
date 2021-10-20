@@ -10,7 +10,7 @@ global $tabActivite, $tableau, $tableau0, $color, $cptLgn, $idUser, $dateOrg, $d
 // N° des scénarios =>
 
 // Variables =>
-	$tabActivite = '_activites';
+	$tabActivite = '_tabActivites';
 	$pathRef = mg::getParam('System', 'pathRef');	// Répertoire de référence de domoMG
 
 // Paramètres =>
@@ -57,9 +57,9 @@ global $tableau, $tableau0, $color, $cptLgn, $idUser, $dateOrg, $dateOrgTxt;
 			.colorP { background-color:orange!important }
 			.colorM { background-color:lightblue!important }
 
-			.c_km { background-color:orange!important }
+			.c_Somme { background-color:orange!important }
 			.c_vm { background-color:orange!important }
-
+			.c_IBP { background-color:red!important }
 
 			td.titre { vertical-align:bottom; text-align:center; border-bottom:3px solid #000000 !important; border-top:3px solid #000000 !important; border-left:3px solid #000000 !important; border-right:3px solid #000000 !important; font-weight:bold; color:#FFFFFF; font-family:'Calibri'; font-size:18pt; background-color:#FF6600 }
 
@@ -90,7 +90,7 @@ global $tableau, $tableau0, $color, $cptLgn, $idUser, $dateOrg, $dateOrgTxt;
 
 			.barre_button {
 /*			text-align: end;
-				z-index: 9999!important; 
+				z-index: 9999!important;
 				position: relative;  */
 				position: absolute;
 				/* display: contents; */
@@ -112,12 +112,12 @@ global $tableau, $tableau0, $color, $cptLgn, $idUser, $dateOrg, $dateOrgTxt;
 				 margin: 4px 2px;
 				 cursor: pointer;
 			}
-		
+
 	</style>
 	";
 
 	// ***************************************************** TABLEAU ******************************************************
-	
+
 	$tete = "
 	<!DOCTYPE html PUBLIC '-//W3C//DTD HTML 4.01//EN' 'http://www.w3.org/TR/html4/strict.dtd'>
 	<html>
@@ -126,17 +126,16 @@ global $tableau, $tableau0, $color, $cptLgn, $idUser, $dateOrg, $dateOrgTxt;
 		  <meta name='author' content='Michel Georgein' />
 	</head>
 	";
-	
+
 	$buttons = "
 		<div class='barre_button'>
-		  <a href='https://georgein.dns2.jeedom.com//mg/util/geofence.html' class='button'>Geofence</a>
-		  <a href='https://georgein.dns2.jeedom.com//mg/util/synthese_MG.html' class='button'>Synthese MG</a>
-		  <a href='https://georgein.dns2.jeedom.com//mg/util/synthese_NR.html' class='button'>Synthese NR</a>
-		  <a href='https://georgein.dns2.jeedom.com//mg/util/geo__histo.html' class='button'>Historique</a>
+		  <a href='https://georgein.dns2.jeedom.com/mg/util/geofence.html' class='button'>Geofence</a>
+		  <a href='https://georgein.dns2.jeedom.com/mg/util/synthese_MG.html' class='button'>Synthese MG</a>
+		  <a href='https://georgein.dns2.jeedom.com/mg/util/synthese_NR.html' class='button'>Synthese NR</a>
+		  <a href='http://192.168.2.196/mg/tabulator/tabulator.html' class='button'>Historique</a>
 		</div>
 		<br>";
 
-	
 //	$tete Tableau
 	$tableau = "
 		<body>
@@ -157,10 +156,15 @@ global $tableau, $tableau0, $color, $cptLgn, $idUser, $dateOrg, $dateOrgTxt;
 
 	// Tableau principal
 	$cptLgn = 0;
+	$tableau .= titre("Stat. Quotidiennes sur les 7 derniers jours de $user.");
+	$tableau .= ligneSousTitre1();
+	$tableau .= ligneSousTitre2();
+	$tableau .= quotidienne($user); // 7 jours
+	$tableau .= ligneVide();
+
 	$tableau .= titre("Stat. Hebdomadaires sur les 4 dernières semaines de $user.");
 	$tableau .= ligneSousTitre1();
 	$tableau .= ligneSousTitre2();
-	//$tableau .= ligne(4); // 4 semaines
 	$tableau .= hebdo($user); // 4 semaines
 	$tableau .= ligneVide();
 
@@ -186,7 +190,7 @@ global $tableau, $tableau0, $color, $cptLgn, $idUser, $dateOrg, $dateOrgTxt;
 			</tbody>
 		</table>
 	";
-	
+
 	// ********** Sortie finale **********
 	$HTML = '';
 	$HTML .= $tete;
@@ -213,7 +217,7 @@ function titre($titre) {
 	</tr>
 	";
 }
-	
+
 function ligneSousTitre1() {
 	global $cptLgn;
 	$cptLgn++;
@@ -292,10 +296,10 @@ function ligne($aff) {
 			<td class='cellMoy c'>".($aff['s_poids'] > 0 ? $aff['j_poids'] : $null)."</td>
 			<td class='cellJour s'>{$aff['nb']}</td>
 			<td class='cellMoy c'>{$aff['s_IBP']}</td>
-			<td class='cellJour c'>{$aff['j_IBP']}</td>
-			<td class='cellMoy c'>{$aff['s_km_E']}</td>
-			<td class='cellJour c_km'>{$aff['j_km_E']}</td>
-			<td class='cellMoy c'>{$aff['s_km_Effort']}</td>
+			<td class='cellJour c_IBP'>{$aff['j_IBP']}</td>
+			<td class='cellMoy c_Somme'>{$aff['s_km_E']}</td>
+			<td class='cellJour c'>{$aff['j_km_E']}</td>
+			<td class='cellMoy c_Somme'>{$aff['s_km_Effort']}</td>
 			<td class='cellJour c'>{$aff['j_km_Effort']}</td>
 			<td class='cellMoy c'>{$aff['s_deniv_P']}</td>
 			<td class='cellJour c'>{$aff['j_deniv_P']}</td>
@@ -339,6 +343,29 @@ function ligne($aff) {
 }
 
 /*********************************************************************************************************************/
+/************************************************ CALCUL QUOTIDIENNE *************************************************/
+/*********************************************************************************************************************/
+function quotidienne($user) {
+	global $tableau, $tableau0, $cptLgn, $color;
+	$affLgn = '';
+
+	// 7 derniers jours
+	$dateMin = strtotime("today");
+	for ($i=0; $i<7; $i++) {
+		$cptLgn++;
+//		$dateMax = strtotime("- 7 day", $dateMin);
+		$dateMax = strtotime("today", $dateMin);
+
+		$result = getActivites($user, $dateMin, $dateMax);
+		$aff = valLigne($result, $dateMin, $dateMax);
+		$affLgn .= ligne($aff);
+//		$dateMin = strtotime("last Monday", $dateMin-1*1440*60);
+		$dateMin = strtotime("- 1 day", $dateMin);
+	}
+	return $affLgn;
+}
+
+/*********************************************************************************************************************/
 /*************************************************** CALCUL HEBDO ****************************************************/
 /*********************************************************************************************************************/
 function hebdo($user) {
@@ -361,7 +388,7 @@ function hebdo($user) {
 	$dateMin = strtotime("- 6 day", $dateMax);
 	$result = getActivites($user, $dateMin, $dateMax);
 	$aff = valLigne($result, $dateMin, $dateMax);
-		$aff['titreLigne'] = 'Semaine glissante';
+	$aff['titreLigne'] = 'Semaine glissante';
 	$color = 'colorP';
 	$tableau0 .= ligne($aff);
 
@@ -506,7 +533,6 @@ function valLigne($result, $dateMin, $dateMax) {
 	$aff['j_poids'] = ($nbVal_P > 0 ? round($aff['s_poids'] / $nbVal_P, 1).' kg' : 0);
 
 	for ($i=0; $i<=count($result); $i++) {
-
 		// Gestion Entrainements
 		if (isset($result[$i]['km_E']) && $result[$i]['km_E'] > 0) $nbVal_E++;
 
@@ -529,16 +555,16 @@ function valLigne($result, $dateMin, $dateMax) {
 			$aff['j_deniv_M'] = -round($aff['s_deniv_M'] / $nbVal_E).' m';
 
 			$aff['j_duree_Mvmt'] = $aff['s_duree_Mvmt'] / $nbVal_E;
-			$aff['j_duree_Pause'] = $aff['s_duree_Pause'] / $nbVal_E -3600; // ???????????????????????????????????
+			$aff['j_duree_Pause'] = $aff['s_duree_Pause'] / $nbVal_E; 
 			$aff['j_duree_Glob'] = $aff['s_duree_Glob'] / $nbVal_E;
 
 			$tmp = '';
 //			$tmp = ($aff['j_duree_Mvmt'] > 0 ? round($aff['s_km_Effort'] / $nbVal_E / $aff['j_duree_Mvmt']*3600, 1).' km/h' : 0);
 			$aff['j_vitesse_Mvmt'] = ($aff['j_duree_Mvmt'] > 0 ? round($aff['s_km_E'] / $nbVal_E / $aff['j_duree_Mvmt']*3600, 1)."/$tmp km/h" : 0);
-			
-//			$tmp = ($aff['j_duree_Mvmt'] > 0 ? round($aff['s_km_Effort'] / $nbVal_E / $aff['j_duree_Glob']*3600, 1).' km/h' : 0);
-			$aff['j_vitesse_Glob'] = ($aff['j_duree_Mvmt'] > 0 ? round($aff['s_km_E'] / $nbVal_E / $aff['j_duree_Glob']*3600, 1)."/$tmp km/h" : 0);
-		}
+
+//			$tmp = ($aff['j_duree_Glob'] > 0 ? round($aff['s_km_Effort'] / $nbVal_E / $aff['j_duree_Glob']*3600, 1).' km/h' : 0);
+			$aff['j_vitesse_Glob'] = ($aff['j_duree_Glob'] > 0 ? round($aff['s_km_E'] / $nbVal_E / $aff['j_duree_Glob']*3600, 1)."/$tmp km/h" : 0);
+		} 
 
 		// Gestion Voiture
 		if (isset($result[$i]['km_V']) && $result[$i]['km_V'] > 0) $nbVal_V++;
@@ -557,12 +583,11 @@ function valLigne($result, $dateMin, $dateMax) {
 /************************************************* TIME TO SECONDES **************************************************/
 /*********************************************************************************************************************/
 function TimeToSec($time) {
-//date_default_timezone_set('Europe/Paris');
-//	$time = "$time.000Z";
-    $sec = 0; $k=0; $v=0;
-    foreach (array_reverse(explode(':', $time)) as $k => $v) $sec += pow(60, $k) * $v;
-    return $sec-3600*0; //($sec > 3600 ? $sec-3600 : $sec);
+	$times = explode(':', $time);
+	$sec = $times[0]*3600 + $times[1]*60 + $times[2];
+	return $sec;
 }
+
 
 /*********************************************************************************************************************/
 /************************************ LIT LES DONNEES ACTIVITES ENTRE DEUX DATES *************************************/

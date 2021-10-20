@@ -38,8 +38,7 @@ if (mg::getCmd($infCinemaEtat)) {
 
 	// Fermeture volets
 	mg::setScenario($scenVoletsJourNuit, 'deactivate');
-	mg::unsetVar('_VoletGeneral');
-	mg::VoletsGeneral( 'Salon', 'D', 1);
+	mg::VoletsGeneral( 'Salon', 'D');
 
 	mg::setScenario($scenLuminositeSalon, 'deactivate');
 	
@@ -71,7 +70,6 @@ if (mg::getCmd($infCinemaEtat)) {
 mg::frameTV('Frame TV', 'Salon', 'art');
 
 	// Rétablissement volets
-	mg::unsetVar('_VoletGeneral'); // Pour 'forcer' le prochain mouvement de voletsGeneral
 	mg::setScenario($scenVoletsJourNuit, 'activate');
 	mg::setScenario($scenVoletsJourNuit, 'start');
 

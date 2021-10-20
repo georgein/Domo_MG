@@ -16,8 +16,8 @@ NB : si 'periodicite' == 0, on ne lance pas la correction
 // N° des scénarios :
 
 // Variables de Ctrl des équipements
-	$tabChauffages = (array)mg::getVar('tabChauffages');
-	$tabChauffages_ = mg::getVar('_tabChauffages');
+	$tabChauffages = mg::getTabSql('_tabChauffages');
+	$tabChauffagesTmp = mg::getVar('tabChauffagesTmp');
 
 	// Paramètres :
 	$cron = 5;
@@ -31,7 +31,7 @@ mg::setCron('', "*/$cron * * * *");
 // Lecture du tableau de paramètrage
 foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	$zone = $detailsZone['zone'];
-	$equip = $detailsZone['equip'];
+	$equip = $detailsZone['equipement'];
 	$nomResume = $detailsZone['nomResume'];
 	$cleResume = $detailsZone['cleResume'];
 	$timeOut = $detailsZone['timeOut'];
@@ -39,9 +39,8 @@ foreach ($tabChauffages as $nomChauffage => $detailsZone) {
 	$periodicite = $detailsZone['periodicite'];
 	if (!$equip) { continue; }
 
-	$mode = $tabChauffages_[$nomChauffage]['mode'];
-	$consigne = $tabChauffages_[$nomChauffage]["temp$mode"];
-	
+	$mode = $tabChauffagesTmp[$nomChauffage]['mode'];
+	$consigne = $tabChauffagesTmp[$nomChauffage]["temp$mode"];
 	$cmdResume = mg::toID("#[$zone][Résumé][$nomResume]#");
 	$tempResume = mg::getCmd($cmdResume);
 	$correction = -0.0;	//$detailsZone['correction']; A remettre à zéro APRES la correction
@@ -72,6 +71,7 @@ function ControleResumes($zone, $nomChauffage, $cleResume, $timeOut, $pcEcartMax
 	$values = array();
 	$sql  = "SELECT `configuration` FROM `object` WHERE `name` = '$zone'";
 	$resultSql = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
+	//if (count($resultSql) == 0) return;
 	$configuration = json_decode($resultSql[0]['configuration'], true);
 	$resultTypes = $configuration['summary'][$cleResume];
 

@@ -12,10 +12,11 @@ Parcours les équipements sur batterie et affiche :
 **********************************************************************************************************************/
 // Infos, Commandes et Equipements :
 	// $equipMonitoring
-	
+
 // N° des scénarios :
-	
+
 // Limite Variables contrôle serveur Jeedom :
+	$nomTab = '_tabAlertes';
 	$loadMin = 0.33;	$loadMax = 0.66;
 	$memMin = 33;		$memMax = 66;
 	$volumeMin = 25;	$volumeMax = 50;
@@ -23,15 +24,15 @@ Parcours les équipements sur batterie et affiche :
 	$queueZwaveMin = 5;	$queueZwaveMax = 10;
 
 // Variables de Ctrl des équipements
-	$alerteComDefaut = 1440;								// temps maximum par defaut, en mn depuis dernière comm de l'équipement
-	$alerteComBattery = 14*1440;						// temps maximum, en mn depuis le dernier retour de la batterie 
-	$alerteChgmtBattery = 2*(365)*1440;				// temps maximum, en mn depuis le dernier changement de la batterie 
-	
+	$alerteComDefaut = 1440;						// temps maximum par defaut, en mn depuis dernière comm de l'équipement
+	$alerteComBattery = 365*1440;					// temps maximum, en mn depuis le dernier retour de la batterie
+	$alerteChgmtBattery = 2*(365)*1440;				// temps maximum, en mn depuis le dernier changement de la batterie
+
 	// équipement des plugins exclus separés par des '|' (forme regex)
 	$excludeEquip = 'virtual|asuswrt|broadlink|tvdomsamsung|blea|camera|clink|cloudsyncpro|covidattest|dataexport|doorbird|htmldisplay'; // Exclusion plugins N°1
 	$excludeEquip .= '|jeedomconnect|mobile|phonemarket|telegram|netatmo*|openvpn|mail|livebox|googlecast|jeelink|phone_detection'; // Exclusion plugins N°2
 	$excludeEquip .= '|cachés|aucun|test|télécommande|volet|store|meteofull|domicile'; // Exclusion Nom de l'équipement
-	
+
 	// Si mot contenu dans le nom de l'équipement, pas de prise en compte à affichage des contrôles de batterie
 	$excludeBattery = 'xxx|yyy';
 	// Si mot contenu dans le nom de l'équipement, pas de prise en compte à affichage des contrôles de communications
@@ -41,26 +42,24 @@ Parcours les équipements sur batterie et affiche :
 	$timerCtrlLog = 5;									// Nb de minutes entre deux contrôles des logs (maximum 24h (1440), multiple du cron
 	$timerNettoieLog = 'all';							// Heure de nettoyage des logs (0-23), si == 'all' : toute les heures
 
-	$nomActionZwave = 'refreshAllValues'; // testNode 
+	$nomActionZwave = 'refreshAllValues'; // testNode
 
 	// Paramètres :
 	$logTimeLine = mg::getParam('Log', 'timeLine');
 // ********************************************************************************************************************
-	$nomTab = trim(mg::getTag('nomTab'), '#');
-	$action = trim(mg::getTag('action'), '#');
-
 	$values = array();
+
 	$sql = "SELECT * FROM `config` WHERE `key` REGEXP 'battery::danger'";
-	$resultSql = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL); 
+	$resultSql = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
 	$batteryDangerDefaut = $resultSql['0']['value'];
-	
+
 	$sql = "SELECT * FROM `config` WHERE `key` REGEXP 'battery::warning'";
-	$resultSql = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL); 
+	$resultSql = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
 	$batteryWarningDefaut = $resultSql['0']['value'];
 
-	// Modification BdD si changements du tableau _alertes
-	if ($nomTab == '_alertes' && ($action == 'Enregistre' || $action == 'Charge')) {
-		setAlertes($batteryDangerDefaut, $batteryWarningDefaut, $excludeEquip); 
+	// ************************************************ MAJ DE LA TABLE ***********************************************
+	if (!mg::declencheur('schedule') && !mg::declencheur('user')) {
+		setAlertes($nomTab, $excludeEquip);
 		goto suite;
 	}
 
@@ -72,40 +71,31 @@ mg::setInf($equipMonitoring, 'MonitorUp', "$upTxt - ". ConsoCPU($equipMonitoring
 mg::setInf($equipMonitoring, 'MonitorMem', Mem($equipMonitoring, $memMin, $memMax));
 mg::setInf($equipMonitoring, 'MonitorVol', Volume($equipMonitoring, $volumeMin, $volumeMax));
 
-if ($nomTab == '_alertes' || (mg::getTag('#heure#')*60 + mg::getTag('#minute#')) % $timerCtrlEquip == 0 || mg::getTag('#trigger#') == 'user') {
+if ($nomTab == '_tabAlertes' || (mg::getTag('#heure#')*60 + mg::getTag('#minute#')) % $timerCtrlEquip == 0 || mg::getTag('#trigger#') == 'user') {
 	suite:
 	//=================================================================================================================
 	mg::MessageT('', "! RECHERCHE ERREURS EQUIPEMENTS (Danger pcBattery par défaut : $batteryDangerDefaut %)");
 	//=================================================================================================================
-	$alertes = getAlertes($excludeEquip, $excludeActivite, $excludeBattery, $batteryDangerDefaut, $batteryWarningDefaut);
+	$tabAlertes = getAlertes($nomTab, $excludeEquip, $excludeActivite, $excludeBattery, $batteryDangerDefaut, $batteryWarningDefaut);
 	$messages = '';
 	mg::unsetVar('_equipErreur');
-	foreach($alertes as $type => $equips) {
+	foreach($tabAlertes as $type => $equips) {
 		foreach($equips as $equip => $detailsEquip) {
 			if (boolval($detailsEquip['isEnabled']) === false) { continue; }
 			// Alerte sur lastCommunication
 			$lastComDuree = ($detailsEquip['lastComm'] ? round((time() - @strtotime($detailsEquip['lastComm'], date('Y-m-d H:i:s')))/60) : 0);
-			$DureeMaxComDefaut = (!$detailsEquip['timeout'] ? $alerteComDefaut : $detailsEquip['timeout']);
+			$DureeMaxComDefaut = ($detailsEquip['timeOut'] == '' ? $alerteComDefaut : $detailsEquip['timeOut']);
 			if (intval($DureeMaxComDefaut) > 0 && $lastComDuree > $DureeMaxComDefaut) {
 				$messages .= "$type - $equip - last Comm : {$detailsEquip['cDepuis']} > $DureeMaxComDefaut mn)<br>";
-				// ********************* CORRECTION refreshAllValues DE ZWAVE *****************
-/*				if ($type == 'openzwave' && !$detailsEquip['pcBattery']) {
-					$logicalID =  $detailsEquip['-logicalID'];
-					if( mg::ZwaveBusy() == 0) {
-						mg::ZwaveAction($logicalID, $nomActionZwave);
-						mg::message(mg::getParam('Log', 'timeLine'), "WARNING monitoring - ERROR '$nomActionZwave' de $type - $equip ($logicalID) lastCom : $lastComDuree mn.");
-						mg::ZwaveBusy(1);
-					}
-				}*/
 			}
-			
-			if (trim($detailsEquip['pcBattery']) != '') {
+
+			if (trim($detailsEquip['batLastCom']) != '') {
 			// Alerte sur last changement batterie
 				$lastChgmtBattery = round((time() - @strtotime($detailsEquip['batChgmt'], date('Y-m-d H:i:s')))/60);
 				if (trim($lastChgmtBattery) != '' && $lastChgmtBattery > $alerteChgmtBattery) {
 				$messages .= "$type - $equip - last Chgmt Batterie : {$detailsEquip['ChgmtDepuis']}<br>";
 				}
-			
+
 				// Alerte sur lastComBattery
 				$lastComBattery = round((time() - @strtotime($detailsEquip['batLastCom'], date('Y-m-d H:i:s')))/60);
 				if (trim($lastComBattery) != '' && $lastComBattery > $alerteComBattery) {
@@ -163,10 +153,10 @@ if ($nomTab == '_alertes' || (mg::getTag('#heure#')*60 + mg::getTag('#minute#'))
 	$logEnErreur = mg::getVar('_LogEnErreur');
 	// Uniquement le rep des scénarios 'custom'
 	if ($logEnErreur) {
-		shell_exec("sudo chmod -R 777 /var/www/html/log/scenarioLog"); 
+		shell_exec("sudo chmod -R 777 /var/www/html/log/scenarioLog");
 		$result = shell_exec("sudo rm -f /var/www/html/log/scenarioLog/scenario159.log"); // Supprime le log de monitoring pour éviter le feedback du mot 'error'
 	}
-	
+
 	mg::unsetVar('_LogEnErreur');
 	$logEnErreur = trim(shell_exec("sudo grep -rn -o -i 'error' /var/www/html/log/scenarioLog --files-with-matches"));
 	// Nettoyage du nom des logs en erreur
@@ -175,7 +165,7 @@ if ($nomTab == '_alertes' || (mg::getTag('#heure#')*60 + mg::getTag('#minute#'))
 		preg_match_all("#$regex#ui", $logEnErreur, $found);
 		$logEnErreur = '';
 		foreach($found[1] as $num => $scenario) {
-			mg::getScenario($scenario, $name); 
+			mg::getScenario($scenario, $name);
 			$logEnErreur .= " - '$name'";
 		}
 		$logEnErreur = trim(trim($logEnErreur, '-'));
@@ -198,7 +188,7 @@ $equipErreur = mg::getVar('_equipErreur');
 $logEnErreur = mg::getVar('_LogEnErreur');
 $notif_ICO = mg::getVar('_Notif_ICO'); // Géré dans scénario piscine
 $notif_ICO = (strpos($notif_ICO, '!') !== false ? $notif_ICO.'<br>' : '');
-	
+
 $messageAlerte = '*** '.date('H\ \h\ i\ \m\n', time()).' ***<br>';
 $messageAlerte .= mg::NettoieChaine("$notif_ICO $freeEnErreur $equipErreur $logEnErreur");
 if (trim($messageAlerte) == '') { $messageAlerte = "Aucune alerte."; }
@@ -237,11 +227,11 @@ function Volume($equipMonitoring, $volumeMin, $volumeMax) {
 	$volumeLibre_pc = round(100-intval($volumeDetails[4]));
 	mg::setInf($equipMonitoring, 'VolumeLibre_pc', $volumeLibre_pc);
 	$volumeLibre_pc = ThreeColor($volumeLibre_pc, $volumeMin, $volumeMax, '+', $color);
-	
-	$volumeUtilise = $volumeTotal - $volumeLibre; 
-	$volumeUtilise_pc = round(intval($volumeDetails[4])); 
-	$volumeUtilise_pc = ThreeColor($volumeUtilise_pc, $volumeMin, $volumeMax, '+', $color); 
-	return ThreeColor("Vol utilisé : ", '', '', '+', $color) . "$volumeUtilise  G / $volumeTotal  G ($volumeLibre_pc % de libre)."; 
+
+	$volumeUtilise = $volumeTotal - $volumeLibre;
+	$volumeUtilise_pc = round(intval($volumeDetails[4]));
+	$volumeUtilise_pc = ThreeColor($volumeUtilise_pc, $volumeMin, $volumeMax, '+', $color);
+	return ThreeColor("Vol utilisé : ", '', '', '+', $color) . "$volumeUtilise  G / $volumeTotal  G ($volumeLibre_pc % de libre).";
 }
 
 /*---------------------------------------------------------------------------------------------------------------------
@@ -253,10 +243,10 @@ function LoadAvg($equipMonitoring, $loadMin, $loadMax, &$upTxt, $queueZwaveMin, 
 	$loadAvg = str_replace(', ', ' ', $loadAvg);	// Suppression virgule de séparation
 	$loadAvg = str_replace(',', '.', $loadAvg);		// Point décimal
 	$loadAvgDetails = explode(' ', $loadAvg);
-	
+
 	$Count = count($loadAvgDetails);
 	$Count = intval($loadAvgDetails[$Count-1])-2;
-	//mg::message('', "LoadAvg : $loadAvg - Count : $Count - " . print_r($loadAvgDetails, true)); 
+	//mg::message('', "LoadAvg : $loadAvg - Count : $Count - " . print_r($loadAvgDetails, true));
 
 	// Calcul de la durée de fonctionnement
 	if (strpos($loadAvgDetails[1], ':') !== false) // au démarrage avec heure
@@ -273,7 +263,7 @@ function LoadAvg($equipMonitoring, $loadMin, $loadMax, &$upTxt, $queueZwaveMin, 
 		$nbHeures = str_replace(':', 'h', $nbHeures);
 		$nbJours = "{$loadAvgDetails[1]} jour(s) et ";
 	}
-	
+
 	//	Calcul / affichage de la queue Zwave
 /*	$queueZwave = mg::ZwaveBusy();
 	$queueZwave = ThreeColor($queueZwave, $queueZwaveMin, $queueZwaveMax, '', $color);
@@ -359,72 +349,72 @@ function ThreeColor($value, $valueMin = 0, $valueMax = 1, $sens = '+', &$color =
 
 /**********************************************************************************************************************
 															SET ALERTES
-					Met à jour la Base de données si des modifs ont été faites dans _alertes
+					Met à jour la Base de données JEEDOM si des modifs ont été faites dans _tabAlertes
 **********************************************************************************************************************/
-function setAlertes ($batteryDangerDefaut, $batteryWarningDefaut, $excludeEquip) {
+function setAlertes ($nomTab, $excludeEquip) {
 	mg::messageT('', "! ENREGISTREMENT EN BDD DES MODIFICATIONS DE L'EQUIPEMENT");
-	$values = array();
-	$_alertes = mg::getVar('_alertes');
 	
+	$tabAlertes = mg::getTabSql($nomTab);
+
 	// Lecture de la BdD
 	$eqLogics = eqLogic::all();
 	foreach($eqLogics as $eqLogic) {
 		$ID = $eqLogic->getId();
-		$type = strtolower($eqLogic->getEqType_name()); 
+		$type = $eqLogic->getEqType_name();
 		$humanName = $eqLogic->getHumanName();
-		
-		$isEnabled = $eqLogic->getIsEnable();
+
+		$isEnabled = intVal($eqLogic->getIsEnable());
 		if (!$isEnabled) { continue; }
-		$isVisible = $eqLogic->getIsVisible();
-		$timeout = $eqLogic->getTimeout(); 
-		$battery_danger = $eqLogic->getConfiguration('battery_danger_threshold');
-		$battery_warning = $eqLogic->getConfiguration('battery_warning_threshold');
+		$isVisible = intVal($eqLogic->getIsVisible());
+		$timeout = intVal($eqLogic->getTimeout());
+		$battery_danger = intVal($eqLogic->getConfiguration('battery_danger_threshold'));
+		$battery_warning = intVal($eqLogic->getConfiguration('battery_warning_threshold'));
 		$batteryType = $eqLogic->getConfiguration('battery_type');
-		
+
 		// Si équipement exclu on le saute
 		preg_match("#$excludeEquip#i", " $type $humanName", $foundEquip);
-		if (isset($foundEquip[0])) { continue; } 
+		if (isset($foundEquip[0])) { continue; }
 
 		// Lecture de _alertes pour voir si changement vs BdD
-		if (!isset($_alertes[$type][$humanName])) { continue; }
-		
-		$isEnabled_ = $_alertes[$type][$humanName]['isEnabled'];
-		$isVisible_ = $_alertes[$type][$humanName]['isVisible'];
-		$timeout_ = $_alertes[$type][$humanName]['timeout'];
-		$battery_warning_ = $_alertes[$type][$humanName]['batWarning'];
-		$battery_danger_ = $_alertes[$type][$humanName]['batDanger'];
-		$batteryType_ = $_alertes[$type][$humanName]['batType'];
-		
-		// Pose des modifs en BdD
+//		if (!isset($tabAlertes[$type][$humanName])) { continue; }
+
+		$isEnabled_ = intVal($tabAlertes[$type][$humanName]['isEnabled']);
+		$isVisible_ = intVal($tabAlertes[$type][$humanName]['isVisible']);
+		$timeout_ = intVal($tabAlertes[$type][$humanName]['timeOut']);
+		$battery_warning_ = intVal($tabAlertes[$type][$humanName]['batWarning']);
+		$battery_danger_ = intVal($tabAlertes[$type][$humanName]['batDanger']);
+		$batteryType_ = $tabAlertes[$type][$humanName]['batType'];
+
+		// Pose des modifs en BdD Jeedom
 		$modif =0;
 		if ($isEnabled != $isEnabled_) {
-			mg::message('', "$ID - $type - $humanName - isEnabled : $isEnabled => $isEnabled_"); 
+			mg::message('', "$ID - $type - $humanName - isEnabled : $isEnabled => $isEnabled_");
 			$eqLogic->setIsEnabled($isEnabled_ == 1 ? '1' : '0');
 			$modif++;
 		}
 		if ($isVisible != $isVisible_) {
-			mg::message('', "$ID - $type - $humanName - isVisible : $isVisible => $isVisible_"); 
+			mg::message('', "$ID - $type - $humanName - isVisible : $isVisible => $isVisible_");
 			$eqLogic->setIsVisible($isVisible_ == 1 ? '1' : '0');
 			$modif++;
 		}
 		if ($timeout != $timeout_) {
-			mg::message('', "$ID - $type - $humanName - timeout : $timeout ==> $timeout_"); 
+			mg::message('', "$ID - $type - $humanName - timeout : $timeout ==> $timeout_");
 			$eqLogic->setTimeout(intval($timeout_));
 			$modif++;
 		}
 		if ($battery_warning != $battery_warning_) {
-			 mg::message('', "$ID - $type - $humanName - battery_warning : $battery_warning => $battery_warning_"); 
+			 mg::message('', "$ID - $type - $humanName - battery_warning : $battery_warning => $battery_warning_");
 				$eqLogic->setConfiguration('battery_warning_threshold', $battery_warning_);
 			$modif++;
 		}
 		if ($battery_danger != $battery_danger_) {
-			mg::message('', "$ID - $type - $humanName - battery_danger : $battery_danger => $battery_danger_"); 
-			$eqLogic->setConfiguration('battery_danger_threshold', $battery_danger_);	
+			mg::message('', "$ID - $type - $humanName - battery_danger : $battery_danger => $battery_danger_");
+			$eqLogic->setConfiguration('battery_danger_threshold', $battery_danger_);
 			$modif++;
 		}
 		if ($batteryType != $batteryType_) {
-			mg::message('', "$ID - $type - $humanName - type batterie : '$batteryType' => '$batteryType_'"); 
-			$eqLogic->setConfiguration('battery_type', $batteryType_);	
+			mg::message('', "$ID - $type - $humanName - type batterie : '$batteryType' => '$batteryType_'");
+			$eqLogic->setConfiguration('battery_type', $batteryType_);
 			$modif++;
 		}
 		if ($modif) { $eqLogic->save(); }
@@ -433,87 +423,83 @@ function setAlertes ($batteryDangerDefaut, $batteryWarningDefaut, $excludeEquip)
 
 /**********************************************************************************************************************
 															GET ALERTES
-				Mets à jour la variable _alertes avec les dernières info de tous ce qui n'est pas 'exclude'
+				Mets à jour la table _tabAlertes avec les dernières info de tous ce qui n'est pas 'exclude'
 **********************************************************************************************************************/
-function getAlertes ($excludeEquip, $excludeActivite, $excludeBattery, $batteryDangerDefaut, $batteryWarningDefaut) {
-	mg::messageT('', "! GENERATION DE LA VARIABLE _ALERTES");
-	mg::unsetVar('_alertes');
-//	unset($alertes);
-	$_alertes = array();
+function getAlertes ($nomTab, $excludeEquip, $excludeActivite, $excludeBattery, $batteryDangerDefaut, $batteryWarningDefaut) {
+	mg::messageT('', "! GENERATION DE LA TABLE $nomTab");
+
 	$eqLogics = eqLogic::all();
 	// Lecture de la base de données
 	foreach($eqLogics as $eqLogic) {
-		$type = strtolower($eqLogic->getEqType_name()); 
+		$type = $eqLogic->getEqType_name();
 		$humanName = $eqLogic->getHumanName();
 		$isEnabled = $eqLogic->getIsEnable();
 		if (!$isEnabled) { continue; }
 		$isVisible = $eqLogic->getIsVisible();
-		$lastCommunication = $eqLogic->getStatus('lastCommunication', date('Y-m-d H:i:s')); 
-		$timeout = trim($eqLogic->getTimeout());
+		$lastCommunication = $eqLogic->getStatus('lastCommunication', date('Y-m-d H:i:s'));
+		$timeout = intval($eqLogic->getTimeout());
 		$status = $eqLogic->getStatus();
-		$logicalID = $eqLogic->getLogicalId(); 
-		$battery_danger = $eqLogic->getConfiguration('battery_danger_threshold');
-		$battery_warning = $eqLogic->getConfiguration('battery_warning_threshold');
+		$battery_danger = intVal($eqLogic->getConfiguration('battery_danger_threshold'));
+		$battery_warning = intVal($eqLogic->getConfiguration('battery_warning_threshold'));
 		$batteryType = $eqLogic->getConfiguration('battery_type');
-		$batteryChangement = $eqLogic->getConfiguration('batterytime'); 
-		$pcBattery = @$status['battery']; 
-		$batteryDatetime = @$status['batteryDatetime']; 
+		$batteryChangement = $eqLogic->getConfiguration('batterytime');
+		$pcBattery = intVal(@$status['battery']);
+		$batteryDatetime = @$status['batteryDatetime'];
 
-		// Pour lastCommunication on prend le plus récent vs batteryDatetime 
-		$lastCommunication = max($lastCommunication, $batteryDatetime); 
-		
+		// Pour lastCommunication on prend le plus récent vs batteryDatetime
+		$lastCommunication = max($lastCommunication, $batteryDatetime);
+
 		// Si équipement exclu on le saute
 		preg_match("#$excludeEquip#i", " $type $humanName", $foundEquip);
-		if (isset($foundEquip[0])) { continue; } 
+		if (isset($foundEquip[0])) { continue; }
+
+		$equi = $eqLogic->getId();
+		if ($equi > 0) mg::setValSql($nomTab, $type, $humanName, 'eqLogic', $equi);
 		
 		preg_match("#$excludeActivite#i", $humanName, $foundActivite);
 		preg_match("#$excludeBattery#i", $humanName, $foundBattery);
-		
+
 		// ENREGISTREMENT DE _ALERTES
-			
+
 		// si pas dans $excludeActivite
 		if (!isset($foundActivite[0])) {
-			
-			$_alertes[$type][$humanName]['lastComm'] = $lastCommunication; 
-			$_alertes[$type][$humanName]['cDepuis'] = mg::dateIntervalle($lastCommunication, '');
-			
-			$_alertes[$type][$humanName]['timeout'] = $timeout;
+			mg::setValSql($nomTab, $type, $humanName, 'lastComm', $lastCommunication);
+			mg::setValSql($nomTab, $type, $humanName, 'cDepuis', mg::dateIntervalle($lastCommunication));
+			mg::setValSql($nomTab, $type, $humanName, 'timeOut', $timeout);
 		} else {
-			$_alertes[$type][$humanName]['lastComm'] = ' ';
-			$_alertes[$type][$humanName]['cDepuis'] = ' ';
-			$_alertes[$type][$humanName]['timeout'] = ' ';
+			mg::setValSql($nomTab, $type, $humanName, 'lastComm', '');
+			mg::setValSql($nomTab, $type, $humanName, 'cDepuis', '');
+			mg::setValSql($nomTab, $type, $humanName, 'timeOut', 0);
 		}
 		// si pas dans $excludeBattery
 		if (!isset($foundBattery[0])) {
-			if ($pcBattery > 0) {
-				$_alertes[$type][$humanName]['batLastCom'] = $batteryDatetime;
-				$_alertes[$type][$humanName]['bDepuis'] = mg::dateIntervalle($batteryDatetime, '');
+			if ($batteryChangement != '') {
+			mg::setValSql($nomTab, $type, $humanName, 'batLastCom', $batteryDatetime);
+			mg::setValSql($nomTab, $type, $humanName, 'bDepuis', mg::dateIntervalle($batteryDatetime, ''));
 			} else {
-				$_alertes[$type][$humanName]['batLastCom'] = ' ';
-				$_alertes[$type][$humanName]['bDepuis'] = ' ';
+			mg::setValSql($nomTab, $type, $humanName, 'batLastCom', '');
+			mg::setValSql($nomTab, $type, $humanName, 'bDepuis', '');
 			}
-			$_alertes[$type][$humanName]['batChgmt'] = $batteryChangement;
-			$_alertes[$type][$humanName]['ChgmtDepuis'] = mg::dateIntervalle($batteryChangement, '');
-			$_alertes[$type][$humanName]['batType'] = $batteryType;
-			$_alertes[$type][$humanName]['pcBattery'] = $pcBattery;
-			$_alertes[$type][$humanName]['batDanger'] = $battery_danger; 
-			$_alertes[$type][$humanName]['batWarning'] = $battery_warning;
+			mg::setValSql($nomTab, $type, $humanName, 'batChgmt', $batteryChangement);
+			mg::setValSql($nomTab, $type, $humanName, 'ChgmtDepuis', mg::dateIntervalle($batteryChangement, ''));
+			mg::setValSql($nomTab, $type, $humanName, 'batType', $batteryType);
+			mg::setValSql($nomTab, $type, $humanName, 'pcBattery', $pcBattery*1);
+			mg::setValSql($nomTab, $type, $humanName, 'batDanger', $battery_danger*1);
+			mg::setValSql($nomTab, $type, $humanName, 'batWarning', $battery_warning*1);
 		} else {
-			$_alertes[$type][$humanName]['batLastCom'] = ' ';
-			$_alertes[$type][$humanName]['bDepuis'] = ' ';
-			$_alertes[$type][$humanName]['batChgmt'] = ' ';
-			$_alertes[$type][$humanName]['ChgmtDepuis'] = ' ';
-			$_alertes[$type][$humanName]['batType'] = ' ';
-			$_alertes[$type][$humanName]['pcBattery'] = ' ';
-			$_alertes[$type][$humanName]['batWarning'] = ' ';
-			$_alertes[$type][$humanName]['batDanger'] = ' ';
+			mg::setValSql($nomTab, $type, $humanName, 'batLastCom', '');
+			mg::setValSql($nomTab, $type, $humanName, 'bDepuis', '');
+			mg::setValSql($nomTab, $type, $humanName, 'batChgmt', '');
+			mg::setValSql($nomTab, $type, $humanName, 'ChgmtDepuis', '');
+			mg::setValSql($nomTab, $type, $humanName, 'batType', '');
+			mg::setValSql($nomTab, $type, $humanName, 'pcBattery', 0);
+			mg::setValSql($nomTab, $type, $humanName, 'batWarning', 0);
+			mg::setValSql($nomTab, $type, $humanName, 'batDanger', 0);
 		}
-		$_alertes[$type][$humanName]['-logicalID'] = $logicalID; 
-		$_alertes[$type][$humanName]['isEnabled'] = $isEnabled != 1 ? '0' : '1';
-		$_alertes[$type][$humanName]['isVisible'] = $isVisible != 1 ? '0' : '1';
+			mg::setValSql($nomTab, $type, $humanName, 'isEnabled', $isEnabled != 1 ? '0' : '1');
+			mg::setValSql($nomTab, $type, $humanName, 'isVisible', $isVisible != 1 ? '0' : '1');
 	}
-	ksort($_alertes);
-	mg::setVar('_alertes', $_alertes);
-	return $_alertes;
+	return mg::getTabSql($nomTab);
 }
+
 ?>
