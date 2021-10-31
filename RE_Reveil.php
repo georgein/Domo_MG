@@ -66,7 +66,7 @@ if (!$reveilOnLine) {
 	//=================================================================================================================
 	mg::messageT('', ". ON ENTROUVRE LE VOLET CHAMBRE");
 	//=================================================================================================================
-	if 	( time() >= ($heureRelance) || ($nuitSalon == 2 && $lastMvmt > 60)) {
+	if 	(time() >= $heureRelance || ($nuitSalon == 2 && $lastMvmt > 60)) {
 		mg::VoletRoulant('Chambre', 'Volet Chambre', 'Slider', 10);
 		mg::VoletRoulant('RdCSdB', 'Volet RdCSdB', 'Slider', 99);
 	}
@@ -80,7 +80,7 @@ if (!$reveilOnLine) {
 	mg::messageT('', "! 2 OUVERTURE TOTALE CHAMBRE");
 	//=================================================================================================================
 	if (mg::getCmd($infVoletChambre) > 1) {
-		mg::VoletsGeneral ('Chambre', 'M');
+		mg::VoletsGeneral ('Chambre', 'M', 1);
 	}
 		
 	mg::setVar('_ReveilOnLine', 3);
@@ -135,7 +135,7 @@ if (!$reveilOnLine) {
 	mg::setVar('_ReveilOnLine', 4);
 
 	// ***** SI volets chambre baissés on relance le réveil *****
-	if (mg::getCmd($infVoletChambre) < 1) {
+	if (mg::getCmd($infVoletChambre) < 1 && $heureRelance > $heure_Reveil) {
 		mg::Message($logTimeLine, "Reveil - RELANCE DU REVEIL POUR $heureRelance.");
 		mg::setVar('_Heure_Reveil', $heureRelance);
 		mg::unsetVar('_ReveilOnLine');

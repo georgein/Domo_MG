@@ -42,7 +42,7 @@ else {
 }
 mg::messageT('', "Trigger : $trigger - zone : $zone, cmd : $cmd - ValCmd : $ValCmd");
 
-mg::VoletRoulant($zone, $cmd, $trigger, $ValCmd);
+mg::VoletRoulant($zone, $cmd, $trigger, $ValCmd, 'manuel');
 mg::unsetVar('_InfPorte');
 
 ?>

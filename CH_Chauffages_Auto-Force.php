@@ -11,57 +11,41 @@ Positionner la variable '_TypeChauffage' à Auto (Confort si HeureFin existe, Ec
 	$scenChauffageMode = 104;								// Scénario de gestion du chauffage du salon
 
 //Variables :
-	$tabChauffages = mg::getTabSql('_tabChauffages');
-	$tabChauffagesTmp = mg::getVar('tabChauffagesTmp');
 
 // Paramètres :
-	$logChauffage = mg::getParam('Log', 'chauffage');				// Pour debug
-	$timingHG = mg::getParam('Chauffages','timingHG');		// TimingHG de passage à HG après le forçage du mode Eco
+	$logChauffage = mg::getParam('Log', 'chauffage');		// Pour debug
 
 /******************************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 $typeChauffage = mg::getVar('_TypeChauffage', 'Auto');
 
-// Retablissement chauffage (retour à Confort)  
-if ($typeChauffage == 'Auto') {
-	foreach ($tabChauffages as $nomChauffage => $detailsZone) {
-		if (!$nomChauffage) {continue; }
-		$__Mode	= '_Chauf' . $nomChauffage . 'Mode';
-		if (!$detailsZone['chauffage'] == 0 || !$detailsZone['equipement']) { continue; }
-			$tabChauffagesTmp[$nomChauffage]['mode'] = 'Confort'; 
-	}
+// Passage en mode Auto (le script ModeChauffage remettra le bon mode à son lancement)
+if ($typeChauffage == 'Auto' || $typeChauffage == 'Confort') {
 	mg::setScenario($scenChauffageMode, 'Activate');
 	mg::setScenario($scenChauffageMode, 'start');
-	mg::unsetVar('_TypeChauffage');
-	mg::message($logChauffage, "Retour forcé des chauffages en mode Auto");
-	mg::setCron('', time() - 24*3600); // Annulation du cron
-}
+	$message = "RETOUR des chauffages en mode $typeChauffage";
 
 // Passage en mode Eco
-else if ($typeChauffage == 'Eco') {
+} else {
+	$typeChauffage = 'Eco';
 	mg::setScenario($scenChauffageMode, 'Deactivate');
-	foreach ($tabChauffages as $nomChauffage => $detailsZone) {
-		if (!$nomChauffage) {continue; }
-		if (!$detailsZone['chauffage'] || !$detailsZone['equipement']) { continue; }
-		$tabChauffagesTmp[$nomChauffage]['mode'] = 'Eco'; 
-	}
-	mg::message($logChauffage, "Passage forcé des chauffages en Eco");
-
-	// Préparation relance dans $timingHG en mode HG
-//	mg::setVar('_TypeChauffage', 'HG');
-//	mg::setCron('', time() + ($timingHG * 3600));
+	$message = "Passage FORCE des chauffages en mode $typeChauffage si nécessaire.";
 }
 
-// Passage en mode HG 
-else if ($typeChauffage == 'HG') {
-	mg::setScenario($scenChauffageMode, 'Deactivate');
-	foreach ($tabChauffages as $nomChauffage => $detailsZone) {
-		if (!$nomChauffage) {continue; }
-		if (!$detailsZone['chauffage'] == 0 || !$detailsZone['equipement']) { continue; }
-		$tabChauffagesTmp[$nomChauffage]['mode'] = 'HG'; 
+mg::messageT($logChauffage, $message);
+
+	foreach(eqLogic::byType('thermostat') as $thermostat){
+		$equipement = $thermostat->getHumanName();
+		if (!$thermostat->getIsEnable()) continue;
+		if (mg::getCmd($equipement, 'Mode') == 'Off') continue;
+		
+	// On force à Eco si nécessaire
+	if ($typeChauffage != 'Auto' && $typeChauffage != 'Confort' && mg::getCmd($equipement, 'Mode') != $typeChauffage) {
+		mg::setCmd($equipement, $typeChauffage);
 	}
-	mg::message($logChauffage, "Passage forcé des chauffages en HG");
 }
+
+mg::unsetVar('_TypeChauffage');
 
 ?>

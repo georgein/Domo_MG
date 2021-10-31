@@ -48,7 +48,6 @@ SuiviTempFrigo($infTempCongeloSS	,'-14', $destinataires, $infAffAlerte, $periodi
 **********************************************************************************************************************/
 function SuiviTempFrigo($infCmd, $tempMax, $destinataires, $infAffAlerte, $periodicite) {
 	// Effacement de l'affichage des températures si pas en alerte)
-//	if (strpos(mg::getCmd($infAffAlerte, 'AlerteFroid'), "ALERTE") === false) { mg::setInf($infAffAlerte, 'AlerteFroid', ''); }
 	$nom = trim(str_replace('_', '', mg::ExtractPartCmd($infCmd, 2)));
 	mg::messageT('', "Contrôle de la température de $nom");
 	$temp = round(mg::getCmd($infCmd), 1);
@@ -57,14 +56,11 @@ function SuiviTempFrigo($infCmd, $tempMax, $destinataires, $infAffAlerte, $perio
 	if ($temp > $tempMax && $tempMoyen > $tempMax) {
 	mg::MessageT('',"! ********ALERTE FROID : $nom ==> Temp : $temp/$tempMoyen - TempMax : $tempMax - NomAlerte : $nom  **********");
 		$message = "ALERTE : $nom, ($temp ° au lieu de $tempMax °)";
-		mg::Alerte($nom, $periodicite, 9999, $destinataires, $message);
+		mg::Alerte($nom, $periodicite, 1440, $destinataires, $message);
 		mg::setInf($infAffAlerte, 'AlerteFroid', $message);
 
 	// FIN D'ALERTE
 	} else {
-//			mg::Alerte($nom, -1);
-//			mg::setInf($infAffAlerte, 'AlerteFroid', '');
-			
 		if (mg::getVar("_Alerte$nom")) {
 			mg::Alerte($nom, -1);
 			mg::setInf($infAffAlerte, 'AlerteFroid', '');
@@ -86,13 +82,12 @@ mg::messageT('', "CONTROLE EDF");
 
 	// COUPURE EDF
 	if ($statutEDF == 2) {
-		mg::message($destinataires, $message);
+//		mg::message($destinataires, $message);
+		mg::Alerte($nomAlerte, $periodicite, 1440, $destinataires, $message);
 
-		mg::Alerte($nomAlerte, $periodicite, 9999, $destinataires, $message);
-
-		mg::eventGhost('Veille', 'PC-MG');
-		sleep(10);
-		mg::setCmd($infSecondaire, 'Off');
+	//	mg::eventGhost('Veille', 'PC-MG');
+	//	sleep(10);
+	//	mg::setCmd($infSecondaire, 'Off');
 
 	// EDF OK
 	} elseif (mg::declencheur('EDF') && $statutEDF == 3) {
@@ -100,8 +95,8 @@ mg::messageT('', "CONTROLE EDF");
 		sleep(2);
 		mg::WakeOnLan('PC-MG');
 
-		mg::Alerte($nomAlerte, -1);
 		mg::message($destinataires, "FIN DE LA COUPURE EDF.");
+		mg::Alerte($nomAlerte, -1);
 	}
 
 }

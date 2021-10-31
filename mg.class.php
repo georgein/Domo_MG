@@ -512,6 +512,7 @@ self::message('', $requete);
 			// ********************************** Calcul position globale du groupe ***********************************
 			$count = 0;
 			$somme = 0;
+			self::debug();
 			foreach ($tabVolets as $cmd => $details_Volet) {
 				$zone = trim($details_Volet['zone']);
 				$equipement = "[$zone][Ouvertures]";
@@ -525,16 +526,16 @@ self::message('', $requete);
 			}
 			$voletGeneralGroupe = $somme/ $count > 55 ? 'M' : 'D';
 			self::Message('', "moyenne des volets du groupe $groupeTraite : ".$somme/ $count." ==> sens $voletGeneralGroupe");
-			mg::setVar("_lastVolet$groupeTraite", $voletGeneralGroupe); // Mémo pour volets jour/nuit (évite les appels inutile)
 
 			// Abandon si déja en position
 			if ($force == 0 && $sensDemandé == $voletGeneralGroupe) {
 				self::MessageT('', self::SP . __FUNCTION__ . " - Volets déja en position, Annulation de la demande ...");
 				continue;
 			}
+			mg::setVar("_lastVolet$groupeTraite", $sensDemandé); // Mémo pour volets jour/nuit (évite les appels inutile)
 			// Lancements des actions
 			self::wait("scenario(".self::$__scenarioVoletManuel.") == 0", 180);
-			self::MessageT($Log, "$sensTxt volet général du groupe : $groupeTraite");
+			self::Message($Log, "$sensTxt volet général du groupe : $groupeTraite");
 			self::setCmd($equipementGeneral, $sensTxt);
 
 			// ********************* Parcours de la table des volets pour fermeture individuelle **********************
@@ -544,10 +545,8 @@ self::message('', $requete);
 				$groupe =  trim($details_Volet['groupe']);
 				// Uniquement si volet existe et volets dans le groupe
 				if (!$groupe || $groupeTraite != $groupe || !$duree) { continue; }
-					
-				$voletInverse =	 $details_Volet['inverse'];
-				if ($voletInverse == 1) { $slider = ($sensDemandé == 'M' ? 0.1 : 99); }
-				else { $slider = ($sensDemandé == 'M' ? 99 : 0.1); }
+				$slider = ($sensDemandé == 'M' ? 99 : 0.1);
+
 				self::debug();
 				self::Message('', "$sensTxt ($sensDemandé) individuelle du volet : $cmd / $zone (==> $slider)");
 				self::debug(0);
@@ -574,18 +573,13 @@ self::message('', $requete);
 *																				(ex : Bureau_O_pour le widget Bureau).	*
 *	les noms de commande/info Etat, Slider, Slider_, Volet et Volet_ ne doivent pas être modifié dans le virtuel		*
 ************************************************************************************************************************/
-	public static function voletRoulant($zone, $cmd, $trigger, $slider = '') {
+	public static function voletRoulant($zone, $cmd, $trigger, $slider = '', $appelant='') {
 		global $debugVolet;
-		// self::message('', "zone : '$zone' - cmd : '$cmd' - trigger '$trigger' - slider : '$slider'");
 
 		self::setScenario(self::$__scenarioVoletManuel, 'Deactivate');
 
 		$etat = 0;
 		$equipement = "[$zone][Ouvertures]";
-
-		if ($slider <= 0.1) { $slider = 0.1; }
-		if ($slider >= 99) { $slider = 99; }
-
 		$nbLamelles = 17; // Nb de lamelles dans le Widget moins une
 		$increment = round(99 / $nbLamelles);
 
@@ -600,9 +594,12 @@ self::message('', $requete);
 			$duree_Mouvement = intval($details_Volet['duree']);
 			$alerteOuvert = intval($details_Volet['alerteOuvert']);
 			$ouvrant = trim($details_Volet['ouvrant']);
-
-		if($duree_Mouvement == 0) { $slider = 0.1 ; }
+			$voletInverse =	 $details_Volet['inverse'];
+			if($duree_Mouvement == 0) { $slider = 0.1 ; }
+			$slider = ($voletInverse && $appelant != 'manuel') ? abs($slider - 99.1) : $slider; 
 		}
+		if ($slider <= 0.1) { $slider = 0.1; }
+		if ($slider >= 99) { $slider = 99; }
 
 		// Nom des équipements Volet et Ouverture
 		if ($duree_Mouvement > 0) {
@@ -801,62 +798,65 @@ self::message('', $requete);
 *		$destinataires : Liste des destinataires du message d'alerte.													*
 *		$message : Message à envoyer.																					*
 *																														*
-* Un cron est automatiquement posé pour le rappel																		*
-* Une variable _alerte$nom est positionnée à time() au lancement de l'alerte											*
+* Un cron est automatiquement posé pour le rappel, au final un cron '* * * * *' est posé, le prog appelant doit donc 	*
+* redéfinir son cron																									*
 *																														*
 * Usage :																												*
-*			Lancement de l'appel : mg::alerte($nom, $periodicite, $dureeTotale, $destinataires, $message);				*
-*			Rappel de l'alerte mg::alerte($nom);																		*
-*			Annulation de l'alerte mg::alerte($nom , -1);																*
+*			Lancement de l'appel ET rappel : mg::alerte($nom, $periodicite, $dureeTotale, $destinataires, $message);	*
+*			Annulation de l'alerte : mg::alerte($nom , -1);																*
 ************************************************************************************************************************/
-	public static function alerte($nom, $periodicite = 0, $dureeTotale = 60, $destinataires = '', $message = '') {
+	public static function alerte($nom, $periodicite=0, $dureeTotale=60, $destinataires='', $message='') {
 		if ($nom == '' ) { return; }
 		$nom = str_replace(' ', '_', $nom);
 
 		$alertes = self::getVar('tabAlertes', array());
-		if (!array_key_exists('nom', $alertes)) return; //////////////////////////////
-
-		// Si heure de fin dépassée ou périodicité == 0, Annulation de l'alerte
-		if ($periodicite < 0 || time() >= @$alertes[$nom]['fin']) {
+		
+		// FIN de l'alerte
+		if ($periodicite < 0 && array_key_exists($nom, $alertes)) {
 			// --------------------------------------------------------------------------------------------------------
-			self::messageT('', "! Fin de l'alerte : $nom");
+			self::messageT('', "! Fin de l'alerte : $nom - $message");
 			// --------------------------------------------------------------------------------------------------------
-			self::unsetVar("_alerte$nom");
 			unset($alertes[$nom]);
-			//self::unsetVar('tabAlertes');
-			self::setCron('', time()-60);
+			self::setVar('tabAlertes', $alertes);
+			self::setCron('', '* * * * *');
 			return;
 		}
 
-		elseif ($periodicite > 0  && @$alertes[$nom]['nom'] == '') {
+		// Création de l'alerte
+		if (!array_key_exists($nom, $alertes) && $periodicite > 0) {
 			// --------------------------------------------------------------------------------------------------------
-			self::messageT('', "! Lancement de l'alerte : $nom - periodicite : $periodicite mn - fin dans " . $dureeTotale . " mn.");
+			self::messageT('', "CREATION ALERTE : Nom : $nom - Périodicité : $periodicite, - Durée totale : $dureeTotale -  Destinataire : $destinataires - Message : '$message'");
 			// --------------------------------------------------------------------------------------------------------
 			$alertes[$nom]['nom'] = $nom;
-			$alertes[$nom]['message'] = ($message ? $message : "alerte $nom");
-			$alertes[$nom]['periodicite'] = $periodicite;
 			$alertes[$nom]['debut'] = time();
 			$alertes[$nom]['fin'] = time() + $dureeTotale*60;
+			$alertes[$nom]['last'] = 0;
+		}
+
+		// RAPPEL de l'alerte
+		if (((time() - $periodicite*60 + 60) >= $alertes[$nom]['last'] || $alertes[$nom]['last'] == 0) && $periodicite > 0) {
+			// --------------------------------------------------------------------------------------------------------
+			// --------------------------------------------------------------------------------------------------------
 			$alertes[$nom]['last'] = time();
-			self::message($destinataires, $alertes[$nom]['message']);
+			$duree = round((time() - $alertes[$nom]['debut'])/60);
+			self::message($destinataires, $message. ($duree > 0 ? " depuis $duree minutes." : "."));
+			self::messageT('', "! Rappel alerte : $nom - periodicite : $periodicite mn - last rappel à " . date('H\h\ i\m\n\:s', $alertes[$nom]['last']) . " - Debut à " . date('H\h\ i\m\n', $alertes[$nom]['debut']) . " - fin à " . date('H\h\ i\m\n', $alertes[$nom]['fin']));
+			goto fin;
+		}
+		
+		// ANNULATION de l'alerte
+		elseif (time() >= $alertes[$nom]['fin']) {
+			// --------------------------------------------------------------------------------------------------------
+			self::messageT('', "! ANNULATION de l'alerte : $nom");
+			// --------------------------------------------------------------------------------------------------------
 			self::setVar('tabAlertes', $alertes);
-			self::setVar("_alerte$nom", time());
-			self::setCron('', time() + $periodicite*60);
+			unset($alertes[$nom]);
+			self::setCron('', '* * * * *');
 			return;
 		}
-
-		elseif (time() - $alertes[$nom]['periodicite']*60 >= $alertes[$nom]['last'] && $periodicite > 0) {
-			// --------------------------------------------------------------------------------------------------------
-			self::messageT('', "! Rappel alerte : $nom - periodicite : " . $alertes[$nom]['periodicite'] . " mn - last rappel à " . date('H\h\ i\m\n', $alertes[$nom]['last']) . " - Debut à " . date('H\h\ i\m\n', $alertes[$nom]['debut']) . " - fin à " . date('H:i', $alertes[$nom]['fin']));
-			// --------------------------------------------------------------------------------------------------------
-			$duree = round((time() - $alertes[$nom]['debut'])/60);
-			self::message($destinataires, $alertes[$nom]['message']. " depuis $duree minutes.");
-			$alertes[$nom]['last'] = time();
-			self::setVar('tabAlertes', $alertes);
-			self::setCron('', time() + $alertes[$nom]['periodicite']*60);
-		}
-
-//	self::Message('', print_r($alertes, true));
+	fin:
+	self::setVar('tabAlertes', $alertes);
+	self::setCron('', time() + $periodicite*60);
 }
 
 /************************************************************************************************************************
@@ -1223,8 +1223,7 @@ public static function minuterie($equipEcl, $infNbMvmt, $timer=2, $cdExtinction,
 * UTIL													SET LAMPE														*
 *************************************************************************************************************************
 * Gère le contrôle des lampes en prenant en compte 																		*
-*	L'obligation du On  pour celle pourvue de commandes  Etat_On/Off ET Etat_Intensité									*
-*	Une attente de dispo de Zwave pour les types openzwave pour éviter la saturation de la queue						*
+*	L'obligation du Off  pour celle pourvue de commandes  Etat_On/Off ET Etat_Intensité									*
 *	Paramètres :																										*
 *		$equipLampe : Le nom de l'équipement de la lampe																*
 *		La nouvelle intensité désirée																					*
@@ -1240,7 +1239,7 @@ public static function setLampe($equipLampe, $intensite) {
 			$etatLampe = self::getCmd($equipLampe, 'Etat');
 		}
 
-		if ($intensite == 0 /*&& $etatLampe >= 1*/) {
+		if ($intensite == 0) {
 			self::setCmd($equipLampe, 'Off');
 		}
 		if ($etatLampe != $intensite) {
@@ -2559,7 +2558,6 @@ function FONCTIONS_JEEDOM(){}
 
 		// Calcul du ScenarioID par defaut = celui de l'appelant
 		if ( $scenarioID == '' ) { $scenarioID = $scenario->getID(); }
-
 		$scenarioClock = scenario::byId($scenarioID);
 		if ( is_object($scenarioClock) ) {
 			if (is_numeric($cron)) {

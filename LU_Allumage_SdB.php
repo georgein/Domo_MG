@@ -36,7 +36,9 @@ if ($etatPorte == 1 || $lastMvmt <= $timer) {
 	// La journée
 	} else { 
 		mg::setCmd($equipVeilleuse, 'Slider Intensité', 254); 
+		mg::setCmd($equipVeilleuse, 'On');
 		mg::setCmd($equipLampes, 'Slider Intensité', 254); 
+		mg::setCmd($equipLampes, 'On');
 	}
 
 	mg::messageT('', "NuitSalon : $nuitSalon - nePasDeranger : $nePasDeranger - Porte : $etatPorte - lastMvmt : $lastMvmt mn. => ALLUMAGE");
@@ -48,6 +50,7 @@ if ($etatPorte == 0 && ($lastMvmt > $timer || $nuitSalon == 2 || $nePasDeranger)
 //else {
 	mg::setCmd($equipLampes, 'Off');
 	mg::setCmd($equipVeilleuse, 'Off');
+		mg::setCmd($equipVeilleuse, 'Slider Intensité', 0); 
 		mg::setCmd($equipLampes, 'Slider Intensité', 0); 
 	
 	mg::messageT('', "NuitSalon : $nuitSalon - nePasDeranger : $nePasDeranger - Porte : $etatPorte - lastMvmt : $lastMvmt mn. => EXTINCTION");

@@ -45,20 +45,6 @@ deb:
 /*********************************************************************************************************************/
 $debugAlarme = 0;
 
-/*// ***** INIT de la table PASSWORD *****
-$tabPassword = array(
-'Options' => array('mdp' => '31416#'),
-'MG' => array('mdp' => '#31416'),
-'NR' => array('mdp' => '121060'),
-'PS' => array('mdp' => '#12345'),
-'CB' => array('mdp' => '081147'),
-'Invité' => array('mdp' => '#1234#'),
-'RETOUR' => array('mdp' => '!')
-);
-
-mg::message('', print_r($tabPassword, true));
-return;*/
-
 // Nettoyage si rien à faire
 if (mg::getCmd($equipAlarme, 'CodeSaisi') == '' && mg::getCmd($equipAlarme, 'NomUserModif') == '') {
 	mg::setInf($equipAlarme, 'NomUserModif', '');
@@ -174,20 +160,19 @@ mg::MessageT('', "! ****************************************** ACTIVATION ******
 		$dureePorte = scenarioExpression::lastChangeStateDuration($infoPorteEntree, 1)/60;
 		if ($dureePorte >= $timingAlarmeEntree) {
 			$message = "Lancement de l'alarme annulée (pas de porte d'entrée depuis " . round($dureePorte, 0) . "minutes.";
-			mg::Message($logTimeLine, "Alarme - $message");
-			mg::Message($destinatairesAlarme, $message, $prefixeAlarme);
 			goto fin;
 		}
 		if (mg::getCmd($infoPorteEntree) == 0) {
 			$message = "La porte d'entrée est ouverte. Armement de l'alarme impossible !";
-			mg::Message($destinatairesAlarme, $message, $prefixeAlarme);
 			goto fin;
 		}
 	}
-	// Passage en mode Alarme
-	$message = "Alarme activée par " . ($force ? 'le mode FORCE' : $nomUserSaisi);
+	
 	if ($debugAlarme) { goto fin; }
 
+	// Passage en mode Alarme
+	$message = "Alarme activée par " . ($force ? 'le mode FORCE' : $nomUserSaisi);
+	mg::LampeCouleur($equipLampeCouleur, 80, mg::ROUGE, '', 180);
 	mg::setVar('Alarme', 1);
 
 	// Verrouillage porte
@@ -205,10 +190,6 @@ mg::MessageT('', "! ****************************************** ACTIVATION ******
 	mg::setVar('_TypeChauffage', 'Eco');
 	mg::setScenario($scenModeChauffage, 'deactivate'); 
 
-	mg::Message($logTimeLine, "Alarme - $message");
-	mg::Message($destinatairesAlarme, $message, $prefixeAlarme);
-	mg::LampeCouleur($equipLampeCouleur, 80, mg::ROUGE, '', 180);
-
 	mg::setScenario($scen_GestionAlarme, 'activate');
 	mg::setScenario($scen_GestionAlarme, 'start');
 } // Fin d'activation
@@ -220,11 +201,9 @@ elseif ($alarme == 1 || mg::getCmd($equipAlarme, 'Inhibition Etat') || ($alarme 
 mg::MessageT('', "! ***************************************** DESACTIVATION ****************************************");
 // --------------------------------------------------------------------------------------------------------------------
 	// Desactivation de l'alarme proprement dite
-//	mg::unsetVar('Alarme');
+	mg::unsetVar('Alarme');
 	
 	$message = "Alarme désactivée par " . ($inhibition ? 'le mode INHIBITION' : $nomUserSaisi);
-	mg::Message($logTimeLine, "Alarme - $message");
-	mg::Message($destinatairesAlarme, $message, $prefixeAlarme);
 	mg::LampeCouleur($equipLampeCouleur, 80, mg::VERT, '', 180);
 	mg::setScenario($scen_GestionAlarme, 'deactivate');
 		if ($debugAlarme) { goto fin; }
@@ -253,13 +232,17 @@ mg::MessageT('', "! ***************************************** DESACTIVATION ****
 	mg::unsetVar('_Alarme_Perimetrique');
 
 	// Desactivation de l'alarme proprement dite
-	mg::unsetVar('Alarme');
-	sleep(180);
+//	mg::unsetVar('Alarme');
+//	sleep(180);
 } // Fin de désactivation
 
 fin:
 
-if ($message) { mg::setInf($equipAlarme, 'MessageAlarme', "$prefixeMessage<br>$message"); }
+if ($message) { 
+	mg::Message($logTimeLine, "Alarme - $message");
+	mg::Message($destinatairesAlarme, $message, $prefixeAlarme);
+	mg::setInf($equipAlarme, 'MessageAlarme', "$prefixeMessage<br>$message"); 
+}
 
 // --------------------------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------------

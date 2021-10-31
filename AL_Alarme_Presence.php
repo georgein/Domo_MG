@@ -34,7 +34,7 @@ global $debug;
 	$tempoBLEA = 2*60;				// Durée max en sec	 depuis dernier signal BLEA (multiple du cron de base)
 	$tempoNOK = 2*60;				// Tempo avant de passer les user réseau en NOK (multiple du cron de base)
 
-	$pluginRouteur = 'asuswrt';		// Nom du plugin du routeur actif (Vide si inutilisé (mais faut obligatoirement les équipements user dans '$equipVirtuel)' )
+	$pluginRouteur = 'asuswrt';		// Nom du plugin du routeur actif (Vide si inutilisé (mais il faut obligatoirement les équipements user dans '$equipVirtuel)' )
 	$equipVirtuel = 'Sys_Routeur';			// Nom de l'objet auquel sont affectés les équipements (obligatoire si pas de plugin routeur)
 
 // Paramètres :
@@ -53,6 +53,7 @@ global $debug;
 /***********************************************************************************************************************/
 /***********************************************************************************************************************/
 $declencheurShedule = mg::declencheur('schedule');
+$declencheurUser = mg::declencheur('user');
 $nbTentatives = 0;
 $nbPresences = 0;
 
@@ -89,20 +90,20 @@ foreach ($tabUser as $user => $detailsUser) {
 	$OK = null;
 
 	// ******** On saute si pas 'schedule' et (pas user ********
-	if (!$declencheurShedule && !mg::declencheur('user') && $type != 'user') continue; 
+	if (!$declencheurShedule && !$declencheurUser && $type != 'user') continue; 
 	// Scan du réseau sinon
-	else ScanReseau($interfaceReseau, $scanReseau); 
+	elseif(!$pluginRouteur) ScanReseau($interfaceReseau, $scanReseau); 
 	// ------------------------------------------------------------------------------------------------------------------
 	// ------------------------------------------------------------------------------------------------------------------
 	// Test de localisation
 	if ($geofence > 0 && !$OK) {
-		if (mg::getVar("dist_$user") > 0 && mg::getVar("dist_$user") < $geofence) {
+		if (mg::getVar("dist_$user", 9999) < $geofence) {
 			$OK .= " GEOFENCE";
 		}
 	}
 
 	// Test ARP-SCAN de l'IP/MAC
-	if ($MAC && !$OK) {
+	if (!$pluginRouteur && $MAC && !$OK) {
 		if (getUser($user, $IP, $MAC, $interfaceReseau, $scanReseau)) {
 			$OK .= ' - ARP-SCAN ';
 		}
@@ -126,10 +127,10 @@ foreach ($tabUser as $user => $detailsUser) {
 			$typeName = $eqLogic->getEqType_name();
 			if ($typeName == $pluginRouteur && strpos($name, $user) !== false) {
 				$equipUser = $eqLogic->getHumanName();
-				$cmd_id = trim(mg::toID($equipUser, 'Présence'), '#');
 				$presence = mg::getCmd($cmd_id);
 				if ($presence) {
-					$IP = mg::getCmd($equipUser, 'Adresse IP') ? mg::getCmd($equipUser, 'Adresse IP') : $IP;
+					$adresseIP = mg::getCmd($equipUser, 'Adresse IP');
+					$IP = strlen($adresseIP) > 2 ? $adresseIP : $IP;
 					$MAC = strtolower($eqLogic->getLogicalId());
 					$OK .= " - ROUTEUR";
 					continue;
@@ -138,8 +139,8 @@ foreach ($tabUser as $user => $detailsUser) {
 		}
 	}
 	
-	// Test Ping direct de l'adresse IP si lancement shedule
-	if ($declencheurShedule && $IP && !$OK) {
+	// Test Ping direct de l'adresse IP si lancement shedule ET PAS DE PLUGIN ROUTEUR //////////////////////////////
+	if (!$pluginRouteur && $declencheurShedule && $IP && !$OK) {
 		if (mg::getPingIP($IP, $user)) {
 			$OK .= " - PING";
 		}
@@ -169,7 +170,7 @@ foreach ($tabUser as $user => $detailsUser) {
 	if ($type == 'user' && $OK) { $nbPresences++; }
 
 	// ================================================================================================================
-	mg::message('', "$user " . ($OK ? "PRESENT" : "***ABSENT***)") . " Depuis le " . date('d\/m \à H\hi\m\n', (abs($tabUserTmp[$user]['OK']))) . " sec. ($OK) - ($IP / $MAC)");
+	mg::messageT('', ". $user " . ($OK ? "PRESENT" : "***ABSENT***)") . " Depuis le " . date('d\/m \à H\hi\m\n', (abs($tabUserTmp[$user]['OK']))) . " sec. ($OK) - ($IP / $MAC)");
 	// ================================================================================================================
 
 	$tabUserTmp[$user]['equipStat'] = $cmd_id;

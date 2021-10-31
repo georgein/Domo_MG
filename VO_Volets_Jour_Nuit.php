@@ -18,15 +18,17 @@ Action dispo :
 // Infos, Commandes et Equipements :
 //	$InfLumExt, $infPresenceEtg, $$infMvmtEtg
 //	$equipReveil, $equipMvmtSalon, $equipMeteoFrance
-// N° des scénarios :
 
+// N° des scénarios :
+	$scenarioVoletManuel = 107;
+	
 //Variables :
 	$alarme = mg::getVar('Alarme', 0);
 	$nuitSalon = mg::getVar('NuitSalon');
 	$nuitExt = mg::getVar('NuitExt');
 	$saison = mg::getVar('Saison');
 	$tabVolets = mg::getTabSql('_tabVolets');
-	
+
 	$nbMvmtSalon = mg::getCmd($equipMvmtSalon, 'NbMvmt');
 	$heureReveil = mg::getVar('_Heure_Reveil');
 	$vitesseVent = max(mg::getCmd($equipMeteoFrance, 'Rafales Réelles'), mg::getCmd($equipMeteoFrance, 'Vitesse Rafales METAR'));
@@ -57,7 +59,9 @@ global $debug; $debugVolet; $debugVolet = false; // Pour neutraliser l'action su
 //=====================================================================================================================
 mg::messageT('', "! CALCUL DES CONDITIONS DE BASE");
 //=====================================================================================================================
-mg::setCron('', '*/5 * * * *'); 
+mg::setCron('', '*/5 * * * *');
+
+if (mg::getScenario($scenarioVoletManuel) != 0) return;
 
 // Condition Saison
 $cdEte = ($saison == 'ETE') ? 1 : 0;
@@ -81,27 +85,27 @@ mg::message('', "Aurore à " . date('H\hi\m\n', $aurore));
 $cdVoletsNuit = mg::TimeBetween(strtotime($timeVoletsNuit), time(), $aurore);
 mg::message('', "cdVoletsNuit ==> $cdVoletsNuit");
 
-// CD INHIB VOLETS REVEIL (cdInhibVoletsReveil DOIT succéder à cdVoletsNuit d'ou les '+900'
-$cdInhibVoletsReveil = mg::TimeBetween($aurore+900, time(), $heureReveil+2*3600);
+// CD INHIB VOLETS REVEIL (cdInhibVoletsReveil DOIT succéder à cdVoletsNuit
+$cdInhibVoletsReveil = mg::TimeBetween(min($heureReveil, $aurore), time(), $heureReveil+2*3600);
 mg::message('', "cdInhibVoletsReveil ==> $cdInhibVoletsReveil");
 
 if ($alarme || $cdVoletsNuit ) {
 	//=====================================================================================================================
 	mg::messageT('', ". FERMETURE VOLETS DE NUIT || ALARME.");
 	//=====================================================================================================================
-//	if (mg::getVar('_lastVoletSalon') != 'D') {
+	if (mg::getVar('_lastVoletSalon') != 'D' || mg::getVar('_lastVoletChambre') != 'D' || mg::getVar('_lastVoletEtage') != 'D' || mg::getVar('_lastVoletExtérieur') != 'D') {
 		mg::Message($logTimeLine, "Volets - Fermeture générale, time > $timeVoletsNuit | Alarme.");
-		mg::VoletsGeneral('Salon, Chambre, Etage', 'D'); 
-//	}
-	
-} elseif ( !$alarme && $nbMvmtSalon >= $seuilNbMvmt  && $cdInhibVoletsReveil) {
+		mg::VoletsGeneral('Salon, Chambre, Etage, Extérieur', 'D');
+	}
+
+} elseif (!$alarme && $nbMvmtSalon >= $seuilNbMvmt  && $cdInhibVoletsReveil) {
 	//=====================================================================================================================
 	mg::messageT('', ". OUVERTURE GENERALE SALON APRES LE REVEIL AU PREMIER MOUVEMENT.");
 	//=====================================================================================================================
-//	if (mg::getVar('_lastVoletSalon') != 'M') {
+	if (mg::getVar('_lastVoletSalon') != 'M') {
 		mg::Message($logTimeLine, "Volets - Ouverture générale du matin au premier mouvement.");
 		mg::VoletsGeneral('Salon', 'M');
-//	}
+	}
 }
 
 foreach ($tabVolets as $cmd => $details_Volet) {
@@ -115,20 +119,19 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 	//=================================================================================================================
 	mg::messageT('', "! TRAITEMENT DE $cmd - $nomAff");
 	//=================================================================================================================
-	
+
 	$messageAff = '-- Aucun --';
 	$nomZone = trim($details_Volet['zone']);
 
 	if ($cdEte) { $sliderSoleilGenant = intval($details_Volet['genantEte']); }
 	else { $sliderSoleilGenant = intval($details_Volet['genantHiver']); }
-	mg::message('', "SliderSoleilGenant : $sliderSoleilGenant");
 
 	$sliderSoirETE_O = intval($details_Volet['soir']);
 	$sliderNuitETE_O = intval($details_Volet['nuit']);
 	$ventMax = intval($details_Volet['vent']);
 	$voletReveil = intval($details_Volet['reveil']);
 	$duree = intval($details_Volet['duree']); // si == 0 => pas de volet
-	$voletInverse =	 $details_Volet['inverse'];
+	//$voletInverse =	$details_Volet['inverse'];
 	$alerteOuvert = $details_Volet['alerteOuvert'];
 	$ouvrant =	$details_Volet['ouvrant'];
 
@@ -139,7 +142,7 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 	if ($duree > 0) {
 		$sliderCourant = mg::getCmd("#[$nomZone][Ouvertures][$cmd"." Etat]#");
 		if ($sliderCourant > 99) { $sliderCourant = $sliderCourant - 100; }
-		
+
 		$slider =  $sliderCourant > 99 ? 99 : $sliderCourant;
 		$slider = $sliderCourant < 0.1 ? 0.1 : $sliderCourant;
 		$messageAff = "Rien faire - Courant = $sliderCourant";
@@ -149,12 +152,11 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 	$cdVentVort = ($vitesseVent > $ventMax && $ventMax > 0) ? 1 : 0;
 	mg::Message('', "CdVentVort : $vitesseVent km/h > $ventMax km/h ==> $cdVentVort");
 
-	// Condition fenêtre Ouverte 
-	$cdFerme = 1;
-	if ($ouvrant != '') $cdFerme = mg::getCmd($equipOuverture, 'Ouverture');
-	mg::message('', "CdOuvert ==> '$cdFerme'");
+	// Condition fenêtre Ouverte
+	$cdFerme = $ouvrant != '' ? mg::getCmd($equipOuverture, 'Ouverture') : 0;
+	mg::message('', "cdFerme ==> '$cdFerme'");
 	//=================================================================================================================
-	mg::messageT('', "! DEBUT DU TRAITEMENT DE $cmd - $nomAff ".(!$cdFerme ? 'Fermée' : 'Ouverte'));
+	mg::messageT('', "! DEBUT DU TRAITEMENT DE $cmd - $nomAff ".($cdFerme ? 'Fermée' : 'Ouverte'));
 	//=================================================================================================================
 
 	if ( !$alarme && !$nuitExt && $nbMvmtSalon >= $seuilNbMvmt && $cdInhibVoletsReveil ) {
@@ -165,17 +167,19 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 	//		mg::Message($logTimeLine, $messageAff);
 		}
 
-	// Traité en journée et APRES le REVEIL
-	if (!$alarme && $sliderSoleilGenant > 0 && !$nuitExt && !$cdInhibVoletsReveil) {
+	// Traité en journée et APRES le REVEIL + 2heures
+	if (!$alarme && $sliderSoleilGenant > 0 &&  time() > $heureReveil+2*3600 && !$cdVoletsNuit && !$cdInhibVoletsReveil) {
 		//=============================================================================================================
 		mg::messageT('', ". SOLEIL GENANT");
 		//=============================================================================================================
+		mg::message('', "SliderSoleilGenant : $sliderSoleilGenant");
 		if (!$nuitSalon && $cdSoleil) {
 			$slider = $sliderSoleilGenant; $messageAff = "Soleil Génant";
 		}
-		elseif ($nuitSalon || !$cdSoleil && !$cdFerme) { 
+		elseif ($nuitSalon || !$cdSoleil && !$cdFerme) {
 			$slider = 99; $messageAff = "Fin Soleil Génant";
 		}
+		
 	}
 
 	if ($nuitExt == 2) {
@@ -183,11 +187,19 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 		mg::messageT('', ". FERMETURE VOLET A L'AUBE");
 		//=============================================================================================================
 		$messageAff = "FERMETURE VOLET A L'AUBE";
-		$slider = -10; 
-		if ($voletInverse == 1) { $slider = 110; }	
+		$slider = -10;
 		goto fin;
 	}
 
+	// POUR L'HIVER hors zone du REVEIL et uniquement la nuit
+	if(!$alarme && !$cdEte && $cdVoletsNuit && !$cdInhibVoletsReveil) {
+		//=============================================================================================================
+		mg::messageT('', ". FERMETURE FENETRE DE NUIT");
+		//=============================================================================================================
+			$messageAff = "Fermeture fenêtre de nuit.";
+			$slider = -10;
+	}
+	
 	// POUR L'ETE hors zone du REVEIL et uniquement la nuit
 	if(!$alarme && $cdEte && $nuitExt == 1 && !$cdInhibVoletsReveil) {
 		//=============================================================================================================
@@ -196,16 +208,15 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 		$sliderOuvert = $sliderCourant;
 		if ($nuitSalon == 1) { $sliderOuvert = $sliderSoirETE_O; } // Le soir (Si fenêtre ouverte)
 		if ($nuitSalon == 2) { $sliderOuvert = $sliderNuitETE_O; } // La nuit (Si fenêtre ouverte)
-		
+
 		// Fenêtre ouverte
 		if (!$cdFerme) {
 			$messageAff = "Fenêtre ouverte.";
-			$slider = $sliderOuvert; 
+			$slider = $sliderOuvert;
 		// Fenêtre fermée de nuit
 		} elseif ($cdVoletsNuit) {
 			$messageAff = "Fenêtre fermée.";
-			$slider = 0.1; 
-			if ($voletInverse == 1) { $slider = 110; } 
+			$slider = 0.1;
 		}
 	}
 
@@ -222,31 +233,26 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 		mg::messageT('', ". FERMETURE VOLET SI VENT FORT");
 		//=============================================================================================================
 
-		if ($voletInverse == 1) { $slider = 110; } else { $slider = -10; }
+		$slider = -10;
 		$messageAff = "Vent fort > $vitesseVent km/h / Nuit";
 	}
 
-	if ($cdVoletsNuit && ($alerteOuvert == 1 && !$cdFerme)) {
+	if ($cdVoletsNuit && $alerteOuvert == 1) {
 		//=============================================================================================================
 		mg::messageT('', ". ALERTE FENETRE OUVERTE");
 		//=============================================================================================================
-		// Si étage occupé OU mouvement de moins de 3 heures
-		$lastMvmtEtg = round(mg::lastMvmt($infMvmtEtg, $NbMvmtEtg)/60);
-		if (strpos($nomZone, 'Etg') !== 0 || $lastMvmtEtg > 3*60) {
-			
+		if (!$cdFerme) {
 			// Envoi de l'alerte volet ouvert
 			$heureFin = strtotime($timeVoletsNuit) + $timeoutAlerteFenetre*60;
-			if (time() <= $heureFin) {
-				$messageAlerte = "ATTENTION $nomAff est ouverte, Veuillez la fermer.";
-				mg::Alerte($cmd, $periodeAlerteFenetre/10, $heureFin, $destinatairesAlerteFenetre, $messageAlerte);
-			} else {
-				mg::Alerte($cmd, -1); // Annulation Alerte
-			}
+			$messageAlerte = "ATTENTION $nomAff est ouverte, Veuillez la fermer.";
+			mg::Alerte($cmd, $periodeAlerteFenetre, $heureFin, $destinatairesAlerteFenetre, $messageAlerte);
+		// FIN de l'alerte
+		} else {
+			$tabAlertes = mg::getVar('tabAlertes', array());
+			if (array_key_exists($cmd, $tabAlertes)) mg::Alerte($cmd, -1); // Annulation Alerte
 		}
-	} else {
-		mg::Alerte($cmd, -1); // Annulation Alerte
 	}
-	
+
 	fin:
 	// TRAITEMENT FINAL
 	if ($duree > 0) {
@@ -255,7 +261,7 @@ foreach ($tabVolets as $cmd => $details_Volet) {
 		$message = "$sens pour $cmd ($messageAff) Slider $sliderCourant => $slider.";
 		mg::Message('', "---------------------------------------------- $message -----------------------------------");
 		// Activation volet si différence sensible ou min forcé ou max forcé
-		if (abs($slider - $sliderCourant) >= 5 || $slider < 0.1 || $slider > 99) { 
+		if (abs($slider - $sliderCourant) >= 5 || $slider < 0.1 || $slider > 99) {
 			if (!$debugVolet) {
 				$debug = false;
 				mg::VoletRoulant($nomZone, $cmd, 'Slider', $slider);

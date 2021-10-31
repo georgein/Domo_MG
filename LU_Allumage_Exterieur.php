@@ -36,7 +36,7 @@ if (mg::declencheur('Eclairages')) {
 // ==================================================== EXTINCTION =====================================================
 if ( !$nuitExt || $ventFort || $lastMvmt >= $timerLumExt) { 
 	$action = 'Off'; 
-	mg::setCron('', '*/'.(3*$timerLumExt).' * * * *');
+	mg::setCron('', '*/'.(3*$timerLumExt).'* * * * *');
 // ===================================================== ALLUMAGE ======================================================
 } elseif ($nuitExt && ($nbMvmt > 0 || $etatLumCave)) { 
 	$action = 'On'; 

@@ -21,8 +21,8 @@ Envoi des proposition de menu par SMS le soir
 	);
 
 	$tab_Legumes = array(
-				'Pate au beurre (200 grammes.)', // avec 2 t pour TTS ....
-				'Pate champignons (200 grammes.)',
+				'Patte au beurre (200 grammes.)', // avec 2 t pour TTS ....
+				'Patte champignons (200 grammes.)',
 				'Purée de pomme de terre (200 grammes.)',
 				'Pomme de terre à l\'eau (200 grammes.)',
 				'Ecrasé de pomme de terre (200 grammes.)',
@@ -39,7 +39,7 @@ Envoi des proposition de menu par SMS le soir
 	);
 	
 	$tab_PlatsComplets = array(
-					'Pates Carbonara (350 grammes avec légumes)',
+					'Patte Carbonara (350 grammes avec légumes)',
 					'Riz cantonnais (350 grammes avec légumes)',
 					'Tortilla (350 grammes avec légumes)',
 					'Blanquette de veau (350 grammes avec légumes)',
