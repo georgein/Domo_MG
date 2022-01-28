@@ -8,7 +8,7 @@ snaphot url : http://192.168.2.2/bha-api/image.cgi?http-user=ghbbgw0001&http-pas
 **********************************************************************************************************************/
 
 //Infos, Commandes et Equipements :
-	// $infAffDoorbird, $equipJC_PC_MG, $equipJC_JPI
+	// $equipJC_PC_MG, $equipJC_JPI
 
 // N° des scénarios :
 
@@ -16,22 +16,24 @@ snaphot url : http://192.168.2.2/bha-api/image.cgi?http-user=ghbbgw0001&http-pas
 
 // Paramètres :
 	$nePasDeranger = mg::getVar('nePasDeranger', 0);
-	$designCam = 24;
+
 	$camJC = 369;
 	$salonJC = 220;
+	
 	$designPrincipal = mg::getParam('Media', 'designGeneral');
+	$designCam = 24;
 
 	$volumeSonnette = 80;					// Volume du son de la sonnette
 	$sonnettePorte = 'sonnettePorte.mp3';
 	$jingleMvmt = 'jingle_07.mp3';
 	$volumeMvmt = 10;
-	$timerRetour = 1;						// Timer en mn avant retour au design principal
-	$timer = 15;							// Timer en mn normal du cron
+	$timerRetour = 2;						// Timer en mn avant retour au design principal
+//	$timer = 15;							// Timer en mn normal du cron
 
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-mg::setCron('', time() + $timer*60);
+mg::setCron('', '*/5 * * * *');
 //		mg::setCmd($equipJC_PC_MG, 'Afficher page', $salonJC, $salonJC);
 
 // Rétablissement de l'IP dans les param de Doorbird et de Caméra

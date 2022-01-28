@@ -3,7 +3,7 @@
 Geo_Synthese - 202
 
 **********************************************************************************************************************/
-global $tabActivite, $tableau, $tableau0, $color, $cptLgn, $idUser, $dateOrg, $dateOrgTxt;
+global $tabActivite, $tableau, $tableau0, $color, $cptLgn, $idUser, $dateOrg, $dateOrgTxt, $IP_Jeedom;
 
 // Infos, Commandes et Equipements =>
 
@@ -14,6 +14,7 @@ global $tabActivite, $tableau, $tableau0, $color, $cptLgn, $idUser, $dateOrg, $d
 	$pathRef = mg::getParam('System', 'pathRef');	// Répertoire de référence de domoMG
 
 // Paramètres =>
+	$IP_Jeedom = mg::getConfigJeedom('core', 'jeedom::url');
 
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
@@ -26,7 +27,7 @@ synthese('NR', $pathRef);
 /*********************************************** EDITION SYNTHES $USER **********************************************/
 /********************************************************************************************************************/
 function synthese($user, $pathRef) {
-global $tableau, $tableau0, $color, $cptLgn, $idUser, $dateOrg, $dateOrgTxt;
+global $tableau, $tableau0, $color, $cptLgn, $idUser, $dateOrg, $dateOrgTxt, $IP_Jeedom;
 	$fileSynthese = getRootPath() . "$pathRef/util/synthese_$user.html";
 
 	// Calcul de la date minimum entre les Activité et le poids
@@ -123,16 +124,15 @@ global $tableau, $tableau0, $color, $cptLgn, $idUser, $dateOrg, $dateOrgTxt;
 	<html>
 	  <head>
 		  <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
-		  <meta name='author' content='Michel Georgein' />
 	</head>
 	";
 
 	$buttons = "
 		<div class='barre_button'>
-		  <a href='https://georgein.dns2.jeedom.com/mg/util/geofence.html' class='button'>Geofence</a>
-		  <a href='https://georgein.dns2.jeedom.com/mg/util/synthese_MG.html' class='button'>Synthese MG</a>
-		  <a href='https://georgein.dns2.jeedom.com/mg/util/synthese_NR.html' class='button'>Synthese NR</a>
-		  <a href='http://192.168.2.196/mg/tabulator/tabulator.html' class='button'>Historique</a>
+		  <a href='$IP_Jeedom/mg/util/geofence.html' class='button'>Geofence</a>
+		  <a href='$IP_Jeedom/mg/util/synthese_MG.html' class='button'>Synthese MG</a>
+		  <a href='$IP_Jeedom/mg/util/synthese_NR.html' class='button'>Synthese NR</a>
+		  <a href='$IP_Jeedom/mg/tabulator/tabulator.html' class='button'>Historique</a>
 		</div>
 		<br>";
 
@@ -305,8 +305,8 @@ function ligne($aff) {
 			<td class='cellJour c'>{$aff['j_deniv_P']}</td>
 			<td class='cellMoy c'>{$aff['s_deniv_M']}</td>
 			<td class='cellJour c'>{$aff['j_deniv_M']}</td>
-			<td class='cellJour c'>".date('H:i:s', $aff['j_duree_Mvmt'])."</td>
-			<td class='cellJour c'>".date('H:i:s', $aff['j_duree_Pause'])."</td>
+			<td class='cellJour c'>". date('H:i:s', strtotime(date('Y-m-d 00:00:00'). '+' .round($aff['j_duree_Mvmt']). ' sec'))."</td>
+			<td class='cellJour c'>". date('H:i:s', strtotime(date('Y-m-d 00:00:00'). '+' .round($aff['j_duree_Pause']). ' sec'))."</td>
 			<td class='cellJour c'>".date('H:i:s', $aff['j_duree_Glob'])."</td>
 			<td class='cellJour c_vm'>{$aff['j_vitesse_Mvmt']}</td>
 			<td class='cellJour c'>{$aff['j_vitesse_Glob']}</td>

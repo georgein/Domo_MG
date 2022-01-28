@@ -24,14 +24,14 @@ Parcours les équipements sur batterie et affiche :
 	$queueZwaveMin = 5;	$queueZwaveMax = 10;
 
 // Variables de Ctrl des équipements
-	$alerteComDefaut = 1440;						// temps maximum par defaut, en mn depuis dernière comm de l'équipement
-	$alerteComBattery = 365*1440;					// temps maximum, en mn depuis le dernier retour de la batterie
-	$alerteChgmtBattery = 300*1440;					// temps maximum, en mn depuis le dernier changement de la batterie
+	$alerteComDefaut = 360;						// temps maximum par defaut, en mn depuis dernière comm de l'équipement
+	$alerteComBattery = 30*1440;					// temps maximum, en mn depuis le dernier retour de la batterie
+	$alerteChgmtBattery = 365*1440;					// temps maximum, en mn depuis le dernier changement de la batterie
 
 	// équipement des plugins exclus separés par des '|' (forme regex)
-	$excludeEquip = 'virtual|asuswrt|broadlink|tvdomsamsung|blea|camera|clink|cloudsyncpro|covidattest|dataexport|doorbird|htmldisplay'; // Exclusion plugins N°1
-	$excludeEquip .= '|jeedomconnect|mobile|phonemarket|telegram|netatmo*|openvpn|mail|livebox|googlecast|jeelink|phone_detection'; // Exclusion plugins N°2
-	$excludeEquip .= '|cachés|aucun|test|télécommande|volet|store|meteofull|domicile'; // Exclusion Nom de l'équipement
+	$excludeEquip = 'thermostat|virtual|asuswrt|broadlink|tvdomsamsung|blea|camera|clink|cloudsyncpro|dataexport|doorbird|htmldisplay'; // Exclusion plugins N°1
+	$excludeEquip .= '|jeedomconnect|mobile|phonemarket|telegram|netatmo*|openvpn|mail|livebox|googlecast|jeelink'; // Exclusion plugins N°2
+	$excludeEquip .= '|cachés|aucun|test|télécommande|volet|store|domicile'; // Exclusion Nom de l'équipement
 
 	// Si mot contenu dans le nom de l'équipement, pas de prise en compte à affichage des contrôles de batterie
 	$excludeBattery = 'xxx|yyy';
@@ -41,8 +41,6 @@ Parcours les équipements sur batterie et affiche :
 	$timerCtrlEquip = 5;								// Nb de minutes entre deux contrôles des équipements (maximum 24h (1440), multiple du cron
 	$timerCtrlLog = 5;									// Nb de minutes entre deux contrôles des logs (maximum 24h (1440), multiple du cron
 	$timerNettoieLog = 'all';							// Heure de nettoyage des logs (0-23), si == 'all' : toute les heures
-
-	$nomActionZwave = 'refreshAllValues'; // testNode
 
 	// Paramètres :
 	$logTimeLine = mg::getParam('Log', 'timeLine');
@@ -92,14 +90,14 @@ if ($nomTab == '_tabAlertes' || (mg::getTag('#heure#')*60 + mg::getTag('#minute#
 			if (trim($detailsEquip['batLastCom']) != '') {
 			// Alerte sur last changement batterie
 				$lastChgmtBattery = round((time() - @strtotime($detailsEquip['batChgmt'], date('Y-m-d H:i:s')))/60);
-				if (trim($lastChgmtBattery) != '' && $lastChgmtBattery > $alerteChgmtBattery) {
-				$messages .= "$type - $equip - last Chgmt Batterie : {$detailsEquip['ChgmtDepuis']}<br>";
+				if (/*trim($lastChgmtBattery) != '' &&*/ $lastChgmtBattery > $alerteChgmtBattery) {
+				$messages .= "$type - $equip - last Chgmt Bat. {$detailsEquip['ChgmtDepuis']}<br>";
 				}
 
 				// Alerte sur lastComBattery
 				$lastComBattery = round((time() - @strtotime($detailsEquip['batLastCom'], date('Y-m-d H:i:s')))/60);
-				if (trim($lastComBattery) != '' && $lastComBattery > $alerteComBattery) {
-					$messages .= "$type - $equip - last Comm Batterie ( : {$detailsEquip['bDepuis']} > $alerteComBattery mn)<br>";
+				if (/*trim($lastComBattery) != '' &&*/ $lastComBattery > $alerteComBattery) {
+					$messages .= "$type - $equip - last Comm Bat. ( {$detailsEquip['bDepuis']} > $alerteComBattery mn)<br>";
 				}
 
 				// Alerte sur pcBatterie
@@ -352,6 +350,11 @@ function ThreeColor($value, $valueMin = 0, $valueMax = 1, $sens = '+', &$color =
 					Met à jour la Base de données JEEDOM si des modifs ont été faites dans _tabAlertes
 **********************************************************************************************************************/
 function setAlertes ($nomTab, $excludeEquip) {
+
+	// Nettoyage préalable de la table
+//	$sql = "DELETE FROM `$nomTab`";
+//	$result = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
+
 	mg::messageT('', "! ENREGISTREMENT EN BDD DES MODIFICATIONS DE L'EQUIPEMENT");
 	
 	$tabAlertes = mg::getTabSql($nomTab);
@@ -425,8 +428,8 @@ function setAlertes ($nomTab, $excludeEquip) {
 															GET ALERTES
 				Mets à jour la table _tabAlertes avec les dernières info de tous ce qui n'est pas 'exclude'
 **********************************************************************************************************************/
-function getAlertes ($nomTab, $excludeEquip, $excludeActivite, $excludeBattery, $batteryDangerDefaut, $batteryWarningDefaut) {
 	mg::messageT('', "! GENERATION DE LA TABLE $nomTab");
+function getAlertes ($nomTab, $excludeEquip, $excludeActivite, $excludeBattery, $batteryDangerDefaut, $batteryWarningDefaut) {
 
 	$eqLogics = eqLogic::all();
 	// Lecture de la base de données
@@ -442,8 +445,8 @@ function getAlertes ($nomTab, $excludeEquip, $excludeActivite, $excludeBattery, 
 		$battery_danger = intVal($eqLogic->getConfiguration('battery_danger_threshold'));
 		$battery_warning = intVal($eqLogic->getConfiguration('battery_warning_threshold'));
 		$batteryType = $eqLogic->getConfiguration('battery_type');
-		$batteryChangement = $eqLogic->getConfiguration('batterytime');
 		$pcBattery = intVal(@$status['battery']);
+		$batteryChangement = $eqLogic->getConfiguration('batterytime');
 		$batteryDatetime = @$status['batteryDatetime'];
 
 		// Pour lastCommunication on prend le plus récent vs batteryDatetime

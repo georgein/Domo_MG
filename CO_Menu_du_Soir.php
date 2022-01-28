@@ -66,6 +66,6 @@ if (random_int( 0, 3) != 0) {
 	$menu .= ' - Plat préparé : ' . $tab_PlatsComplets[random_int( 0 , count($tab_PlatsComplets) -1)];
 }
 
-mg::Message($destinatairesMenu, $menu, '');
+mg::Message($destinatairesMenu, $menu);
 
 ?>

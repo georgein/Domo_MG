@@ -11,11 +11,10 @@ L'état 'Aurore' démarre 0:30 AVANT l'aurore civile et se termine 1:00 AVANT le
 // N° des scénarios :
 
 //Variables :
-	$alarme = mg::getVar('Alarme');
 	$nuitExt = mg::getVar('NuitExt');
 	$nuitSalon = mg::getVar('NuitSalon');
 	$Lum_Ext = mg::getCmd($equipLumExt, 'Luminosité');
-	$heureReveil = mg::getVar('_Heure_Reveil');
+	$heureReveil = mg::getVar('heureReveil');
 
 // Paramètres :
 	$SeuilLumExterieureNuit = mg::getParam('Lumieres', 'seuilLumExterieureNuit');
@@ -29,10 +28,8 @@ L'état 'Aurore' démarre 0:30 AVANT l'aurore civile et se termine 1:00 AVANT le
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 $tmp = mg::Soleil(time(), $latitude, $longitude); 
-$aurore = min($heureReveil, $tmp['lever'])-30*60;
-// Mémo pour volet ou autres
-mg::setVar('_Aurore', $aurore);
-$cdAurore = mg::TimeBetween($aurore, time(), $heureReveil+120*60);
+$aurore = $tmp['lever']-30*60;
+$cdAurore = mg::TimeBetween($aurore-60*60, time(), $aurore);
 $message = "Aurore à " . date('H\hi\m\n', $aurore);
 mg::message('', $message);
 
@@ -50,6 +47,8 @@ elseif ( $nuitExt == 1 && $cdAurore ) {
 	$nuitExt = 2; // AURORE
 	$message = "NuitExt - Passage à l'AubeExt (2).";
 }
+
+//$nuitExt = 0; // POUR DEBUG //////////////////////////////
 
 // Si changement
 if ( $oldNuitExt != $nuitExt) {

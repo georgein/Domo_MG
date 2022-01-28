@@ -233,9 +233,9 @@ function MsgMeteoLocale($EquipMeteo, $equipMeteoFrance) {
 	// Lecture de la prévision Météo France de la période si existante
 	if (mg::existCmd($equipMeteoFrance, "$periode - $jour - Description")) {
 		$description = mg::getCmd($equipMeteoFrance, "$periode - $jour - Description");
-		$vitesse_du_Vent = mg::getCmd($equipMeteoFrance, "$periode - $jour - Vitesse du Vent");
+		$vitesse_du_Vent = mg::getCmd($equipMeteoFrance, "$periode - $jour - Vitesse du Vent")*3.6;
 		$direction_du_Vent = mg::getCmd($equipMeteoFrance, "$periode - $jour - Direction du Vent");
-		$force_Rafales = mg::getCmd($equipMeteoFrance, "$periode - $jour - Force Rafales");
+		$force_Rafales = mg::getCmd($equipMeteoFrance, "$periode - $jour - Force Rafales")*3.6;
 		$température_Maximum = mg::getCmd($equipMeteoFrance, "$periode - $jour - Température Maximum");
 		$température_Minimum = mg::getCmd($equipMeteoFrance, "$periode - $jour - Température Minimum");
 		$indice_UV = mg::getCmd($equipMeteoFrance, "Météo du Jour - Aujourdhui - Indice UV");
@@ -260,12 +260,12 @@ function MsgMeteoLocale($EquipMeteo, $equipMeteoFrance) {
 	}
 
 	// MàJ des virtuels de météo
-	mg::setInf($EquipMeteo, 'Heure Prévision Météo', $periode);
+/*	mg::setInf($EquipMeteo, 'Heure Prévision Météo', $periode);
 	mg::setInf($EquipMeteo, 'Vitesse Météo', $vitesse_du_Vent);
 	mg::setInf($EquipMeteo, 'Direction Météo', $direction_du_Vent);
 	mg::setInf($EquipMeteo, 'Rafales Météo', $force_Rafales);
 	mg::setInf($EquipMeteo, 'Température Météo', $température_Maximum);
-	mg::setInf($EquipMeteo, 'UV Météo', $indice_UV);
+	mg::setInf($EquipMeteo, 'UV Météo', $indice_UV);*/
 
 	// Construction du TTS des prévisions
 	mg::TranspoCap($direction_du_Vent, $direction_du_Vent_Libelle);

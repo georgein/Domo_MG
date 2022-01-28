@@ -7,17 +7,18 @@ Cinema - 160
 
 // Infos, Commandes et Equipements :
 	// $infCinemaEtat
-	// $equipEcl
+	// $equipEcl, $equipVoletsSalon
 
 // N° des scénarios :
 	$scenLuminositeSalon = 59;
 	$scenAllumageSalon = 44;
-	$scenVoletsJourNuit = 29;
+//	$scenVoletsJourNuit = 29;
 
 //Variables :
 	$nuitExt = mg::getVar('NuitExt');
 	$nuitSalon = mg::getVar('NuitSalon');
 	$timeVoletsNuit = mg::getParam('Volets', 'timeVoletsNuit');
+	$equipSonos = mg::getParam('Media', 'equipSonos');
 	
 // Paramètres :
 	$logTimeLine = mg::getParam('Log', 'timeLine');
@@ -35,19 +36,22 @@ if (mg::getCmd($infCinemaEtat)) {
 	mg::message($logTimeLine, "Cinéma - Mise en route.");
 
 	mg::frameTV('Frame TV', 'Salon', 'hdmi');
+	mg::setCmd($equipSonos, 'Volume', '75');
 
-	// Fermeture volets
-	mg::setScenario($scenVoletsJourNuit, 'deactivate');
-	mg::VoletsGeneral( 'Salon', 'D');
-
-	mg::setScenario($scenLuminositeSalon, 'deactivate');
-	
 	// Ambiance lumière à 'Cinéma'
 	mg::wait("scenario($scenAllumageSalon) == 0", 180);	
 	mg::setCmd($equipEcl, 'Lampe Ambiance Slider', 3);
+	mg::setScenario($scenAllumageSalon, 'start');
+	sleep(2);
 	mg::wait("scenario($scenAllumageSalon) == 0", 180);	
 	mg::setScenario($scenAllumageSalon, 'deactivate');
+	
+	mg::setScenario($scenLuminositeSalon, 'deactivate');
 
+	// Fermeture volets
+	mg::setVar('_disableVoletJourNuit', 1);
+	mg::setCmd($equipVoletsSalon, 'Down');
+	
 // ************************************************** ARRET DU CINEMA *************************************************
 } else {
 	//=================================================================================================================
@@ -57,21 +61,20 @@ if (mg::getCmd($infCinemaEtat)) {
 	mg::setVar('NuitSalon', 1);
 	mg::setCmd($equipEcl, 'Lampe Générale Slider', 50);
 	mg::setCmd($equipEcl, 'Lampe Ambiance Slider', 1);
-//	sleep(5);
 	mg::setScenario($scenAllumageSalon, 'activate');
 	mg::setScenario($scenAllumageSalon, 'start');
 	mg::wait("scenario($scenAllumageSalon) == 0", 180);	
-	
-	sleep(15);
-	mg::setScenario($scenLuminositeSalon, 'activate');
-	mg::setScenario($scenLuminositeSalon, 'start');
 
 	// On passe en mode 'Art'
-mg::frameTV('Frame TV', 'Salon', 'art');
+	mg::frameTV('Frame TV', 'Salon', 'art');
 
-	// Rétablissement volets
-	mg::setScenario($scenVoletsJourNuit, 'activate');
-	mg::setScenario($scenVoletsJourNuit, 'start');
+	// Réactivation et Ouverture volets
+	mg::unsetVar('_disableVoletJourNuit');
+	if ($nuitExt == 0) mg::setCmd($equipVoletsSalon, 'up');
+	
+	sleep(180);
+	mg::setScenario($scenLuminositeSalon, 'activate');
+	mg::setScenario($scenLuminositeSalon, 'start');
 
 	mg::message($logTimeLine, "Cinéma - Arrêt.");
 }

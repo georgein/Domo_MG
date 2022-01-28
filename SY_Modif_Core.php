@@ -36,12 +36,12 @@ if (mg::declencheur('begin')) {
 	// ERREURS LOGS ASUSWRT
 	$fileName = 'asuswrt.class.php';
 	$repDest = '/var/www/html/plugins/asuswrt/core/class';
-	copyFile ($repDest, $repOrg, $fileName);
+//	copyFile ($repDest, $repOrg, $fileName);
 
 	// ERREURS LOG METEO-FRANCE
 	$fileName = 'meteofrance.class.php';
 	$repDest = '/var/www/html/plugins/meteofrance/core/class';
-	copyFile ($repDest, $repOrg, $fileName);
+//	copyFile ($repDest, $repOrg, $fileName);
 
 	mg::message($logTimeLine, "CORE : restauration des fichiers terminé.");
 }

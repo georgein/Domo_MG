@@ -16,7 +16,7 @@
 	$lastMvmt = round(mg::lastMvmt($infNbMvmtExt, $nbMvmt)/60);
 	$ventFort = mg::getCmd($cmdVentFort);
 	$etatLumCave = mg::getCmd($equipEclCave, 'Etat');
-	
+
 	$nuitExt = mg::getVar('NuitExt');
 
 // Paramètres :
@@ -25,21 +25,21 @@
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-$action = 'Off'; 
+$action = 'Off';
 
 if (mg::declencheur('Eclairages')) {
-	if (mg::getCmd($cmdEtatEclExt)) { 
+	if (mg::getCmd($cmdEtatEclExt)) {
 		$action = 'On'; } else { $action = 'Off'; }
-	goto suite; 
+	goto suite;
 }
 
 // ==================================================== EXTINCTION =====================================================
-if ( !$nuitExt || $ventFort || $lastMvmt >= $timerLumExt) { 
-	$action = 'Off'; 
+if ( !$nuitExt || $ventFort || $lastMvmt >= $timerLumExt) {
+	$action = 'Off';
 	mg::setCron('', '*/'.(3*$timerLumExt).'* * * * *');
 // ===================================================== ALLUMAGE ======================================================
-} elseif ($nuitExt && ($nbMvmt > 0 || $etatLumCave)) { 
-	$action = 'On'; 
+} elseif ($nuitExt && ($nbMvmt > 0 || $etatLumCave)) {
+	$action = 'On';
 	mg::setCron('', time() + $timerLumExt*60);
 }
 
@@ -53,4 +53,5 @@ for ($i = 0; $i < count($tab_EquipLampes); $i++) {
 	if (mg::getCmd($tab_EquipLampes[$i]) != ($action=='On' ? 1 : 0)) {
 		mg::setCmd(str_replace(' Etat', " $action", trim(mg::toHuman($tab_EquipLampes[$i]), '#')));
 	}
+	usleep(0.5 * 1000000);
 }

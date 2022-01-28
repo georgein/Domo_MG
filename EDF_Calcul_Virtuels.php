@@ -37,18 +37,19 @@ foreach ($tabConso as $equipement => $detailsConso) {
 	if ($timerMinMax && $gestionMinMax == 1 && mg::existCmd($equipement, 'Consommation')) {
 		$infConso = mg::mkCmd($equipement, 'Consommation');
 		$consommation = ($recalculConso == 1) ? $consoCalculee : floatval(mg::getCmd($infConso));
-		$minConsoWeek = floatval(mg::getExp("minBetween($infConso, 7 day ago, now)"));
-		$consoDay = ($consommation - $minConsoWeek) / 7;
-		$min = max(round($consommation - 5), 0);
-		$max = round($consommation + $consoDay + 5, 0) + ($consoDay < 1 ? 10 : 0); // REequerrage/rattrapage quotidien ????
-		mg::setMinMaxCmd($equipement, 'Consommation', $min, $max);
+//		$minConsoWeek = floatval(mg::getExp("minBetween($infConso, 7 day ago, now)"));
+//		$consoDay = ($consommation - $minConsoWeek) / 7;
+//		$min = max(round($consommation - 5), 0);
+//		$max = round($consommation + $consoDay + 5, 0) + ($consoDay < 1 ? 10 : 0); // REequerrage/rattrapage quotidien ????
+//		mg::setMinMaxCmd($equipement, 'Consommation', $min, $max);
+		mg::setMinMaxCmd($equipement, 'Consommation', $consommation - 5, $consommation*1.05); // RATTRAPAGE FORCE TEMPORAIRE !!!!!!!!!!!!!!!!!
 		if (!$recalculConso) { mg::setValSql('_tabConso', $equipement, '', 'consoCalculee', 0); }
 	}
 
 	if (!mg::existCmd($equipement, 'Puissance')) continue;
+		$puissance = mg::getCmd($equipement, 'Puissance');
 	// --------------------------------------------------- PUISSANCE --------------------------------------------------
 	if ($recalculPuissance == 1) {
-		$puissance = mg::getCmd($equipement, 'Puissance');
 		$maxValue = max(mg::getMinMaxCmd($equipement, 'Etat', 'max'), 99);
 		$etat = mg::getCmd($equipement, 'Etat');
 		$puissanceNew = $puissanceEstimeeMax * (($etat > 1) ? $etat/$maxValue : $etat);
@@ -61,9 +62,9 @@ foreach ($tabConso as $equipement => $detailsConso) {
 	// -------------------------------------------------- CONSOMMATION ------------------------------------------------
 	if ($recalculConso == 1 && $puissance > 0) {
 		$consoCalculee += $puissance * $cron/60/1000;
-		mg::setValSql('_tabConso', $equipement, '', 'consoCalculee', $consoCalculee);
 		mg::setInf($equipement, 'Consommation', $consoCalculee);
-		mg::messageT('', ". $nomAff : old/New Consommation calculée : {$detailsConso['consoCalculee']} / $consoCalculee");
+		mg::setValSql('_tabConso', $equipement, '', 'consoCalculee', $consoCalculee);
+		mg::messageT('', ". $nomAff : puissance = $puissance - old/New Consommation calculée : {$detailsConso['consoCalculee']} / $consoCalculee");
 	}
 }
 

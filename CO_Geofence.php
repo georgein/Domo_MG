@@ -51,7 +51,8 @@ global $layerDefaut, $epaisseur, $sizePoint, $pauseSize, $colorVoiture, $refresh
 	$longitudeHome = round(mg::getConfigJeedom('core', 'info::longitude'), 5);
 	$altitudeHome = round(mg::getConfigJeedom('core', 'info::altitude'), 1);
 
-	$IP_Jeedom = "georgein.dns2.jeedom.com";
+
+	$IP_Jeedom = mg::getConfigJeedom('core', 'jeedom::url');
 	$API_Jeedom = mg::getConfigJeedom('core');
 	$logTimeLine = mg::getParam('Log', 'timeLine');
 
@@ -252,6 +253,8 @@ ORDER BY `datetime` ASC
 
 		$pcBatterie = get('pcBatterie', $result, $i);
 		$SSID = get('SSID', $result, $i);
+//		if ($SSID == '') $SSID = 'Pas de SSID'; /////////////////////
+		
 		$activite = get('activite', $result, $i);
 
 		if ($i > 0) {
@@ -300,7 +303,7 @@ ORDER BY `datetime` ASC
 
 						// *************** ENVOIS D'UN SOS AUTOMATIQUE ***************
 						if ($tabGeofence[$user]['debTime'] > 0 && $tabGeofence[$user]['cloture'] == 0 && $tabGeofence[$user]['Km_E'] > 1 && $dureePause > $timingSOS && $tabGeofence[$user]['alerteEnCours'] == 0 && abs(time() - $datetime) < 1*60) {
-							mg::message($destinatairesSOS, "SOS AUTOMATIQUE de $user, Aucun mouvement depuis ".round($dureePause)." minutes, Coordonnées ($latlng). VOIR :  https://georgein.dns2.jeedom.com/mg/util/geofence.html");
+							mg::message($destinatairesSOS, "SOS AUTOMATIQUE de $user, Aucun mouvement depuis ".round($dureePause)." minutes, Coordonnées ($latlng). VOIR : $IP_Jeedom/mg/util/geofence.html");
 							$tabGeofence[$user]['alerteEnCours'] = $datetime;
 						}
 					}
@@ -354,7 +357,9 @@ ORDER BY `datetime` ASC
 						 || ($i >= count($result)-1 && file_exists($fileGPX))
 						 || strpos($tabGeofence[$user]['SSID_Org'], $SSID) !== false
 						 || strpos($SSID, $tabGeofence[$user]['SSID_Org']) !== false
-						 || ($activite == 'V' && $lastActivite == 'V'))
+						 || countActivites($i, $result, 'V', 5) > 2
+//						 || ($activite == 'V' && get('activite', $result, $i-2) /*$lastActivite == 'V'*/)
+					)
 					{
 					$tabGeofence[$user]['cloture'] = $datetime;
 					$tabGeofence[$user]['alerteEnCours'] = 0;
@@ -790,7 +795,7 @@ $geofence .= HTML_tete_JS();
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 function HTML_Tete() {
-global $pathRef, $tailleBoutonsNum, $tailleBoutons, $styleUser;
+global $pathRef, $tailleBoutonsNum, $tailleBoutons, $styleUser, $IP_Jeedom;
 
 	$tailleBoutonsNum = '96';
 	$tailleBoutons = $tailleBoutonsNum.'px';
@@ -967,9 +972,9 @@ return "
 		</div>
 
 		<div class='barre_button'>
-		  <a href='https://georgein.dns2.jeedom.com//mg/util/synthese_MG.html' class='button'>Synthese MG</a>
-		  <a href='https://georgein.dns2.jeedom.com//mg/util/synthese_NR.html' class='button'>Synthese NR</a>
-		  <a href='https://georgein.dns2.jeedom.com//mg/util/geo__histo.html' class='button'>Historique</a>
+		  <a href='$IP_Jeedom/mg/util/synthese_MG.html' class='button'>Synthese MG</a>
+		  <a href='$IP_Jeedom/mg/util/synthese_NR.html' class='button'>Synthese NR</a>
+		  <a href='$IP_Jeedom/mg/tabulator/tabulator.html' class='button'>Historique</a>
 		</div>
 
 		<!-- <button class='bt-reload' value='Reload' id='reload' onclick='reload();' title='Recharge la page.'>--- Reload ---</button> -->
@@ -1011,7 +1016,7 @@ function __setCookie(sName, sValue) {
 
 	/* Recharge la page au changement de valeur d'une variable Jeedom */
 	function __loadRefresh(varName, refresh=5, newValue='') {
-		IP = 'https://$IP_Jeedom';
+		IP = '$IP_Jeedom';
 		apiJeedom = '$API_Jeedom';
 		requete = IP+'/core/api/jeeApi.php?apikey='+apiJeedom+'&type=variable&name='+varName+ (newValue != '' ? '&value=\"'+newValue+'\"' : '');
 		var old_geofenceOK = __getCookie('_geofenceOK');
@@ -1028,7 +1033,7 @@ function __setCookie(sName, sValue) {
 /* ----------------------------------------------------- API JEEDOM ------------------------------------------------ */
 	/* ************************************** Lit / écrit une variable Jeedom ************************************** */
 	function __setVarJeedom(varName, newValue='') {
-		IP = 'https://$IP_Jeedom';
+		IP = '$IP_Jeedom';
 		apiJeedom = '$API_Jeedom';
 		requete = IP+'/core/api/jeeApi.php?apikey='+apiJeedom+'&type=variable&name='+varName+ (newValue != '' ? '&value='+newValue : '');
 		$.get(requete, function( data, status ) {
@@ -1038,7 +1043,7 @@ function __setCookie(sName, sValue) {
 
 	/* Lit une commande info de Jeedom */
 	function __getCmd(id) {
-		IP = 'http://$IP_Jeedom';
+		IP = '$IP_Jeedom';
 		apiJeedom = '$API_Jeedom';
 		requete = IP+'/core/api/jeeApi.php?apikey='+apiJeedom+'&type=cmd&id='+id;
 		$.get(requete, function( data, status ) {

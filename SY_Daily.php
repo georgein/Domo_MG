@@ -142,7 +142,7 @@ mg::MessageT('', ". ***************************** NETTOYAGE SNAPSHOTS DE $equipV
 			$diffDate = round((time() - $date) / 24/3600, 0);
 			if (strpos($liste[$i], 'Snapshot automatique') !== false && ($diffDate == 0 || $diffDate >= $snapshotspNbJours)) {
 				mg::setCmd($equipVmWare, 'Supprimer un snapshot', '', "Nom=\"$nomSnap\"");
-				mg::message('', "Suppression de '$$liste[$i]' - Ancienneté : $diffDate - Jour : ". date('j', $date) . ' / ' . date('D', $date));
+				mg::message('', "Suppression de '$liste[$i]' - Ancienneté : $diffDate - Jour : ". date('j', $date) . ' / ' . date('D', $date));
 			}
 	}
 

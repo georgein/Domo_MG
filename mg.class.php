@@ -35,12 +35,16 @@ class mg {
 	const	INF2	= 'INF2 : ';
 	const	SP	= 'SP : ';
 
+	const _debCo_ = "<font color='orange'>";
+	const _debCr_ = "<font color='red'>";
+	const _finC_ = "</font>";
+
 	private static $__wait_cmd = true;
 	private static $__stop_exception = 'Arrêt forcé du scénario';
 
 	private static $__debug = 0;
 	private static $__tabParams = '_tabParams';
-	private static $__scenarioVoletManuel = 107;
+	private static $__scenarioLeurre = 205; // Utilisé pour éviter des erreurs si __trigger() appelé (même indirectement) par un plugin
 
 	private static $__pluginName = '';
 
@@ -51,18 +55,19 @@ class mg {
 	public static function init($del='') {
 		global $scenario;
 
-		if (self::$__pluginName) { self::debug(5); return;}
-
-		$mode = $scenario->getConfiguration('logmode');
-		// Passe $debug selon le 'mode' du scénario.
-		if ($mode == 'realtime' || self::$__pluginName) { self::$__debug = 5; }
-		elseif ($mode == 'default') { self::$__debug = 4; }
-		else { self::$__debug = -1; }
-		self::delLog($del);
-		$message = ' Déclencheur : '.self::declencheur().' ';
-		$message = str_repeat("=", (138-strlen($message))/2).$message.str_repeat("=", (138-strlen($message))/2);
-		$scenario->setlog($message);
-		self::debug(self::$__debug, $mode);
+		// Si PAS plugin
+		if (is_object($scenario)) {
+			$mode = $scenario->getConfiguration('logmode');
+			// Passe $debug selon le 'mode' du scénario.
+			if ($mode == 'realtime') { self::$__debug = 5; }
+			elseif ($mode == 'default') { self::$__debug = 4; }
+			else { self::$__debug = -1; }
+			self::delLog($del);
+			$message = ' Déclencheur : '.self::declencheur().' ';
+			$message = str_repeat("=", (138-strlen($message))/2).$message.str_repeat("=", (138-strlen($message))/2);
+			$scenario->setlog($message);
+			self::debug(self::$__debug, $mode);
+		}
 	}
 
 /************************************************************************************************************************
@@ -179,7 +184,7 @@ function FONCTIONS_DOMOTIQUE(){}
 	// ----------------------------------------------------------- TTS ------------------------------------------------
 	} elseif ($cmd == 'TTS') {
 	// ----------------------------------------------------- CHOIX DE LA VOIX ------------------------------------------
-		$TTS_Voix = self::getParam('Media', 'TTS_Voix');
+		$TTS_Voix = self::getParam('Media', 'SONOS_TTS_Voix');
 		if ($TTS_Voix == 'Aléatoire') {
 			$liste = array('voxygen.tts.fabienne', 'voxygen.tts.agnes', 'voxygen.tts.camille', 'VoiceRSS');
 			$TTS_Voix = $liste[random_int(0,count($liste)-1)];
@@ -391,6 +396,24 @@ self::message('', $requete);
 	}
 
 /************************************************************************************************************************
+* DOMO																GCast												*
+*************************************************************************************************************************
+* Pilotage TTS de de la Gateway GCast																					*
+*	Paramètres :																										*
+*		$cmd : inutilisé																								*
+*		$message : Message TTS																							*
+*		$volume																											*
+************************************************************************************************************************/
+	public static function GCast($cmd='', $message = '', $volume=0) { 
+		$equipGCast = self::getParam('Media', 'equipGCast');
+		if ($volume == 0) $volume = self::getParam('Media', 'GCast_TTS_Vol');
+		$message = trim($message, '@');
+log::add('thermostat', 'info',  "----- $equipGCast - $message - $volume");
+		self::setCmd($equipGCast, 'Volume', $volume);
+		self::setCmd($equipGCast, 'Parle', $message);
+	}
+
+/************************************************************************************************************************
 * DOMO															GoogleCast												*
 *************************************************************************************************************************
 * Pilotage de de la Gateway GoogleCast																					*
@@ -401,13 +424,13 @@ self::message('', $requete);
 *	cf https://github.com/guirem/plugin-googlecast/blob/develop/docs/fr_FR/index.md#utilisation-dans-un-sc%C3%A9nario	*
 ************************************************************************************************************************/
 	public static function GoogleCast($cmd, $message = '', $complement = '') {
+
 		$equipGoogleCast = self::getParam('Media', 'equipGoogleCast');
 		$uuid = self::getParam('Media', 'uuidGoogleCast');
 		$cmd = strtoupper($cmd);
 		$volOrg = self::getCmd($equipGoogleCast, 'Volume');
 		if ($message && $message[0] == '@') { $jingle = 1; }
 		$message = trim($message, '@');
-
 		if ($cmd == 'TTS') {
 		// --------------------------------------------------------- TTS ------------------------------------------------
 			if (isset($jingle)) {
@@ -419,7 +442,7 @@ self::message('', $requete);
 			// =========================================== VOIX VoiceRSS (Online) ===========================================
 			$volume = $complement > 0 ? $complement : self::getParam('Media', 'googleCast_TTS_Vol');
 			if (self::getParam('Media', 'googleCast_TTS_Voix') == 'VoiceRSS') {
-				$nom_File_TTS = time().'.mp3';
+				$nom_File_TTS = 'VoiceRSS.mp3';
 					self::VoiceRSS($nom_File_TTS, $message, self::getParam('Media', 'googleCastPathMedia'));
 					sleep(2);
 					$command_string = "cmd=notif|value=$nom_File_TTS";
@@ -428,7 +451,6 @@ self::message('', $requete);
 					$command_string = "cmd=tts|value=$message";
 				}
 				self::_GoogleCast($equipGoogleCast, $uuid, $command_string, $volume);
-//				if (is_file($nom_File_TTS)) unlink($nom_File_TTS);
 		}
 
 		// --------------------------------------------------------- PLAY ------------------------------------------------
@@ -443,9 +465,12 @@ self::message('', $requete);
 	/***********************************************************************************************************************/
 	public static function _GoogleCast($equipGoogleCast, $uuid, $command_string, $volume) {
 		$googlecast = googlecast::byLogicalId($uuid, 'googlecast');
-		if ( !is_object($googlecast) || $googlecast->getIsEnable()==false ) {
+		if ( !is_object($googlecast) || $googlecast->getIsEnable() == false ) {
 		} else {
-			if ($volume != self::getCmd($equipGoogleCast, 'volume')) { self::setCmd($equipGoogleCast, 'Volume niveau', $volume); }
+			if ($volume != self::getCmd($equipGoogleCast, 'volume')) {
+				$cmd = cmd::byString(self::mkCmd($equipGoogleCast, 'Volume niveau'));
+				$cmd->execCmd(array('slider' => $volume));
+			}
 			$ret = googlecast::helperSendNotifandWait_static($uuid, $command_string, 300, 500);
 		}
 	}
@@ -479,270 +504,6 @@ self::message('', $requete);
 			$fileTTS = getRootPath() . "$pathMedia/$nom_File_TTS";
 			sleep(1);
 			file_put_contents($fileTTS, $voice['response']);
-	}
-
-/************************************************************************************************************************
-* DOMO												VOLETS GENERAL														*
-*************************************************************************************************************************
-* Ouverture ou fermeture des volets par Zone.																			*
-* La variable _VoletGeneral est positionnée avec le $sens à la fin.														*
-* Cela permet de connaître le sens du dernier mouvement et pour l'appelant d'attendre la fin du process.				*
-*																														*
-* NB : Pour 'forcer un mouvement, commencer par faire un unsetVar('_VoletGeneral') ou paramètre $force = 1				*
-*	Paramètres :																										*
-*		_VoletsGroupe = (Zones à traiter séparées par des virgules)														*
-*		VoletsSens = Monter, Descendre ou 'M', 'D'																		*
-*		force = Force le mouvement																						*
-*																														*
-*	Exemple VoletsGeneral ('Etage, Salon, Chambre, SdBRdC'), 'M');														*
-************************************************************************************************************************/
-	public static function voletsGeneral ($voletsGroupe, $sensDemandé, $force=0) {
-		global $scenario, $debugVolet;
-		$tabVolets = self::getTabSql('_tabVolets', '', 'DESC');
-		$Log = "Log:_Volets/_TimeLine";
-		$sensDemandé = strtoupper($sensDemandé[0]);
-		$sensTxt = $sensDemandé == 'M' ? $sensTxt = 'Monter': 'Descendre'; 
-
-		// Parcours des groupes à traiter
-		$tabGroupes = explode(',', $voletsGroupe);
-		for ($i = 0; $i < count($tabGroupes); $i++) {
-			$groupeTraite = trim($tabGroupes[$i]);
-			$equipementGeneral = "[$groupeTraite][Volet_Général]";
-
-			// ********************************** Calcul position globale du groupe ***********************************
-			$count = 0;
-			$somme = 0;
-			self::debug();
-			foreach ($tabVolets as $cmd => $details_Volet) {
-				$zone = trim($details_Volet['zone']);
-				$equipement = "[$zone][Ouvertures]";
-				$duree =  intval(trim($details_Volet['duree']));
-				$groupe =  trim($details_Volet['groupe']);
-				// Uniquement si volet existe et volets dans le groupe
-				if (!$groupe || $groupeTraite != $groupe || !$duree) { continue; }
-				$voletAff = self::getCmd($equipement, "$cmd"." Aff");
-				$count++;
-				$somme += $voletAff;
-			}
-			$voletGeneralGroupe = $somme/ $count > 55 ? 'M' : 'D';
-			self::Message('', "moyenne des volets du groupe $groupeTraite : ".$somme/ $count." ==> sens $voletGeneralGroupe");
-
-			// Abandon si déja en position
-			if ($force == 0 && $sensDemandé == $voletGeneralGroupe) {
-				self::MessageT('', self::SP . __FUNCTION__ . " - Volets déja en position, Annulation de la demande ...");
-				continue;
-			}
-			mg::setVar("_lastVolet$groupeTraite", $sensDemandé); // Mémo pour volets jour/nuit (évite les appels inutile)
-			// Lancements des actions
-			self::wait("scenario(".self::$__scenarioVoletManuel.") == 0", 180);
-			self::Message($Log, "$sensTxt volet général du groupe : $groupeTraite");
-			self::setCmd($equipementGeneral, $sensTxt);
-
-			// ********************* Parcours de la table des volets pour fermeture individuelle **********************
-			foreach ($tabVolets as $cmd => $details_Volet) {
-				$zone = trim($details_Volet['zone']);
-				$duree =  intval(trim($details_Volet['duree']));
-				$groupe =  trim($details_Volet['groupe']);
-				// Uniquement si volet existe et volets dans le groupe
-				if (!$groupe || $groupeTraite != $groupe || !$duree) { continue; }
-				$slider = ($sensDemandé == 'M' ? 99 : 0.1);
-
-				self::debug();
-				self::Message('', "$sensTxt ($sensDemandé) individuelle du volet : $cmd / $zone (==> $slider)");
-				self::debug(0);
-
-				self::VoletRoulant($zone, $cmd, 'Slider', $slider);
-				self::wait("scenario(".self::$__scenarioVoletManuel.") == 0", 180);
-			} // fin parcours individuel des Volets
-		} // Fin parcours des groupes
-	}
-
-/************************************************************************************************************************
-* DOMO													VOLET ROULANT													*
-*************************************************************************************************************************
-* Gestion des volets roulant																							*
-*	Gère un visuel proportionnel au temps de mouvement du volet ainsi que la possibilité d'ouvrir/fermer à x %			*
-*	Si Slider <= 0.1 ou slider >= 99 on force le mouvement.																*
-*	Une image de porte fenêtre est utilisé si un équipement d'ouverture/fermeture est déclaré.							*
-*	Réglage largeur/hauteur via les variables du widget widhImage et heightImage										*
-*																														*
-*	Mettre la durée nécessaire à une ouverture ou une fermeture COMPLETE du volet dans @TabVolets/Duree_Mouvement		*
-*	Le nom de l'équipement de commande de volet doit être celui du widget préfixé de 'Volet '							*
-*																			(ex : Volet Bureaupour le widget Bureau).	*
-*	Le nom de l'équipement de commande d'ouverture fermeture de fenêtre doit être celui du widget suffixé de '_O_'		*
-*																				(ex : Bureau_O_pour le widget Bureau).	*
-*	les noms de commande/info Etat, Slider, Slider_, Volet et Volet_ ne doivent pas être modifié dans le virtuel		*
-************************************************************************************************************************/
-	public static function voletRoulant($zone, $cmd, $trigger, $slider = '', $appelant='') {
-		global $debugVolet;
-
-		self::setScenario(self::$__scenarioVoletManuel, 'Deactivate');
-
-		$etat = 0;
-		$equipement = "[$zone][Ouvertures]";
-		$nbLamelles = 17; // Nb de lamelles dans le Widget moins une
-		$increment = round(99 / $nbLamelles);
-
-		if ($debugVolet) { self::message('', self::SP . __FUNCTION__ . " ************** MODE DEBUGVOLET - Volets inhibés !!! *******************"); }
-
-		// ------------------------------------ RECUPERATION DES PARAMETRES DU VOLET ----------------------------------
-		$duree_Mouvement = 0;
-		$alerteOuvert = 0;
-		if ($cmd) {
-			$tabVolets = self::getTabSql('_tabVolets');
-			$details_Volet = $tabVolets[$cmd];
-			$duree_Mouvement = intval($details_Volet['duree']);
-			$alerteOuvert = intval($details_Volet['alerteOuvert']);
-			$ouvrant = trim($details_Volet['ouvrant']);
-			$voletInverse =	 $details_Volet['inverse'];
-			if($duree_Mouvement == 0) { $slider = 0.1 ; }
-			$slider = ($voletInverse && $appelant != 'manuel') ? abs($slider - 99.1) : $slider; 
-		}
-		if ($slider <= 0.1) { $slider = 0.1; }
-		if ($slider >= 99) { $slider = 99; }
-
-		// Nom des équipements Volet et Ouverture
-		if ($duree_Mouvement > 0) {
-			$equipVolet = "[$zone][$cmd]";
-		} else {
-			$equipVolet = '';
-		}
-
-		// Condition fenêtre Ouverte
-		$cdFerme = 1;
-		if ($ouvrant != '') { $cdFerme = self::getCmd("[$zone][$ouvrant]", 'Ouverture');
-		}
-
-		// ------------------------------- CALCUL DU TYPE ---------------------------------
-		if (!$cdFerme) { $type = 100; } //Image fenêtre ouverte
-		else { $type = 0; } // Image fenêtre fermée
-
-		// Calcul de l'état du volet corrigé du type pour le widget
-		if(self::existCmd($equipement, "$cmd"." Aff")) {
-			$volet_Aff = self::getCmd($equipement, "$cmd"." Aff");
-		} else { $volet_Aff = 0.1; }
-		if ($volet_Aff > 99) { $volet_Aff = round($volet_Aff - 100); }
-		if ($volet_Aff <= 1) { $volet_Aff = 0.1; }
-
-		// -------------------------------------- INIT DU VOLET (pour éviter les décalages) -----------------------------
-		self::message('', self::SP . __FUNCTION__ . " *** INITIALISATION - Trigger : '$trigger' - Equipement : $equipement - Type : $type - EquipVolet : $equipVolet - ( $volet_Aff ==> $slider)");
-
-		// On sort si simple MàJ pour ouverture/fermeture fenêtre
-		if ($trigger == 'Ouverture' || $duree_Mouvement <= 0 || !self::existCmd($equipement, "$cmd"." Aff")) {
-			self::VoletRoulantArret($equipement, $equipVolet, $cmd, $volet_Aff, $slider, $type, '*** FIN SUR Mise à jour Ouvert / Fermé de ' . $equipement);
-			sleep(1);
-			return;
-		}
-
-		// ------------------------ CALCUL DE L'ETAT -----------------------------
-		if ($slider > $volet_Aff && $volet_Aff < 99) {
-			$etat = 1;
-			if ($debugVolet == false) { self::setCmd($equipVolet, 'Monter'); }
-			self::message('', self::INF2 . __FUNCTION__ . " *** Montée via slider - Etat = $etat");
-		}
-		if ($slider < $volet_Aff && $volet_Aff > 0.1) {
-			$etat = -1;
-			if ($debugVolet == false) { self::setCmd($equipVolet, 'Descendre'); }
-			self::message('', self::INF2 . __FUNCTION__ . " *** Descente via slider - Etat = $etat");
-		}
-
-
-		//*************************************************************************************************************
-		$ratioFinDescente = 0.11;
-		$ratioDebMontee = 0.23;
-		$ratioVitesseMontee = 1.30;
-
-		if ($etat == 0) {
-			$dureeMouvementPonderee = 0;
-
-		// Montée
-		} elseif ($etat == 1) {
-			$dureeMouvementPonderee = $duree_Mouvement	* $ratioVitesseMontee * (1 - $ratioDebMontee);
-
-		// Descente
-		} elseif ($etat == -1) {
-			$dureeMouvementPonderee = $duree_Mouvement * (1 - $ratioFinDescente);
-		}
-
-		$dureePause = $dureeMouvementPonderee / $nbLamelles;
-
-		//*************************************************************************************************************
-		self::message('', self::SP . __FUNCTION__ . " *** BOUCLE $volet_Aff = > $slider - Etat : $etat - Type : $type - Incrément : $increment - Duree du Mouvement : $duree_Mouvement - DureeMouvementPonderee : $dureeMouvementPonderee - Durée de pause : " . round($dureePause, 2));
-
-		// Délais de démarrage du volet avant la montée effective
-		if ($volet_Aff <= 0.1 && $slider > 0.1) { usleep($dureeMouvementPonderee * $ratioDebMontee *1000000); }
-
-		// boucle de mouvement visuel
-		for ($i = 0; $i < $nbLamelles; $i++) {
-
-		//*************************************************************************************************************
-			 // Si volet montant
-			 if ($etat == 1) {
-				// Incrémentation du volet avec addition du type pour le widget
-				$volet_Aff = round($volet_Aff + $increment);
-				if ($volet_Aff > 99) {$volet_Aff = 99; };
-				self::setInf($equipement, "$cmd"." Aff", $volet_Aff + $type);
-				self::setCmd($equipement, $cmd . ' Slider', $volet_Aff);
-				self::setCmd($equipement, 'Rafraichir');
-				// ****************************************************************************************************
-
-				// Si déclencheur == Slider et slider <= volet on stoppe physiquement et on sort
-				if ( $trigger == 'Slider' && $slider < ($volet_Aff + $increment /2) && $slider < 99 ) {
-					if ($debugVolet == false) { self::setCmd($equipVolet, 'Stop'); }
-					self::VoletRoulantArret($equipement, $equipVolet, $cmd, $volet_Aff, $slider, $type, '$slider == $volet_Aff ==> sortie de la montée.');
-					return;
-
-				// si volet en haut on stoppe (on laisse le volet physique s'arréter seul)
-				} else if ($volet_Aff >= 99) {
-					self::VoletRoulantArret($equipement, $equipVolet, $cmd, $volet_Aff, $slider, $type, 'Montant - $volet_Aff >= 99');
-					return;
-				}
-			}
-
-		//*************************************************************************************************************
-		 // sinon volet descendant
-		 else if ($etat == -1) {
-				// Décrémentation du volet avec addition du type pour le widget
-				$volet_Aff = round($volet_Aff - $increment);
-				if ($volet_Aff < 0.1) {$volet_Aff = 0.1; };
-				self::setInf($equipement, "$cmd"." Aff", $volet_Aff + $type);
-				self::setCmd($equipement, $cmd . ' Slider', $volet_Aff);
-				self::setCmd($equipement, 'Rafraichir');
-				// ****************************************************************************************************
-
-				// Si déclencheur == Slider et slider >= volet on stoppe physiquement et on sort
-				if ( $trigger == 'Slider' && $slider > ($volet_Aff - $increment /2) && $slider > 0.1) {
-					if ($debugVolet == false) { self::setCmd($equipVolet, 'Stop'); }
-					self::VoletRoulantArret($equipement, $equipVolet, $cmd, $volet_Aff, $slider, $type, '$slider == $volet_Aff ==> sortie de la descente.');
-					return;
-				}
-				// si volet en bas (à zéro) on stoppe (on laisse le volet physique s'arréter seul)
-				else if ($volet_Aff <= 0.1) {
-					self::VoletRoulantArret($equipement, $equipVolet, $cmd, $volet_Aff, $slider, $type, 'Descendant - $volet_Aff < 1');
-					return;
-				}
-			}
-		 else if ($etat == 0) {
-					self::VoletRoulantArret($equipement, $equipVolet, $cmd, $volet_Aff, $slider, $type, 'Rien à faire');
-					return;
-		 }
-			// Temporisation
-			if ($dureePause > 0) { usleep($dureePause * 1000000); }
-		} // Fin de boucle de mouvement
-	}
-
-/************************************************************************************************************************
-* DOMO												VoletRoulantArret													*
-	// Arrêt et sortie du scénario
-************************************************************************************************************************/
-	public static function voletRoulantArret($equipement, $equipVolet, $cmd, $volet_Aff, $slider, $type, $message) {
-		if ($volet_Aff < 0.1) {$volet_Aff = 0.1; };
-		if ($volet_Aff > 99) {$volet_Aff = 99; };
-			if ($equipVolet) {
-				self::setCmd($equipement, $cmd . ' Slider', $volet_Aff);
-				self::setInf($equipement, "$cmd"." Aff", $volet_Aff + $type);
-			}
-		self::setScenario(self::$__scenarioVoletManuel, 'activate');
 	}
 
 /************************************************************************************************************************
@@ -798,66 +559,56 @@ self::message('', $requete);
 *		$destinataires : Liste des destinataires du message d'alerte.													*
 *		$message : Message à envoyer.																					*
 *																														*
-* Un cron est automatiquement posé pour le rappel, au final un cron '* * * * *' est posé, le prog appelant doit donc 	*
-* redéfinir son cron																									*
+* Un cron est posé pour le rappel, le prog appelant doit donc redéfinir son cron à l'annulation de l'alerte				*
 *																														*
 * Usage :																												*
-*			Lancement de l'appel ET rappel : mg::alerte($nom, $periodicite, $dureeTotale, $destinataires, $message);	*
+*			Lancement de l'appel ET rappel : mg::alerte($nom, $periodicite, $timeOut, $destinataires, $message);		*
 *			Annulation de l'alerte : mg::alerte($nom , -1);																*
 ************************************************************************************************************************/
-	public static function alerte($nom, $periodicite=0, $dureeTotale=60, $destinataires='', $message='') {
+	public static function alerte($nom, $periodicite, $timeOut=60, $destinataires='', $message='') {
 		if ($nom == '' ) { return; }
 		$nom = str_replace(' ', '_', $nom);
 
 		$alertes = self::getVar('tabAlertes', array());
-		
-		// FIN de l'alerte
-		if ($periodicite < 0 && array_key_exists($nom, $alertes)) {
-			// --------------------------------------------------------------------------------------------------------
-			self::messageT('', "! Fin de l'alerte : $nom - $message");
-			// --------------------------------------------------------------------------------------------------------
-			unset($alertes[$nom]);
-			self::setVar('tabAlertes', $alertes);
-			self::setCron('', '* * * * *');
-			return;
-		}
 
 		// Création de l'alerte
 		if (!array_key_exists($nom, $alertes) && $periodicite > 0) {
 			// --------------------------------------------------------------------------------------------------------
-			self::messageT('', "CREATION ALERTE : Nom : $nom - Périodicité : $periodicite, - Durée totale : $dureeTotale -  Destinataire : $destinataires - Message : '$message'");
+			self::messageT('', "CREATION ALERTE : Nom : $nom - Périodicité : $periodicite, - Durée totale : $timeOut -  Destinataire : $destinataires - Message : '$message'");
 			// --------------------------------------------------------------------------------------------------------
 			$alertes[$nom]['nom'] = $nom;
-			$alertes[$nom]['debut'] = time();
-			$alertes[$nom]['fin'] = time() + $dureeTotale*60;
+			$alertes[$nom]['timeOut'] = $timeOut;
+			$alertes[$nom]['debut'] = 0;
 			$alertes[$nom]['last'] = 0;
 		}
 
 		// RAPPEL de l'alerte
-		if (((time() - $periodicite*60 + 60) >= $alertes[$nom]['last'] || $alertes[$nom]['last'] == 0) && $periodicite > 0) {
+		elseif ((time() - $periodicite*60) >= $alertes[$nom]['last'] && $periodicite > 0) {
+			if ($alertes[$nom]['debut'] == 0 ) {
+				$alertes[$nom]['debut'] = time();
+				$alertes[$nom]['fin'] = time() + $timeOut*60;
+			}
 			// --------------------------------------------------------------------------------------------------------
-			// --------------------------------------------------------------------------------------------------------
-			$alertes[$nom]['last'] = time();
-			$duree = round((time() - $alertes[$nom]['debut'])/60);
-			self::message($destinataires, $message. ($duree > 0 ? " depuis $duree minutes." : "."));
 			self::messageT('', "! Rappel alerte : $nom - periodicite : $periodicite mn - last rappel à " . date('H\h\ i\m\n\:s', $alertes[$nom]['last']) . " - Debut à " . date('H\h\ i\m\n', $alertes[$nom]['debut']) . " - fin à " . date('H\h\ i\m\n', $alertes[$nom]['fin']));
-			goto fin;
+			// --------------------------------------------------------------------------------------------------------
+			$duree = round((time() - $alertes[$nom]['debut'])/60);
+			if ($duree < $alertes[$nom]['timeOut']) {
+				self::message($destinataires, $message. ($duree > 1 ? " depuis $duree minutes." : "."));
+				$alertes[$nom]['last'] = time();
+			}
+		}
+
+		// Fin alerte sur Annulation ou TimeOut
+		elseif (time() > $alertes[$nom]['fin'] || $periodicite < 0) {
+				// --------------------------------------------------------------------------------------------------------
+				self::messageT('', "! ANNULATION de l'alerte : $nom");
+				// --------------------------------------------------------------------------------------------------------
+				unset($alertes[$nom]);
 		}
 		
-		// ANNULATION de l'alerte
-		elseif (time() >= $alertes[$nom]['fin']) {
-			// --------------------------------------------------------------------------------------------------------
-			self::messageT('', "! ANNULATION de l'alerte : $nom");
-			// --------------------------------------------------------------------------------------------------------
-			self::setVar('tabAlertes', $alertes);
-			unset($alertes[$nom]);
-			self::setCron('', '* * * * *');
-			return;
-		}
-	fin:
-	self::setVar('tabAlertes', $alertes);
-	self::setCron('', time() + $periodicite*60);
-}
+		self::setVar('tabAlertes', $alertes);
+		self::setCron('', time() + $periodicite*60);
+	}
 
 /************************************************************************************************************************
 * DOMO														WakeOnLane													*
@@ -1027,9 +778,8 @@ public static function setValSql($nomTab, $key0='', $key1='', $name='', $value='
 		";
 		$clefTxt = "'$nomTab'/'$key0'/'$key1'";
 	}
-	//self::message('', $sql);
 	$result = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
-	//self::message('', "INF2 : " . __FUNCTION__ . " : $clefTxt à été modifié en '$value' - ");
+	self::message('', "INF2 : " . __FUNCTION__ . " : $clefTxt à été modifié en '$value' - ");
 	return $value;
 }
 
@@ -1115,6 +865,23 @@ $tabdata = self::getVar($nomVar);
 ************************************************************************************************************************/
 public static function FONCTIONS_UTILITAIRES(){}
 
+/************************************************************************************************************************
+* UTIL												EVALUATE CONDITION													*
+*************************************************************************************************************************
+* Evalue une condition via Jeedom et renvoie true ou false																*
+*	peut exploiter les variables (variable(xxx) ou les commandes [xx][yyy][yyy]											*
+************************************************************************************************************************/
+	public function EvaluateCondition($Condition){
+		$_scenario = null;
+		$expression = scenarioExpression::setTags($Condition, $_scenario, true);
+		$message = 'Evaluation de la condition : ['.jeedom::toHumanReadable($Condition).'] => [' . trim($expression) . '] => ';
+		$result = evaluate($expression);
+		$message .= "'".intval($result)."'";
+		self::message('', "SP : " . __FUNCTION__ . " : $message");
+
+		if (!$result) return '0';
+		return '1';
+	}
 
 /************************************************************************************************************************
 * UTIL													GET PARAM														*
@@ -1166,14 +933,14 @@ public static function FONCTIONS_UTILITAIRES(){}
 *************************************************************************************************************************
 * On si nbMvmt ou cdAllumage																							*
 * Off si sheduler et lastMvmt > Timer ou cdExtinction.																	*
-* Positionne un cron à $Timer si lampe allumé.																			*
+* Positionne un cron à $Timer si lampe allumée.																			*
 * Paramétres :																											*
 *		$equipEcl : Nom de l'équipement à piloter																		*
 *		$infNbMvmt : Nom de la commande donnant le Nb de mouvement dans la zone											*
 *		$timer : Durée de la minuterie (2 par defaut)																	*
 *		$cdExtinction : Condition d'extinction, true pour éteindre, false sinon											*
 *		$cdAllumage :  Condition d'allumage, true pour allumer, false sinon												*
-*		$actionEtat : Nom de la commande donnat l'état de l'équipement ('Etat' par defaut)								*
+*		$actionEtat : Nom de la commande donnant l'état de l'équipement ('Etat' par defaut)								*
 *																														*
 * Exemple d'utilisation dans un bloc code :																				*
 *-----------------------------------------------------------------------------------------------------------------------*
@@ -1191,7 +958,6 @@ mg::minuterie($equipEcl, $infNbMvmt, $timer, $cdExtinction, $cdAllumage);						 
 *-----------------------------------------------------------------------------------------------------------------------*
 ************************************************************************************************************************/
 public static function minuterie($equipEcl, $infNbMvmt, $timer=2, $cdExtinction, $cdAllumage, $actionEtat='Etat') {
-//	self::setCron('', "*/$timer * * * *");
 	self::setCron('', time() + $timer*60);
 
 	$lastMvmt = round(self::lastMvmt($infNbMvmt, $nbMvmt)/60);
@@ -1202,20 +968,18 @@ public static function minuterie($equipEcl, $infNbMvmt, $timer=2, $cdExtinction,
 		// ------------------------------------------------------------------------------------------------------------
 		self::messageT('', "ALLUMAGE");
 		// ------------------------------------------------------------------------------------------------------------
-		if (!self::getCmd($equipEcl, $actionEtat)) {
 			$action = str_replace('Etat', 'On', $actionEtat);
 			self::setCmd($equipEcl, $action);
-		}
 
 	// On éteint si appelé par le cron ou cdExtinction
-	} elseif ($cdExtinction || $lastMvmt >= ($timer)) {
+	} elseif ($cdExtinction || $lastMvmt*60 > ($timer)) {
 		// ------------------------------------------------------------------------------------------------------------
-	self::messageT('', "EXTINCTION");
+		self::messageT('', "EXTINCTION");
 		// ------------------------------------------------------------------------------------------------------------
-		if (self::getCmd($equipEcl, $actionEtat) || (self::existCmd($equipEcl, 'Puissance') && self::getCmd($equipEcl, 'Puissance') > 2)) {
+//		if (self::getCmd($equipEcl, $actionEtat) || (self::existCmd($equipEcl, 'Puissance') && self::getCmd($equipEcl, 'Puissance') > 2)) {
 			$action = str_replace('Etat', 'Off', $actionEtat);
 			self::setCmd($equipEcl, $action);
-		}
+//		}
 	}
 }
 
@@ -1228,8 +992,7 @@ public static function minuterie($equipEcl, $infNbMvmt, $timer=2, $cdExtinction,
 *		$equipLampe : Le nom de l'équipement de la lampe																*
 *		La nouvelle intensité désirée																					*
 ************************************************************************************************************************/
-public static function setLampe($equipLampe, $intensite) {
-	//$type = strtolower(self::getTypeEqui($equipLampe));
+/*public static function setLampe($equipLampe, $intensite) {
 
 	// Lampe avec réglage intensité
 	if (self::existCmd($equipLampe, 'Slider Intensité')) {
@@ -1241,8 +1004,7 @@ public static function setLampe($equipLampe, $intensite) {
 
 		if ($intensite == 0) {
 			self::setCmd($equipLampe, 'Off');
-		}
-		if ($etatLampe != $intensite) {
+		} else {
 			self::setCmd($equipLampe, 'Slider Intensité', $intensite);
 		}
 		self::messageT('', "Equipement : ".trim(self::toHuman($equipLampe))." - Intensité : $etatLampe => $intensite");
@@ -1251,11 +1013,14 @@ public static function setLampe($equipLampe, $intensite) {
 	} else {
 		if ($intensite == 0 ) {
 			self::setCmd($equipLampe, 'Off');
-		} elseif ($intensite > 0) {
+			self::messageT('', "Equipement : ".trim(self::toHuman($equipLampe))." => Off");
+		}
+		else {
 			self::setCmd($equipLampe, 'On');
+			self::messageT('', "Equipement : ".trim(self::toHuman($equipLampe))." => On");
 		}
 	}
-}
+}*/
 
 /************************************************************************************************************************
 * UTIL											GET CONFIG JEEDOM														*
@@ -1440,35 +1205,6 @@ public static function dateIntervalle($depuis, $jusque='now', $nbVal =3, &$diff=
 				}
 			}
 		}
-	}
-
-/************************************************************************************************************************
-* UTIL												BENCH SCENARIO														*
-*************************************************************************************************************************
-* Donne la durée moyenne d'éxécution d'un script donné ou d'une fonction (modif du code nécessaire)						*
-*	Paramètres :																										*
-*		NbIter : Nombre d'itération de calcul																			*
-*		NumScenario : N° du scénario à tester																			*
-*																														*
-*	Exemple :																											*
-*		mg::BenchScenario(10, 137);																						*
-*		print_r(array_sort($people, 'age', SORT_DESC)); // Sort tri par le plus vieux en premier						*
-*		print_r(array_sort($people, 'nom', SORT_ASC)); // tri par nom ascendant											*
-	********************************************************************************************************************/
-	public static function benchScenario($nbIter, $numScenario) {
-	  global $scenario;
-		$start =  microtime(true);
-
-		for ($i = 0; $i < $nbIter; $i++) {
-			self::setScenario($numScenario, 'start');
-
-			// Remplacer la ligne précédente par l'appel de la fonction à bencher
-			// exemple : self::message('', "test $i ");
-			// Fin de l'appel
-
-		}
-		$time =	 round((microtime(true) - $start) / $nbIter, 3) * 1000;
-		self::message('', "**************** $time mSec sur $nbIter Itérations du scénario '" . $scenario->byId($numScenario)->getName() . "' *******************");
 	}
 
 /************************************************************************************************************************
@@ -1835,14 +1571,11 @@ public static function dateIntervalle($depuis, $jusque='now', $nbVal =3, &$diff=
 
 // ******************************************* Pour test de niveau de debug *******************************************
 	public static function test() {
-		$scenario;
-//		$scenario->setLog(" debug : $__debug");
 		self::message('', __FUNCTION__ . " - Texte banalisé");
 		self::message('', "INFO : " . __FUNCTION__ . " Texte info");
 		self::message('', "SP : " . __FUNCTION__ . " texte SP");
 		self::message('', "WARNING : " . __FUNCTION__ . " Texte warning");
 		self::message('', "ERROR : " . __FUNCTION__ . " Texte erreur");
-//		$scenario->setLog(".");
 	}
 
 /************************************************************************************************************************
@@ -1866,28 +1599,29 @@ public static function dateIntervalle($depuis, $jusque='now', $nbVal =3, &$diff=
 *	exemple :																											*
 *		mg::Message("Log:/_ALARME, message, SMS/@MG/NR, MAIL:MG, TTS:GOOGLECAST/JPI", 'Message multi destinat', 75);	*
 *	Remarques :																											*
+*		Si le destinataire du TTS est 'defaut', on prend celui du paramètrage Media/TTS_Defaut							*
 *		Champ $type : si vide, simple demande log standard.																*
 *		Champ $contenu : Contenu du message																				*
 *		Champ $titre peut contenir le volume (pour les TTS_JPI															*
 * self::$__debug == 0 pas de log, 1 TOUS les logs, 2 logs infos et +, 3 log warning et +, 4 log error et +				*
 ************************************************************************************************************************/
-	public static function message($type, $contenu = '', $titre = 'INFO') {
-		if (self::$__debug <= 0 && !self::$__pluginName) { return; }
+	public static function message($type, $contenu = '', $titre = 'info') {
 		global $scenario;
 
+		if (self::$__pluginName != '') {
+			$type = $type.'/,'.self::$__pluginName;
+			return;
+		}
+
 		if ($contenu == '') {
-			if (!self::$__pluginName) {
-				$scenario->setLog("WARNING : " . __FUNCTION__ . " : Le contenu du message est absent !!!");
-			} else {
-				log::add(self::$__pluginName, 'warning', __FUNCTION__ . " : Le contenu du message est absent !!!");
-			}
+			if (is_object($scenario)) $scenario->setLog("WARNING : " . __FUNCTION__ . " : Le contenu du message est absent !!!");
 			return;
 		}
 
 		// Pose du $type par defaut pour le log si absent
 		$type = ((trim($type) == ''	 || strpos(strtoupper($type), 'LOG:') === false) ? 'log:x/,' : '') . $type;
 
-		if (strstr($type, ',') == false) { $type .= ','; }
+		if (strstr($type, ',') == false) { $type = trim($type).','; }
 //		 *************** Boucle des Destinations séparé par des ',' ***************
 		$listeDestinations = explode(',', $type);
 		for ($i = 0; $i < count($listeDestinations); $i++) {
@@ -1903,7 +1637,7 @@ public static function dateIntervalle($depuis, $jusque='now', $nbVal =3, &$diff=
 				// *************** Boucle des destinataires séparé par des '/' ***************
 				$destinataires = explode("/", $listeDestinataires[$y]);
 				for ($z = 0; $z < count($destinataires); $z++) {
-					$destinataire = strtoupper(trim($destinataires[$z]));
+					$destinataire = trim($destinataires[$z]);
 					if ($destination == 'LOG' && $z == 0) { $destinataire = 'x'; } // Pour le log par defaut
 
 					// Transpo du destinataire si préfixé de '@'
@@ -1933,16 +1667,12 @@ public static function dateIntervalle($depuis, $jusque='now', $nbVal =3, &$diff=
 							elseif (self::$__debug >=3 && strstr($contenuLog, "WARNING : ")) { $OK++; }
 							elseif (self::$__debug >=4 && strstr($contenuLog, "INF2 : ")) { $OK++; }
 							elseif (self::$__debug >=5 && strstr($contenuLog, "SP : ")) { $OK++; }
-							if ($OK == 0 && self::$__pluginName == '') { return; }
+							if ($OK == 0) { return; }
 
 							if ($destinataire == 'x') {
 								// Si log par défaut uniquement si self::$__debug
 								if (self::$__debug) {
-									if (!self::$__pluginName) {
-										$scenario->setLog($contenuLog);
-									} else {
-										log::add(self::$__pluginName, $titre, $contenuLog);
-									}
+									if (is_object($scenario)) $scenario->setLog($contenuLog);
 								}
 							// Sinon log nommé
 							} else {
@@ -1988,10 +1718,11 @@ public static function dateIntervalle($depuis, $jusque='now', $nbVal =3, &$diff=
 //							if (self::getVar($destinataire) . '_OK')<0) { break; }
 							self::JPI('SMS', trim($contenu, '@'), $destinataire);
 
-							// ----------------------------------- APPEL TTS sur SONOS, JPI, GOOGLECAST ou FULLYKIOSK ------------------------------
+							// ----------------------------------- APPEL TTS sur SONOS, JPI, GCast, GOOGLECAST ou FULLYKIOSK ------------------------------
 						} elseif ($destination == 'TTS') {
+					
+							if (strtolower($destinataire) == 'defaut') $destinataire = self::getParam('Media','TTS_Defaut');
 							$message = $contenu;
-
 							// Taille finale du message
 							if ($destination != 'TTS')
 								{
@@ -2008,19 +1739,11 @@ public static function dateIntervalle($depuis, $jusque='now', $nbVal =3, &$diff=
 									$messagePartiel = substr($message, 0, strlen($messagePartiel) - $lgEnTrop);
 								}
 								$message = substr($message, strlen($messagePartiel), 99999);
-								if (!self::$__pluginName) {
-									$scenario->setLog('', $messagePartiel . ' - ' . strlen($messagePartiel) . ' charactères');
-								} else {
-									log::add(self::$__pluginName, $titre, $messagePartiel . ' - ' . strlen($messagePartiel) . ' charactères');
-								}
+									if (is_object($scenario)) $scenario->setLog('', $messagePartiel . ' - ' . strlen($messagePartiel) . ' charactères');
 								self::$destinataire($destination, $messagePartiel , intval($titre));
 							}
 							if (isset($messagePartiel)) {
-								if (!self::$__pluginName) {
-								$scenario->setLog('', $messagePartiel . ' - ' . strlen($messagePartiel) . ' charactères');
-								} else {
-									log::add(self::$__pluginName, $titre, $messagePartiel . ' - ' . strlen($messagePartiel) . ' charactères');
-								}
+								if (is_object($scenario)) $scenario->setLog('', $messagePartiel . ' - ' . strlen($messagePartiel) . ' charactères');
 								self::$destinataire($destination, $message , intval($titre));
 							}
 						}
@@ -2157,7 +1880,7 @@ public static function dateIntervalle($depuis, $jusque='now', $nbVal =3, &$diff=
 	$infNbMvmt : La commande de mouvement à surveiller																	*
 *	$nbMvmt : Retourne le nbMvmt de la commande																			*
 ************************************************************************************************************************/
-	public static function lastMvmt($infNbMvmt, &$nbMvmt) {
+	public static function lastMvmt($infNbMvmt='', &$nbMvmt=0) {
 		$nbMvmt = max(0, self::getCmd($infNbMvmt));
 		$lastMvmt = self::getCond("lastChangeStateDuration($infNbMvmt, 0)");
 		$lastMvmt = ($nbMvmt > 0) ? 0 : $lastMvmt;
@@ -2389,10 +2112,7 @@ public static function dateIntervalle($depuis, $jusque='now', $nbVal =3, &$diff=
 		$message .= ($debug>=5) ? ' + SP': '';
 		$message = " CLASS MG - Mode $mode - AVEC debug ($debug) : log => $message.";
 		$message = str_repeat("=", (138-strlen($message))/2).$message.str_repeat("=", (138-strlen($message))/2);
-		if ($debug > 1) {
-			if (!self::$__pluginName) { $scenario->setlog($message); }
-			else { log::add(self::$__pluginName, 'info', $message); }
-		}
+		log::add(self::$__pluginName, 'info', $message);
 	}
 
 /************************************************************************************************************************
@@ -2953,9 +2673,7 @@ function FONCTIONS_COMMANDES(){}
 *		Variable de retour $collectDate et $valueDate																	*
 ************************************************************************************************************************/
 	public static function getCmd($cmd, $complement = '', &$collectDate = '', &$valueDate = '') {
-
 		if ($complement) { $cmd = self::mkCmd($cmd, $complement); }
-
 		$cmd = self::_tag($cmd);
 		if (!$cmd) {
 			return null;
@@ -3423,19 +3141,13 @@ function FONCTIONS_VARIABLES(){}
 * Lit une variable JEEDOM																								*
 ************************************************************************************************************************/
 	public static function getVar($varName, $default = null) {
-		global $scenario;
 		$varName = trim($varName);
 		if (!$varName) {
 
 			self::message('', "ERROR : " . __FUNCTION__ . " : Le nom de la variable ne peut pas être vide");
 			return;
 		}
-
-		//-------------------------------------------------------------------------------------------------------------
-		if (self::$__pluginName) { return config::byKey($varName, self::$__pluginName, $default); }
-		//-------------------------------------------------------------------------------------------------------------
-
-		$value = $scenario->getData($varName);
+		$value = scenario::getData($varName);
 
 		if ($value == null) {
 			$value = $default;
@@ -3468,7 +3180,6 @@ function FONCTIONS_VARIABLES(){}
 * en sql : 'INSERT INTO `dataStore`	 (`type`, `link_id`, `key`, `value`) VALUES ('scenario', -1, 'VarName', 'valTest');'"
 ************************************************************************************************************************/
 	public static function setVar($varName, $value = "") {
-		global $scenario;
 		$varName = trim($varName);
 
 		if (!$varName) {
@@ -3483,12 +3194,7 @@ function FONCTIONS_VARIABLES(){}
 		} else {
 			$valueAff = $value;
 		}
-
-		//-------------------------------------------------------------------------------------------------------------
-		if (self::$__pluginName) {	return config::save($varName, $value, self::$__pluginName); }
-		//-------------------------------------------------------------------------------------------------------------
-
-		$scenario->setData($varName, $value);
+		scenario::setData($varName, $value);
 		self::message('', "INF2 : " . __FUNCTION__ . " : Variable $varName ==> " . $valueAff);
 	}
 
@@ -3498,21 +3204,15 @@ function FONCTIONS_VARIABLES(){}
 * Détruit une variable JEEDOM																							*
 ************************************************************************************************************************/
 	public static function unsetVar($varName) {
-		global $scenario;
 		$varName = trim($varName);
 		if (!$varName) {
 			self::message('', "ERROR : " . __FUNCTION__ . " : Le nom de la variable ne peut pas être vide");
 			return;
 		}
-
-		//-------------------------------------------------------------------------------------------------------------
-		if (self::$__pluginName) {	return config::remove($varName, self::$__pluginName); }
-		//-------------------------------------------------------------------------------------------------------------
-
 		$unset = false;
 		$No_Exist = 'VaR¨=¨ImPoSiBle_To-HavE^$This.[vAlue#In~@£VarIaBlE;,. Is°iT"{SuR]??__ I&SaY§...\"YeS|-\\\\ oF²cOurs€^^ !!!\"';
-		if ($scenario->getData($varName, false, $No_Exist) !== $No_Exist) {
-			$scenario->removeData($varName);
+		if (scenario::getData($varName, false, $No_Exist) !== $No_Exist) {
+			scenario::removeData($varName);
 			self::message('', "SP : " . __FUNCTION__ . " : Destruction de la variable $varName");
 			$unset = true;
 		}
@@ -3630,7 +3330,6 @@ function FONCTIONS_CONDITIONNELLES(){}
 *		wait("Salon][Oeil bureau][Présence]# == 0", 10)																	*
 ************************************************************************************************************************/
 	public static function wait($condition, $timeout = 7200) {
-		global $scenario;
 		$timeout = min(max($timeout, 1), 7200);
 		$condition = trim($condition);
 		if (!$condition) {
@@ -3656,86 +3355,7 @@ function FONCTIONS_DIVERSES(){}
 * DOIT OBLIGATOIREMENT ETRE APPELE SI LA CLASS EST UTILISE DANS UN PLUGIN												*
 ************************************************************************************************************************/
 	public static function pluginName($pluginName) {
-		self::$__pluginName = $pluginName;
-	}
-
-/************************************************************************************************************************
-*													ZWAVE_ACTION														*
-*************************************************************************************************************************
-* Lance une action sur un noeud et attend la fin pour sortir															*
-*																														*
-*	Paramètres																											*
-*	action		: Action Zwave à effectuer :																			*
-*							'testNode'						Exécuter un test (ping)										*
-							'refreshAllValues'				Demande de rafraîchir toutes les valeurs du nœud			*
-							'requestNodeNeighbourUpdate'	Demande de mise à jour des voisins du noeud					*
-							'healNode'						Demande à soigner le noeud									*
-							'hasNodeFailed'					Demande si le nœud est présumé mort par le contrôleur		*
-							'requestNodeDynamic'			Demande de refaire l’étape de l’interview Dynamic			*
-							'assignReturnRoute'				Forcer une route de retour au contrôleur					*
-*																														*
-************************************************************************************************************************/
-	public static function ZwaveAction($nodeId, $action) {
-		global $scenario;
-		$apizwave = self::getConfigJeedom('openzwave');
-		self::ZwaveBusy(); // Attente de dispo de Zwave
-		$url = "http://127.0.0.1:8083/node?node_id=$nodeId&type=action&action=$action&apikey=$apizwave";
-		self::messageT('', ". Action $action noeud $nodeId");
-
-		self::ZwaveBusy(); // Attente de dispo de Zwave
-		$contents = file_get_contents($url);
-		$results = json_decode($contents);
-		$success = $results->state;
-		self::message('', "Action $action noeud $nodeId return $success");
-	}
-
-/************************************************************************************************************************
-*													SOIGNE ZWAVE														*
-*************************************************************************************************************************
-* Mise à jour des nœuds voisins																							*
-* Une autre fonctionnalité qui a été désactivée dans Jeedom et toujours pour des raisons de trafic réseau inutile,		*
-* spécialement si votre réseau est stabilisé ou que vous ne déplacez jamais vos modules.								*
-																														*
-* Dans l’éventualité ou vous apportez des changements dans la topologie de votre réseau, il sera alors intéressant		*
-* durant quelques semaines de forcer des mises à jour des routes afin d’affiner au mieux la qualité de votre maillage et*
-* calcul des sauts afin de rejoindre le contrôleur.																		*
-************************************************************************************************************************/
-	public static function zwaveSoins() {
-		global $scenario;
-		$apizwave = self::getConfigJeedom('openzwave');
-		// call the network health endpoint
-		$url_health = 'http://localhost:8083/controller?type=action&action=healNetwork&apikey=' . $apizwave;
-		$content = file_get_contents($url_health);
-		self::ZwaveBusy(5);
-		self::message($logTimeLine, $content);
-		// get result as json
-		$results = json_decode($content, true);
-		$success = $results["state"];
-		if ($success != 'ok') {
-			$scenario->setLog('ZAPI controller healNetwork return une erreur: ' . $results["result"]);
-		}
-	}
-
-/************************************************************************************************************************
-*														ZWAVE BUSY														*
-*************************************************************************************************************************
-* Attend que le server ne soit plus 'busy' SI $timer > 0 via un ping sur le Node N° 1,									*
-* Si timer = 0 renvoie directement la valeur de la queue Zwave															*
-************************************************************************************************************************/
-	public static function ZwaveBusy($timer = 0, $queueMax=0, $echo = '') {
-		$networkState = openzwave::callOpenzwave('/network?type=info&info=getStatus');
-		$queueSize = $networkState['result']['outgoingSendQueue'];
-
-		$oldQueueSize = 0;
-		while ($timer > 0 && $queueSize > $queueMax) {
-			$networkState = openzwave::callOpenzwave('/network?type=info&info=getStatus');
-			$queueSize = $networkState['result']['outgoingSendQueue'];
-			if ($oldQueueSize != $queueSize && $echo) { self::message('', "Attente Queue sortante à 0 : $queueSize"); }
-			$oldQueueSize = $queueSize;
-			sleep(intval($timer));
-		}
-		//	self::message('', print_r($networkState, true));
-		return intval($queueSize);
+		self::$__pluginName = '';//$pluginName;
 	}
 
 /************************************************************************************************************************
@@ -3880,6 +3500,9 @@ function FONCTIONS_DIVERSES(){}
 *************************************************************************************************************************/
 	private static function __trigger() {
 		global $scenario;
+		// Pour éviter des erreurs si appelé (même indirectement) par un plugin
+		if (!is_object($scenario)) { $scenario = scenario::byId(self::$__scenarioLeurre); } 
+
 		$trigger = $scenario->getRealTrigger();
 		$cmd_obj = cmd::byId(str_replace('#', '', $trigger));
 		return (is_object($cmd_obj)) ? $cmd_obj->getHumanName() : $trigger;

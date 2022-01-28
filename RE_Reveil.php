@@ -7,7 +7,8 @@ Une annonce constituée de la météo locale, des prévisions de Météo France 
 Si le réveil démarre avec nuitSalon != 2 (levé prématuré) on ouvre la chambre que à la phase d'extinction de la radio.
 **********************************************************************************************************************/
 // Infos, Commandes et Equipements :
-// $infReveil, $infMusique, $equipMvmtEtage, $infVoletChambre
+// $infReveil, $infMusique, $equipMvmtEtage
+// $equipVoletChambre, $equipVoletRdCSdB, $equipVoletEtage
 
 // N° des scénarios :
 
@@ -17,11 +18,10 @@ Si le réveil démarre avec nuitSalon != 2 (levé prématuré) on ouvre la chamb
 //	$radioSDB = 'http://direct.franceinfo.fr/live/franceinfo-midfi.mp3';
 //	$radioSDB = 'http://icecast.radiofrance.fr/fip-midfi.mp3';
 
-	$heure_Reveil = mg::getVar('_Heure_Reveil');
+	$heureReveil = mg::getVar('heureReveil'); 
 	$nuitSalon = mg::getVar('NuitSalon');
-	$lastMvmt = round(mg::lastMvmt($infNbMvmtSalon, $nbMvmt)/60);
-
 	$alarme = mg::getVar('Alarme');
+	$lastMvmt = round(mg::lastMvmt($infNbMvmtSalon, $nbMvmt)/60);
 
 // Paramètres :
 	$equipSonos = mg::getParam('Media', 'equipSonos');
@@ -41,9 +41,9 @@ deb:
 $reveilOnLine = mg::getVar('_ReveilOnLine', 0);
 
 // Si réveil à Off ou sous Alarme, on sort
-if ( $alarme || !mg::getCmd($infReveil)) { return; }
+if ( $alarme == 1 || !mg::getCmd($infReveil)) { return; }
 
-// Si réveil OffLine on démarre Sonos et on ouvre les volets de la chambre
+// Si réveil OnLine on démarre Sonos et on ouvre les volets de la chambre
 if (!$reveilOnLine) {
 	//=================================================================================================================
 	mg::messageT('', "! 0 PREMIERE PARTIE");
@@ -66,28 +66,31 @@ if (!$reveilOnLine) {
 	//=================================================================================================================
 	mg::messageT('', ". ON ENTROUVRE LE VOLET CHAMBRE");
 	//=================================================================================================================
-	if 	(time() >= $heureRelance || ($nuitSalon == 2 && $lastMvmt > 60)) {
-		mg::VoletRoulant('Chambre', 'Volet Chambre', 'Slider', 10);
-		mg::VoletRoulant('RdCSdB', 'Volet RdCSdB', 'Slider', 99);
+	if (mg::getCmd($equipVoletChambre, 'Etat') < 1) {
+		if 	(time() >= $heureRelance || ($nuitSalon == 2 && $lastMvmt > 60)) {
+			mg::setCmd($equipVoletChambre, 'position', 10);
+			mg::setCmd($equipVoletRdcSdB, 'up');
+		}
+//	} else {
+//		mg::setVar('heureReveil', $heureRelance);
+//		$heureReveil = $heureRelance;
 	}
 	
 	mg::setVar('_ReveilOnLine', 2);
-	mg::setCron('', $heure_Reveil + 15 * 60);
+	mg::setCron('', $heureReveil + 15 * 60);
 
 } elseif ($reveilOnLine == 2) {
-	part2:
 	//=================================================================================================================
 	mg::messageT('', "! 2 OUVERTURE TOTALE CHAMBRE");
 	//=================================================================================================================
-	if (mg::getCmd($infVoletChambre) > 1) {
-		mg::VoletsGeneral ('Chambre', 'M', 1);
+	if (mg::getCmd($equipVoletChambre, 'Etat') > 1) {
+		mg::setCmd($equipVoletChambre, 'up');
 	}
 		
 	mg::setVar('_ReveilOnLine', 3);
-	mg::setCron('', ($heure_Reveil + $reveilDureeRadio * 60));
+	mg::setCron('', ($heureReveil + $reveilDureeRadio * 60));
 
 } elseif ($reveilOnLine == 3) {
-	part3:
 	//=================================================================================================================
 	mg::messageT('', ". 3 ANNONCE VOCALE");
 	//=================================================================================================================
@@ -126,23 +129,28 @@ if (!$reveilOnLine) {
 	//=================================================================================================================
 	shell_exec("sudo rm -f /var/www/html/log/scenarioLog/scenario48.log"); // Pour éviter les "error" de monitoring
 	
-	// REMet la radio 
-	mg::setCmd($equipSonos, 'Volume', $reveilVolumeRadio);
-	$infVolSonos = mg::mkCmd($equipSonos, 'Volume Status');
-	self::wait ("$infVolSonos == $reveilVolumeRadio", 5);
-	mg::setCmd($equipSonos, 'Jouer une radio', '.', $reveilStationRadio);
-	mg::setCron('', $heure_Reveil + 1.5*3600);
-	mg::setVar('_ReveilOnLine', 4);
-
-	// ***** SI volets chambre baissés on relance le réveil *****
-	if (mg::getCmd($infVoletChambre) < 1 && $heureRelance > $heure_Reveil) {
-		mg::Message($logTimeLine, "Reveil - RELANCE DU REVEIL POUR $heureRelance.");
-		mg::setVar('_Heure_Reveil', $heureRelance);
+	// ***** SI volets chambre baissés on relance le réveil et on coupe la radio *****
+	if (mg::getCmd($equipVoletChambre, 'Etat') < 1 && $heureRelance > $heureReveil) {
+		mg::Message($logTimeLine, "Reveil - RELANCE DU REVEIL POUR ".date('H\hi\m\n', $heureRelance).".");
 		mg::unsetVar('_ReveilOnLine');
-		mg::setCron('', $heureRelance);
+
+		$heureReveil = $heureRelance;
+		mg::setVar('heureReveil', $heureReveil);
+		mg::setCron('', $heureReveil);
+		mg::setCmd($equipSonos, 'Stop');
 		return;
 	}
 
+	// SINON on REMet la radio 
+	else {
+		mg::setCmd($equipSonos, 'Volume', $reveilVolumeRadio);
+		$infVolSonos = mg::mkCmd($equipSonos, 'Volume Status');
+		self::wait ("$infVolSonos == $reveilVolumeRadio", 5);
+		mg::setCmd($equipSonos, 'Jouer une radio', '.', $reveilStationRadio);
+		mg::setCron('', $heureReveil + 1.5*3600);
+		mg::setVar('_ReveilOnLine', 4);
+	}
+	
 } elseif ($reveilOnLine == 4) {
 	//=================================================================================================================
 	mg::messageT('', ". 4 FIN DE PROCESS");
@@ -152,7 +160,7 @@ if (!$reveilOnLine) {
 	mg::setCmd($equipSonos, 'Stop');
 	mg::unsetVar('_ReveilOnLine');
 
-	mg::VoletsGeneral('Etage', 'M', 1); 
+	mg::setCmd($equipVoletEtage, 'up');
 }
 
 /**********************************************************************************************************************
@@ -160,7 +168,7 @@ if (!$reveilOnLine) {
 **********************************************************************************************************************/
 function MessagePoids($user, $userLong) {
 	$infPoidsUser = trim(mg::toID("[Sys_Présence][Balance $user]", 'Poids'), '#');
-	$poids = mg::getCmd($infPoidsUser);
+	$poids = intVal(mg::getCmd($infPoidsUser));
 
   	$startDate = date('Y-m-d', time()-6*24*3600) . ' 00:00:00';
   	$endDate = date('Y-m-d', time()) . ' 23:59:59';
@@ -171,7 +179,7 @@ function MessagePoids($user, $userLong) {
 
   	$startDate = date('Y-m-d', time()-30*24*3600) . ' 00:00:00';
   	$endDate = date('Y-m-d', time()-24*24*3600) . ' 23:59:59';
-	$avgMois = scenarioExpression::averageBetween(trim($infPoidsUser, '#'), $startDate, $endDate);
+	$avgMois = intval(scenarioExpression::averageBetween(trim($infPoidsUser, '#'), $startDate, $endDate));
 	$deltaMois = round($avgMois - $poids, 1);
 	$sensMois = $deltaMois > 0 ? "en baisse" : "en hausse";
 	$deltaMois = abs($deltaMois);

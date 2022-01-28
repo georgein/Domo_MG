@@ -32,8 +32,8 @@ IMPORTANT : Le script DOIT être lancé après 00:00, soit le jour du réveil, p
 /*********************************************************************************************************************/
 
 // Si Set manuel on positionne la variable '_ReveilManuel' pour ne pas faire la première demande de calcul automatique
-if (mg::declencheur('Heure_Reveil')) {
-	if ( mg::getVar('_ReveilManuel') == 1 && time() < mg::getVar('_Heure_Reveil') ) {
+if (mg::declencheur('heureReveil')) {
+	if ( mg::getVar('_ReveilManuel') == 1 && time() < mg::getVar('heureReveil') ) {
 		mg::unsetVar('_ReveilManuel');
 		return;
 	}
@@ -46,7 +46,7 @@ $jour = ($jour > 6) ? 0 : $jour;
 $detailsTabExceptions = explode(';', $tab_ReveilExceptions[$jour]);
 
 // Lecture des agendas, WE et tableau d'exceptions
-if (!mg::declencheur('Heure_Reveil')) {
+if (!mg::declencheur('heureReveil')) {
 mg::Message('', "-------------------------------------- LECTURE AGENDAS --------------------------------------------");
 	$alarmTime = $reveilHeureNormale;
 
@@ -83,7 +83,7 @@ mg::Message('', "-------------------------------------- LECTURE AGENDAS --------
 // Si mise à jour manuelle des sets on lis les set
 } else {
 mg::Message('', "------------------------------------- LECTURE DU SLIDER -------------------------------------------");
-	$myDate = mg::getCmd($equipReveil, 'Heure_Reveil')/1000;
+	$myDate = mg::getCmd($equipReveil, 'heureReveil')/1000;
 }
 
 // Gestion du mode On/Off
@@ -96,8 +96,8 @@ mg::Message('', "------------------------------------- ACTIVATION REVEIL -------
 // Correction du jour de l'alarme à programmer 
 	if ($myDate < time()) { $myDate = $myDate + (24*3600); }
 	
-	mg::setVar('_Heure_Reveil', $myDate);
-	if (!mg::declencheur('Heure_Reveil')) { mg::setCmd($equipReveil, 'Reveil_Slider', $myDate*1000); }
+	mg::setVar('heureReveil', $myDate);
+	if (!mg::declencheur('heureReveil')) { mg::setCmd($equipReveil, 'Reveil_Slider', $myDate*1000); }
 	mg::unsetVar('_ReveilOnLine');
 	
 	mg::setScenario($ScenarioReveil, 'activate');

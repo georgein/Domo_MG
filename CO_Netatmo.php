@@ -29,8 +29,6 @@ http://debian-facile.org/doc:media:imagemagick
 	$fileParamIni_sh = "$repUtilMg/param_ini.sh";
 
 // Paramètres :
-	$IP_Jeedom = mg::getTag('#IP#');
-	$API_Jeedom = mg::getConfigJeedom('core');
 
 // ================================================ PARAMETRAGES.INI ==============================================
 /*	

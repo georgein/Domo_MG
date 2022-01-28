@@ -20,25 +20,26 @@ Desactive l'éclairage du salon la journée et la nuit si éteint, l'active le s
 	$nuitExt = mg::getVar('NuitExt');
 	$lumSalon = mg::getCmd($equipLumSalon, 'Luminosité');
 	$etatLumiere = mg::getCmd($equipEcl, 'Lampe Générale Etat');
-	$heureReveil = mg::getVar('_Heure_Reveil');
+	$heureReveil = mg::getVar('heureReveil');
 	$timeVoletsNuit = mg::getParam('Volets', 'timeVoletsNuit');
 
 // Paramètres :
 	$logTimeLine = mg::getParam('Log', 'timeLine');
 	$seuilLumSalon = mg::getParam('Lumieres', 'seuilLumSalon');	// Seuil luminosité ambiante de passage à l'état (1) "soir".
 	$seuilNuitSalon = mg::getParam('Lumieres', 'seuilNuitSalon');	// Seuil de luminosité de passage à l'état (2) de nuit totale du salon.
-	$seuilNbMvmt = mg::getParam('Lumieres', 'seuilNbMvmt');
+	$seuilNbMvmt = 1;// mg::getParam('Lumieres', 'seuilNbMvmt');
 	$intensiteMininimum = mg::getParam('Lumieres', 'intensiteMininimum');
 	$ambianceDefaut = intval(mg::getParam('Lumieres', 'ambianceDefaut'));
 
-/**********************************************************************************************************************/
-/**********************************************************************************************************************/
-/**********************************************************************************************************************/
+// ********************************************************************************************************************
+// ********************************************************************************************************************
+// ********************************************************************************************************************
+
 $oldNuitSalon = $nuitSalon;
 
 // NE PAS DERANGER
 $nePasDeranger = mg::TimeBetween(strtotime($timeVoletsNuit), time(), $heureReveil);
-if ($nePasDeranger != mg::getVar('nePasDeranger')) mg::setVar('nePasDeranger', $nePasDeranger);
+mg::setVar('nePasDeranger', $nePasDeranger);
 
 if (mg::getCmd($infCinemaEtat)) { return; }
 
@@ -49,7 +50,7 @@ if ( ($nuitSalon == 2 && $nbMvmt >= $seuilNbMvmt)
 	$message = "NuitSalon - Passage à SoirSalon (1).";
 }
 // JOUR
-elseif ($nuitSalon != 0 && $lumSalon >= $seuilLumSalon*1.35) {
+elseif ($nuitSalon > 0 && $lumSalon >= $seuilLumSalon*1.35) {
 	$nuitSalon = 0;
 	$message = "NuitSalon - Passage à JourSalon (0).";
 }
@@ -59,25 +60,38 @@ if ($lumSalon < $seuilNuitSalon && $nuitExt) {
 	$message = "NuitSalon - Passage à NuitSalon (2).";
 }
 
-//$nuitSalon = 1; // POUR DEBUG
+//$nuitSalon = 1; // POUR DEBUG //////////////////////////////
 
-// Si changement
+// ********************************************************************************************************************
+// *************************************************** SI CHANGEMENT **************************************************
+// ********************************************************************************************************************
 if ($nuitSalon != $oldNuitSalon) {
 	mg::setVar('NuitSalon', $nuitSalon);
 	if ($nuitSalon == 2 || $oldNuitSalon == 2) { mg::Message($logTimeLine, $message); }
 
-	// Allumage le soir et pas en alarme
-	if (!$alarme && $nuitSalon == 1) {
-		if ($etatLumiere < $intensiteMininimum && $nbMvmt >= $seuilNbMvmt) {
+	// ********** ALARME DE NUIT **********
+	$mode = mg::getCmd($equipAlarme, 'Mode');
+	// Activation
+	$statutAlarme = mg::getCmd($equipAlarme, 'Statut');
+	if ($nuitSalon == 2 && $statutAlarme == 0) {
+		mg::Message("$logAlarme/mgDomo", "Alarme - Activation de l'alarme 'Nuit'.");
+		mg::setCmd($equipAlarme, 'Activation Nuit');
+	}
+	// Désactivation
+	elseif ($nuitSalon != 2 && $mode == 'Activation Nuit' && $statutAlarme == 1) {
+		mg::Message("$logAlarme/mgDomo", "Alarme - Désactivation de l'alarme 'Nuit'.");
+		mg::setCmd($equipAlarme, 'Désactiver');
+	}
+
+	// ********** ALLUMAGE DU SOIR **********
+	if ($alarme != 1 && $nuitSalon == 1) {
 			mg::setCmd($equipEcl, 'Lampe Ambiance Slider', $ambianceDefaut);
 			mg::setCmd($equipEcl, 'Lampe Générale Slider', $intensiteMininimum);
-		}
 	// Extinction sinon
 	} else {
 		mg::setCmd($equipEcl, 'Lampe Générale Slider', 0);
+		sleep(120); // Pour éviter yoyo sur passage à nuit et nbMvmt
 	}
-
-	sleep(300); // Pour éviter yoyo sur passage à nuit et nbMvmt
 }
 
 ?>

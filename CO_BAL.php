@@ -11,8 +11,8 @@ Gestion de la boite aux lettres.
 
 //Variables :
 	$nePasDeranger = mg::getVar('nePasDeranger', 0);
-	$destinataire = "Log:/_TimeLine, Message, TTS:GOOGLECAST, SMS:@MG";
-	$heureReveil = mg::getVar('_Heure_Reveil');
+	$destinataire = "Log:/mgDomo, Message, TTS:defaut, SMS:@MG";
+	$heureReveil = mg::getVar('heureReveil');
 
 	$lastPorteEntree = round(scenarioExpression::lastChangeStateDuration($inPorteEntree, 1) / 60);
 mg::message('', "lastPorteEntree - $lastPorteEntree");

@@ -9,7 +9,7 @@ Si le lancement est effectué par le sheduler et par les déclencheurs de proxim
 
 	si lancement par sheduler :
 	2 - si pas Connecté parcours la table ARP
-	3 - si pas Connecté Ping l'équipement 
+	3 - si pas Connecté Ping l'équipement
 	4 - si pas Connecté recherche dans le routeur le premier équipement connecté COMPORTANT le nom du user et le marque comme présent
 	3 - si pas Connecté teste le BLEA
 
@@ -24,8 +24,8 @@ Met à jour le tableau HTML des users.
 global $debug;
 
 // Infos, Commandes et Equipements :
-	// $infNbMvmtSalon, $infTabReseau_Aff
-	// $EquipGeoloc,
+	// $equipTabReseau, $infPorteEntree
+	// $equipPresence, $equipAlarme, $equipNuki
 
 // N° des scénarios :
 	$scen_LancementAlarme = 57;		// N° du scénario du digicode déclenchant l'alarme
@@ -44,6 +44,7 @@ global $debug;
 
 	$tabUser = mg::getTabSql('_tabUsers');
 	$tabUserTmp = mg::getVar('tabUsersTmp'); // Table des valeurs volatiles
+	$timingAlarmeEntree = mg::getParam('Alarme', 'timingEntree');	// Temps maximum (en mn depuis le dernier mouvement de la porte d"entrée pour autoriser le lancement de l"alarme si AutoPrésence.
 
 	$logAlarme = mg::getParam('Log', 'alarme');
 
@@ -72,6 +73,8 @@ mg::setInf($equipTabReseau, 'Maj_Aff', 0);
 // --------------------------------------------------------------------------------------------------------------------
 // Parcours de la table des Users
 foreach ($tabUser as $user => $detailsUser) {
+	$codeUser = str_replace('Tel-', '', $user);
+
 	if ($tabUser[$user]['visible'] == 0) { continue; }
 	if (!isset($tabUserTmp[$user]['lastNOK'])) { $tabUserTmp[$user]['lastNOK'] = 0; }
 	if (!isset($tabUserTmp[$user]['OK'])) { $tabUserTmp[$user]['OK'] = 0; }
@@ -81,6 +84,7 @@ foreach ($tabUser as $user => $detailsUser) {
 	$MAC = strtolower($tabUser[$user]['MAC']);
 	$class = isset($tabUser[$user]['class']) ? trim($tabUser[$user]['class']) : '';
 	$config = isset($tabUser[$user]['config']) ? trim($tabUser[$user]['config']) : '';
+	$JC = isset($tabUser[$user]['JC']) ? intVal($tabUser[$user]['JC']) : '0';
 	$nomBLEA = isset($tabUser[$user]['BLEA']) ? trim($tabUser[$user]['BLEA']) : '';
 	$geofence = isset($tabUser[$user]['geo']) ? floatval($tabUser[$user]['geo']) : 9999; // Distance min pour être considéré comme présent
 	$type = isset($tabUser[$user]['type']) ? trim($tabUser[$user]['type']) : ''; // Type 'user' ou ''
@@ -88,60 +92,82 @@ foreach ($tabUser as $user => $detailsUser) {
 	$equipUser = "[$equipVirtuel][$user]";
 	$cmd_id = trim(mg::toID($equipUser, 'Présence'), '#');
 	$OK = null;
-
-	// ******** On saute si pas 'schedule' et (pas user ********
-	if (!$declencheurShedule && !$declencheurUser && $type != 'user') continue; 
+	$lastValueDate = abs($tabUserTmp[$user]['OK']);
+	
+	// ******** On saute si pas 'schedule' et pas user ********
+	if (!$declencheurShedule && !$declencheurUser && $type != 'user') continue;
 	// Scan du réseau sinon
-	elseif(!$pluginRouteur) ScanReseau($interfaceReseau, $scanReseau); 
+	elseif(!$pluginRouteur) ScanReseau($interfaceReseau, $scanReseau);
 	// ------------------------------------------------------------------------------------------------------------------
 	// ------------------------------------------------------------------------------------------------------------------
+
 	// Test de localisation
 	if ($geofence > 0 && !$OK) {
+		mg::getCmd("#[Sys_Comm][$user][Position]#", '', $collectDate, $valueDate);
 		if (mg::getVar("dist_$user", 9999) < $geofence) {
-			$OK .= " GEOFENCE";
+			if ($valueDate > $lastValueDate) {
+				$lastValueDate = $valueDate;
+				$OK .= " GEOFENCE";
+			}
 		}
 	}
-
-	// Test ARP-SCAN de l'IP/MAC
-	if (!$pluginRouteur && $MAC && !$OK) {
-		if (getUser($user, $IP, $MAC, $interfaceReseau, $scanReseau)) {
-			$OK .= ' - ARP-SCAN ';
+	
+	// Test JEEDOM CONNECT
+	if ($JC == 1 && !$OK) {
+		if (strpos(mg::getCmd("#[Sys_Comm][$user][Réseau wifi (SSID)]#", '', $collectDate, $valueDate), 'Livebox-MG') !== false) {
+			if ($valueDate > $lastValueDate) { 
+				$lastValueDate = $valueDate; 
+				$OK .= " JC";
+			}
 		}
 	}
-
+	
 	// Test Bluetooth BLEA
 	if ($nomBLEA && !$OK) {
-		if (getBLEA("#[Sys_Présence][$nomBLEA][Rssi]#", $tempoBLEA)) {
-			$OK .= ' - BLEA ';
+		if (getBLEA("#[Sys_Présence][$nomBLEA][Rssi]#", $tempoBLEA, $valueDate)) {
+			if ($valueDate > $lastValueDate) { 
+				$lastValueDate = $valueDate; 
+				$OK .= ' - BLEA ';
+			}
 		} else {
 			$OK = '';
 		}
 	}
-	
+
 	// Test via routeur
 	if ($pluginRouteur && !$OK) {
-		$presence = 0;
 		$eqLogics = eqLogic::all();
 		foreach($eqLogics as $eqLogic) {
 			$name = $eqLogic->getName();
 			$typeName = $eqLogic->getEqType_name();
 			if ($typeName == $pluginRouteur && strpos($name, $user) !== false) {
 				$equipUser = $eqLogic->getHumanName();
-				$presence = mg::getCmd($cmd_id);
-				if ($presence) {
-					$adresseIP = mg::getCmd($equipUser, 'Adresse IP');
-					$IP = strlen($adresseIP) > 2 ? $adresseIP : $IP;
+				if (mg::getCmd($equipUser, 'Présence', $collectDate, $valueDate) == 1) {
+					$IP = mg::getCmd($equipUser, 'Adresse IP');
+					mg::setValSql('_tabUsers', $user, '', 'IP', $IP);
 					$MAC = strtolower($eqLogic->getLogicalId());
+					mg::setValSql('_tabUsers', $user, '', 'MAC', $MAC);
+					if ($valueDate > $lastValueDate) $lastValueDate = $valueDate;
 					$OK .= " - ROUTEUR";
 					continue;
 				}
+				if ($valueDate > $lastValueDate) $lastValueDate = $valueDate;
 			}
 		}
 	}
-	
+
+	// Test ARP-SCAN de l'IP/MAC
+	if (!$pluginRouteur && $MAC && !$OK) {
+		if (getUser($user, $IP, $MAC, $interfaceReseau, $scanReseau)) {
+			$lastValueDate = time();
+			$OK .= ' - ARP-SCAN ';
+		}
+	}
+
 	// Test Ping direct de l'adresse IP si lancement shedule ET PAS DE PLUGIN ROUTEUR //////////////////////////////
 	if (!$pluginRouteur && $declencheurShedule && $IP && !$OK) {
 		if (mg::getPingIP($IP, $user)) {
+			$lastValueDate = time();
 			$OK .= " - PING";
 		}
 	}
@@ -154,35 +180,70 @@ foreach ($tabUser as $user => $detailsUser) {
  //************************************* CALCUL DE LA POSITION GLOBALE DU USER ****************************************
 	// RECALCUL DU USER OK D'AFFICHAGE
 	if ($OK) {
-		$tabUserTmp[$user]['OK'] = (time() - scenarioExpression::lastChangeStateDuration($cmd_id, 1));
+//		$tabUserTmp[$user]['OK'] = (time() - scenarioExpression::lastChangeStateDuration($cmd_id, 1));
+		$tabUserTmp[$user]['OK'] = $lastValueDate;
 		$tabUserTmp[$user]['lastNOK'] = 0;
 	} else {
 		if ($tabUserTmp[$user]['lastNOK'] == 0) {
-			$tabUserTmp[$user]['lastNOK'] = time();
+//			$tabUserTmp[$user]['lastNOK'] = time();
+			$tabUserTmp[$user]['lastNOK'] = $lastValueDate;
 		} elseif ((time() - $tabUserTmp[$user]['lastNOK']) > $tempoNOK) {
-			$tabUserTmp[$user]['OK'] = -(time() - scenarioExpression::lastChangeStateDuration($cmd_id, 0));
+//			$tabUserTmp[$user]['OK'] = -(time() - scenarioExpression::lastChangeStateDuration($cmd_id, 0));
+			$tabUserTmp[$user]['OK'] = -$lastValueDate;
 
 		}
 	}
 
 	//************************************************* BILAN USER ****************************************************
-	// Compteur de présence user
-	if ($type == 'user' && $OK) { $nbPresences++; }
+	// MàJ user et Compteur de présence user
+	if ($type == 'user') {
+		if ($OK) $nbPresences++;
+
+		// Changement de statut présence du $user
+		if (mg::getCmd($equipPresence, $codeUser) != ($OK ? 1 : 0)) {
+
+			if (!$OK) {
+mg::message("Log:/mgDomo", "=============== '$user' (OK : $OK) - '".($OK ? 1 : 0)."' <=> '".mg::getCmd($equipPresence, $codeUser)."'");		
+				mg::Message("lLog:/mgDomo", "Présence - Départ de $user (et relance 'tracking' de JC.");
+
+				// Réactivation de 'tracking' au départ du user
+				$equipJC = "#[Sys_Comm][$user]#";
+
+				mg::setCmd($equipJC, 'Modifier Préférences Appli', 'OFF', 'jcService');
+				usleep(0.5 * 1000000);
+				mg::setCmd($equipJC, 'Modifier Préférences Appli', 'ON', 'jcService');
+				usleep(0.5 * 1000000);
+	
+				mg::setCmd($equipJC, 'Modifier Préférences Appli', 'OFF', 'tracking');
+				 usleep(0.5 * 1000000);
+				mg::setCmd($equipJC, 'Modifier Préférences Appli', 'ON', 'tracking');
+
+			} else {
+mg::message("Log:/mgDomo", "=============== '$user' (OK : $OK) - '".($OK ? 1 : 0)."' <=> '".mg::getCmd($equipPresence, $codeUser)."'");		
+				mg::Message("Log:/mgDomo", "Présence - Arrivée de $user.");
+			}
+		}
+
+		// MàJ cmd de présence du user
+		mg::setInf($equipPresence, $codeUser, ($OK ? 1 : 0));
+	}
 
 	// ================================================================================================================
-	mg::messageT('', ". $user " . ($OK ? "PRESENT" : "***ABSENT***)") . " Depuis le " . date('d\/m \à H\hi\m\n', (abs($tabUserTmp[$user]['OK']))) . " sec. ($OK) - ($IP / $MAC)");
+	mg::messageT('', "$user - $IP " . ($OK ? mg::_debCo_ . "*** PRESENT ***" : mg::_debCr_ . "*** ABSENT ***") . " $user - $IP Depuis le " . date('d\/m \à H\hi\m\n', $lastValueDate) . mg::_finC_ . " ($OK) - ($IP / $MAC)");
 	// ================================================================================================================
 
 	$tabUserTmp[$user]['equipStat'] = $cmd_id;
-	if ($IP) { 
-		$tabUser[$user]['IP'] = $IP; 
-		mg::setValSql('_tabUsers', $user, '', 'IP', $IP);//////////////////////////////////
-	}
-	$tabUser[$user]['MAC'] = strtolower($MAC);
-	mg::setValSql('_tabUsers', $user, '', 'MAC', $MAC); /////////////////////////////////////
+
 } // Fin boucle user
 
-	mg::messageT('', "! Il y a $nbPresences user(s) sur le site.");
+// Gestion serrure NUKI si changement de $nbPresences
+if ($nbPresences != mg::getCmd($equipPresence, 'nbUser')) {
+	if ($nbPresences > 0) mg::setCmd ($equipNuki, 'Déverrouiller');
+	else mg::setCmd ($equipNuki, 'Verrouiller');
+	mg::setInf($equipPresence, 'nbUser', $nbPresences);
+}
+
+mg::messageT('', "! Il y a $nbPresences user(s) sur le site.");
 
 // ********************************************************************************************************************
 // *********************************************** GESTION DE L'ALARME ************************************************
@@ -190,13 +251,24 @@ foreach ($tabUser as $user => $detailsUser) {
 $alarme = mg::getVar('Alarme', 0);
 // Arrêt de l'alarme si présence OK et si elle est en route
 if ($nbPresences > 0 && $alarme == 1) {
-	mg::Message("$logAlarme/_TimeLine", "Alarme - Présence détectée. Arrêt de l'Alarme.");
-	mg::setScenario($scen_LancementAlarme, 'start');
+		mg::Message("$logAlarme/mgDomo", "Alarme - Présence détectée. Arrêt de l'Alarme.");
+		mg::setCmd($equipAlarme, 'Désactiver');
 }
+
 // Mise en route de l'alarme si personne et pas déja active
-elseif ($nbPresences == 0 && $alarme == 0) {
-mg::Message("$logAlarme/_TimeLine", "Alarme - Aucune présence détectée. Lancement de l'alarme.");
-mg::setScenario($scen_LancementAlarme, 'start');
+elseif ($nbPresences == 0 && $alarme != 1) {
+	$dureePorte = scenarioExpression::lastChangeStateDuration($infPorteEntree, 1)/60;
+	if ($dureePorte >= $timingAlarmeEntree) {
+		mg::Message("$logAlarme/mgDomo", "Lancement de l'alarme annulée (pas de porte d'entrée ouverte depuis plus de " . round($dureePorte, 0) . "minutes.");
+	}
+	elseif (mg::getCmd($infPorteEntree) == 0) {
+		mg::Message("$logAlarme/mgDomo", "La porte d'entrée est ouverte. Armement de l'alarme impossible !");
+	}
+	// Lancement de l'alarme
+	else {
+mg::Message("$logAlarme/mgDomo", "Alarme - Aucune présence détectée. Lancement de l'alarme.");
+	mg::setCmd($equipAlarme, 'Activation Jour');
+	}
 }
 
 // ********************************************************************************************************************
@@ -204,14 +276,14 @@ mg::setScenario($scen_LancementAlarme, 'start');
 // ********************************************************************************************************************
 ksort($tabUser, SORT_STRING);
 mg::setVar('tabUsersTmp', $tabUserTmp);
-mg::setVar('Présence', $nbPresences);
+//mg::setVar('Présence', $nbPresences);
 
 $HTML = MakeTabReseau($tabUser, $tabUserTmp, $script, $pathRef);
 $HTML .= styleTab();
 
 //file_put_contents($fileExportHTML, $HTML); /* Pour Debug */
 file_put_contents($fileExportJS, $script);
-mg::setInf($infTabReseau_Aff, '', $HTML);
+mg::setInf($equipTabReseau, 'TabReseau_Aff', $HTML);
 
 // ********************************************************************************************************************
 // ********************************************************************************************************************
@@ -220,9 +292,9 @@ mg::setInf($infTabReseau_Aff, '', $HTML);
 // ----------------------------------------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------------------------------------
 // BLEA
-function getBLEA($cmd, $tempoBLEA) {
+function getBLEA($cmd, $tempoBLEA, &$valueDate) {
 	if (mg::existCmd($cmd)) {
-		$BLEA_RSSI = mg::getCmd($cmd);
+		$BLEA_RSSI = mg::getCmd($cmd, '', $collectDate, $valueDate);
 		$BLEA_Last = scenarioExpression::StateDuration(mg::toID($cmd));
 		if ($BLEA_RSSI && $BLEA_RSSI > -190 && $BLEA_Last >= $tempoBLEA) {
 			return true;
@@ -278,8 +350,8 @@ function getUser(&$user, &$IP, &$MAC, $interfaceReseau, $scanReseau) {
 		if (strtolower($MAC) == $MAC_) {
 			//mg::message('', "===============> getUser ==> $i - IP : $IP / $IP_ - MAC : $MAC / $MAC_ ***");
 			$IP = $IP_;
-			$tabUser[$user]['IP'] = $IP; 
-//			$tabUser[$user]['MAC'] = strtolower($MAC); 
+			$tabUser[$user]['IP'] = $IP;
+//			$tabUser[$user]['MAC'] = strtolower($MAC);
 			return true;
 		}
 	}
@@ -343,7 +415,7 @@ $HTML = "
 		$IP = @isset($tabUser[$user]['IP']) ? trim($tabUser[$user]['IP']) : '';
 		$MAC = @isset($tabUser[$user]['MAC']) ? trim($tabUser[$user]['MAC']) : '';
 		$port = @isset($tabUser[$user]['port']) ? trim($tabUser[$user]['port']) : '';
-		
+
 		$equipStat = @isset($tabUserTmp[$user]['equipStat']) ? trim($tabUserTmp[$user]['equipStat']) : '';
 
 		if($port) { $IP2 = $IP . $port; } else { $IP2 = $IP; }
@@ -375,11 +447,11 @@ $HTML = "
 				<td class=c-$lgn-2>$btHisto</td>
 			</tr>
 		";
-		
-	$script .= 
+
+	$script .=
 	"$('.Histo$user2').on('click',function(){ graph('$user', $equipStat); });
 	";
-		
+
 	}
 
 $HTML .= "	</table>
