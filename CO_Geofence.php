@@ -44,7 +44,7 @@ global $layerDefaut, $epaisseur, $sizePoint, $pauseSize, $colorVoiture, $refresh
 	$distMin = 100;							// Distance min du wayPoint pour nommer la rando
 	$distMax = 20000; 						// Distance max du wayPoint pour nommer la rando
 
-	$nbPointsMaxAff = 1800;					// Nombre de points maximum affichable
+	$nbPointsMaxAff = 1500;					// Nombre de points maximum affichable
 
 // Paramètres :
 	$latitudeHome = round(mg::getConfigJeedom('core', 'info::latitude'), 5);
@@ -59,50 +59,47 @@ global $layerDefaut, $epaisseur, $sizePoint, $pauseSize, $colorVoiture, $refresh
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-//RecalculBase ($user = 'NR');
-//return;
-
-	$userAppel = trim(mg::getTag('userAppel'), '#');
+//	$userAppel = trim(mg::getTag('userAppel'), '#');
 
 	$typeGPX = '';
 	$buffTmp = 0;
 	$values = array();
 	$result = array();
-	$userAppel = '';
 	$lastLatLng = '';
 	$dateSQLTest = '';
 	$dateSQL = date('Y\-m\-d', time()); // Date du jour au format SQL
 
-// *********************************************** CALCUL DU USER APPEL ************************************************
+// ***************************************** CALCUL DU USER APPEL VIA DAEMON ******************************************
 if (mg::declencheur('scenario')) {
 	$userAppel = mg::getTag('userAppel');
 }
 
 // Si déclencheur user (manuel POUR DEBUG)
-elseif (mg::declencheur('user')) {
-	$userAppel = 'NR';
-//		$dateSQLTest = '2011-02-18';
+elseif (!mg::declencheur('Tel-')) {
+	$userAppel = 'Tel-NR';
+	//$dateSQLTest = '2011-02-18';
 }
 
 // *********************************** BOUCLE SUR TOUS LES USERS DE TYPE 'geofence' ***********************************
 foreach ($tabUser as $user => $detailsUser) {
 	if ($detailsUser['geo'] == 0) continue;
-	$_user = str_replace('Tel-', '', $user);
-	if ($userAppel == '') $userAppel = $_user;
 
 	// Style pour bornes kilomètriques
-	$styleUser = $styleUser."\n	.borneKm$_user { border-color: ".$detailsUser['colorGeofence']."; }";
+	$styleUser = $styleUser."\n	.borneKm$user { border-color: ".$detailsUser['colorGeofence']."; }";
 
-	if (mg::declencheur('user') || $_user == $userAppel || @$tabGeofence[$user]['dateActive'] != $dateSQL || getVar("tabGeofence_L_$_user", '') == '') {
-		calculUser($_user, $dateSQL, $dateSQLTest);
+	if (mg::declencheur('user') || $user == $userAppel || @$tabGeofence[$user]['dateActive'] != $dateSQL || mg::getVar("tabGeofence_L_$user", '') == '') {
+		calculUser($user, $dateSQL, $dateSQLTest);
 	} else {
-		unset($tabGeofence[$_user]);
+		unset($tabGeofence[$user]);
 	}
 }
 
+mg::message('', "xxxxxxxxxxx $userAppel - $user");
+if ($userAppel == '') $userAppel = $user;
+mg::message('', "xxxxxxxxxxx $userAppel - $user");
 // ********************************************************************************************************************
 mg::setVar('tabGeofence', $tabGeofence);
-$latLng_ = explode(',', mg::getCmd("#[Sys_Comm][Tel-$userAppel][Position]#"));
+$latLng_ = explode(',', mg::getCmd("#[Sys_Comm][$userAppel][Position]#"));
 $currentLatLngUserAppel = $latLng_[0] . ', ' . $latLng_[1];
 mg::messageT('', "! GENERATION du HTML de GEOFENCE, userAppel $userAppel pour le $dateSQL (currentLatLngUserAppel : $currentLatLngUserAppel)");
 
@@ -123,7 +120,7 @@ function calculUser($user, $dateSQL, $dateSQLTest) {
 	$idUser = trim(mg::toID($equipMapPresence, $user), '#');
 
 	// ********************************************* MAJ WIDGET GOOGLE MAP ********************************************
-	$latLng_ = explode(',', mg::getCmd("#[Sys_Comm][Tel-$user][Position]#"));
+	$latLng_ = explode(',', mg::getCmd("#[Sys_Comm][$user][Position]#"));
 	$tmp = mg::getParamWidget($idUser, '');
 	$tmp['from'] = $latLng_[0] . ', ' . $latLng_[1];
 	mg::setParamWidget($idUser, '', $tmp);
@@ -147,17 +144,17 @@ function calculUser($user, $dateSQL, $dateSQLTest) {
 
 		// ------------------------------------------- SIGNALEMENT PROXIMITE ------------------------------------------
 		if ($user == $userAppel) {
-mg::messageT('', "Approche de $user à $dist");/////////////////////////////
-			mg::setVar("dist_Tel-$user", $dist);
-			$distanceMax = floatval($tabUser["Tel-$user"]['geo']);
+mg::messageT('', "Approche de $user à $dist");
+			mg::setVar("dist_$user", $dist);
+			$distanceMax = floatval($tabUser[$user]['geo']);
 			$oldDist = mg::getVar("_OldDist_$user", $dist);
 mg::Message('', "+++ $user == $userAppel - max : $distanceMax - dist : $dist - old : $oldDist - ");
 			if (abs($dist-$oldDist) > $distanceMax && $dist < $oldDist * $coeffDist && $dist > $distanceMax) {
 				$distTxt = str_replace('.', ',', round($dist, 1));
-				mg::message($destinataires, $user[0].' '.$user[1]." en approche à $distTxt kilomètres.");
+				mg::message($destinataires, $user[4].' '.$user[5]." en approche à $distTxt kilomètres.");
 				mg::setVar("_OldDist_$user", $dist);
 			} else {
-				mg::setVar("_OldDist_$userAppel", max($dist, $oldDist));
+				mg::setVar("_OldDist_$user", max($dist, $oldDist));
 			}
 		}
 	}
@@ -173,7 +170,8 @@ function calculDetailsUser($user, $dateSQL, $idUser) {
 	$values = array();
 	$result = array();
 
-	$fileGPX= $pathGeofence."/histo_$user/$dateSQL.gpx";
+	$codeUser = trim(str_replace('Tel-', '', $user), '_'); //////////////////////////////////////
+	$fileGPX = $pathGeofence."/histo_$codeUser/$dateSQL.gpx";
 
 	$tabGeofence[$user]['dureeMouvement'] = 0;
 	$tabGeofence[$user]['debTime'] = 0;
@@ -203,7 +201,6 @@ function calculDetailsUser($user, $dateSQL, $idUser) {
 	$lastCloture = 0;
 	$nbLignes = 0;
 	$nbLignesGPX = 0;
-	$lastActivite = '';
 	$lastPointAffichage  = 0;
 
 	// ********************************************* FIN D'INITIALISATION *********************************************
@@ -228,7 +225,7 @@ ORDER BY `datetime` ASC
 	$result = DB::Prepare($sql, (array)$values, DB::FETCH_TYPE_ALL);
 
 	// Si pas date du jour et .gpx existe on le récupère
-	 if ((/*$tabGeofence[$user]['cloture'] > 0 &&*/ $dateSQL != date('Y\-m\-d', time())) && file_exists($fileGPX)) {
+	 if (($dateSQL != date('Y\-m\-d', time())) && file_exists($fileGPX)) {
 		$result = getGPX($user, $fileGPX);
 	}
 	mg::messageT('', "Parcours des positions du jour ".count($result)." points réduits à $nbPointsMaxAff points maximum");
@@ -253,9 +250,10 @@ ORDER BY `datetime` ASC
 
 		$pcBatterie = get('pcBatterie', $result, $i);
 		$SSID = get('SSID', $result, $i);
-//		if ($SSID == '') $SSID = 'Pas de SSID'; /////////////////////
-		
+		if ($SSID == '') $SSID = 'Pas de SSID';
+
 		$activite = get('activite', $result, $i);
+		$activiteOrg = $activite;
 
 		if ($i > 0) {
 			$ecart = round(get('ecart', $result, $i), 3);
@@ -266,21 +264,17 @@ ORDER BY `datetime` ASC
 			$vitesseAltitude = get('vitesseAltitude', $result, $i);
 
 			// ******************************************* GESTION ANOMALIES ******************************************
-			if ($SSID != 'Pas de SSID') $activite = 'I'; // ***** FORCE A 'I' SI SOUS WIFI *****
+			// ***** FORCE A 'I' SI SOUS WIFI *****
+			if (get('SSID', $result, $i-1) != 'Pas de SSID' && $SSID != 'Pas de SSID' && get('SSID', $result, $i+1) != 'Pas de SSID') $activite = 'I';
 
-//			if ($SSID != 'Pas de SSID' && $vitesseEcart > 1 /*&& $activite != 'I'*/) $SSID = 'Pas de SSID'; // ***** FORCE SSID *****
+			// ANOMALIES ------------------------------ ANOMALIES HORS ENTRAINEMENTS ------------------------------
+			if (($vitesseEcart > 6 && get('vitesseEcart', $result, $i-1) > 6 )) $activite = 'V';
 
 			// ANOMALIES ------------------------------ ANOMALIES ENTRAINEMENTS EN COURS ------------------------------
-				if ($activite == 'I' && $vitesseEcart > 1) $activite = 'E'; // Correction des pauses indues
 			if ($tabGeofence[$user]['debTime'] > 0 && $tabGeofence[$user]['cloture'] == 0) {
-				if ($vitesseEcart > 15 /*|| $ecart > 0.05*/) $inhibe = 1; // POINT ABERRANT ??????
-				if ($activite == 'V' && $vitesseEcart < 10) $activite = 'E'; // Elimination des 'in vehicul' indues
-				if ($activite == 'I' && $vitesseEcart > 1) $activite = 'E'; // Correction des pauses indues
-
+				if ($vitesseEcart > 1 && $vitesseEcart <= 6) $activite = 'E'; // Elimination des 'in vehicul' indues
 				if ($vitesseEcart < 1) $activite = 'I'; // Forçage des pauses
-				//if (($vitesseEcart > 15 && get('vitesseEcart', $result, $i+1) > 15 )) $activite = 'V'; //////////////////////////////
-				}
-			elseif ($activite == 'I' && $vitesseEcart > 15) $activite = 'V'; // Correction des pauses indues ???????????????
+			}
 
 			// ****************************************** ACTIVITE 'V'OITURE ******************************************
 			if ($activite == 'V') {
@@ -358,7 +352,6 @@ ORDER BY `datetime` ASC
 						 || strpos($tabGeofence[$user]['SSID_Org'], $SSID) !== false
 						 || strpos($SSID, $tabGeofence[$user]['SSID_Org']) !== false
 						 || countActivites($i, $result, 'V', 5) > 2
-//						 || ($activite == 'V' && get('activite', $result, $i-2) /*$lastActivite == 'V'*/)
 					)
 					{
 					$tabGeofence[$user]['cloture'] = $datetime;
@@ -389,14 +382,13 @@ ORDER BY `datetime` ASC
 			}
 		} // ******** FIN $i > 0 ********
 
-		$message = " $i ($nbLignes) $activite $user => ".date('d-m H:i:s', $datetime) ." - $SSID - ".round($ecart, 4)." / ".round($tabGeofence[$user]['Km_E'], 2)." / ".round($tabGeofence[$user]['Km_V'], 1)." km - $dureeEcart sec - $vitesseEcart km/h - Pause : $dureePause / ".$tabGeofence[$user]['sommePause']." mn -  Alt $altitude m / ".$tabGeofence[$user]['denivelePlus'];
+		$message = date('d-m H:i:s', $datetime) . " $i ($nbLignes) $user - $SSID - $activiteOrg ($activite) - ".round($ecart, 4)." / ".round($tabGeofence[$user]['Km_E'], 2)." / ".round($tabGeofence[$user]['Km_V'], 1)." km - $dureeEcart sec - $vitesseEcart km/h - Pause : $dureePause / ".$tabGeofence[$user]['sommePause']." mn -  Alt $altitude m / ".$tabGeofence[$user]['denivelePlus'];
 
 		// ******************************************** MEMO DES RESULTATS ********************************************
-		if ($inhibe == 0 && $SSID == 'Pas de SSID' && strpos(" $SSID", $homeSSID) === false) {
-			$lastActivite = $activite;
+		if ($inhibe == 0) {
 
 			// *********************** Réduction du nb de lignes à l'affichage à $nbPointsMaxAff **********************
-			if (count($result) <= $nbPointsMaxAff || round(fmod($i, (count($result) / $nbPointsMaxAff))-0.5) == 0) {
+			if (count($result) <= $nbPointsMaxAff || round(fmod($i, (count($result) / $nbPointsMaxAff))) == 0) {
 				$tabGeofence_L .= "[$latlng,$datetime],";
 				$tabGeofence_C .= "[".$tabGeofence[$user]['Km_E'].",$vitesseEcart,$altitude,'$activite',$pcBatterie,$dureePause,$deltaI_Pause,".$tabGeofence[$user]['Km_V']."],";
 				$nbLignes++;
@@ -456,10 +448,10 @@ function get($value, $table, $index) {
 
 	// valeurs lues
 	if ($value == 'activite') return transpoActivite(@$tables[5]);
-	elseif ($value == 'SSID') return trim($tables[4]);
+	elseif ($value == 'SSID') return trim($tables[4]) != '' ? trim($tables[4]) : 'Pas de SSID';
 	elseif ($value == 'pcBatterie') return intval($tables[3]);
 
-	elseif ($value == 'altitude') return round($tables[2], 1);
+	elseif ($value == 'altitude') return round($tables[2], 0);
 	elseif ($value == 'longitude') return $tables[1];
 	elseif ($value == 'latitude') return $tables[0];
 	elseif ($value == 'latlng') return round(get('latitude', $table, $index), 5).','.round(get('longitude', $table, $index), 5);
@@ -504,16 +496,17 @@ function setActivites($user, $dateSQL, $fileGPX, $km_E=0, $km_V=0) {
 	global $tabActivite, $tabGeofence, $coeffDenivMoins, $zone;
 	$values = array();
 
+	$codeUser = trim(str_replace('Tel-', '', $user), '_'); //////////////////////////////////////
 	// Lecture de l'activité existante
-	$lgnActivite = getActivites($user, $dateSQL);
+	$lgnActivite = getActivites($codeUser, $dateSQL);
 
 	// Récupération des km_x
-	$km_E = round($km_E > 0 ? $km_E : $lgnActivite[$user]['km_E'], 1);
-	$km_V = round($km_V > 0 ? $km_V : $lgnActivite[$user]['km_V']);
+	$km_E = round($km_E > 0 ? $km_E : $lgnActivite[$codeUser]['km_E'], 1);
+	$km_V = round($km_V > 0 ? $km_V : $lgnActivite[$codeUser]['km_V']);
 
 		$zone = '';
-		$name = getNomGPX($user, $fileGPX);
-		$name = ($name != '' ? $name : $lgnActivite[$user]['name']);
+		$name = getNomGPX($codeUser, $fileGPX);
+		$name = ($name != '' ? $name : $lgnActivite[$codeUser]['name']);
 	// *********************************************** LECTURE DE L'IBP ***********************************************
 	if (file_exists($fileGPX)) {
 
@@ -535,10 +528,10 @@ function setActivites($user, $dateSQL, $fileGPX, $km_E=0, $km_V=0) {
 		$duree_Glob = (@$someArray[$Type]['totaltime'] != '' ? $someArray[$Type]['totaltime'] : 0);
 		$reference = (@$someArray['reference'] != '' ? $someArray['reference'] : '');
 
-	// ********************************************** MAJ DE L'L'ACTIVITE *********************************************
-	if ($lgnActivite[$user]['verrou'] != 1 && $km_E > 1 || $km_V > 1) {
+	// ********************************************** MAJ DE L'ACTIVITE *********************************************
+	if ($lgnActivite[$codeUser]['verrou'] != 1 && $km_E > 1 || $km_V > 1) {
 		$sql = "INSERT INTO `$tabActivite` (user,datetime,name,zone,IBP,km_E,deniv_P,deniv_M,km_Effort,duree_Mvmt,vit_Mvmt,duree_Pause,duree_Glob,vit_Glob,km_V,reference)
-				VALUES 	('$user', '$dateSQL','$name','$zone','$IBP','$km_E','$deniv_P','$deniv_M','$km_Effort','$duree_Mvmt','$vit_Mvmt','$duree_Pause','$duree_Glob','$vit_Glob','$km_V','$reference')
+				VALUES 	('$codeUser', '$dateSQL','$name','$zone','$IBP','$km_E','$deniv_P','$deniv_M','$km_Effort','$duree_Mvmt','$vit_Mvmt','$duree_Pause','$duree_Glob','$vit_Glob','$km_V','$reference')
 				ON DUPLICATE KEY UPDATE name='$name',zone='$zone',IBP='$IBP',km_E='$km_E',deniv_P='$deniv_P',deniv_M='$deniv_M',km_Effort='$km_Effort',duree_Mvmt='$duree_Mvmt',vit_Mvmt='$vit_Mvmt',duree_Pause='$duree_Pause',duree_Glob='$duree_Glob',vit_Glob='$vit_Glob',km_V='$km_V',reference='$reference'";
 		mg::message('', " +++ $sql");
 		$result = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
@@ -546,7 +539,7 @@ function setActivites($user, $dateSQL, $fileGPX, $km_E=0, $km_V=0) {
 		// ******************* MàJ $tabGeofence **************
 		if ($km_E > 1) $tabGeofence[$user]['urlIBP'] = "https://www.ibpindex.com/ibpindex/ibp_analisis_completo.php?REF=".@$someArray['reference']."&amp;LAN=fr&amp;MOD=HKG";
 
-		mg::messageT('', "$user - $km_V - Calcul index IBP (".$lgnActivite[$user]['IBP'].") au $dateSQL pour $name ($reference)");
+		mg::messageT('', "$user - $km_V - Calcul index IBP (".$lgnActivite[$codeUser]['IBP'].") au $dateSQL pour $name ($reference)");
 	}
 }
 
@@ -734,22 +727,24 @@ $geofence .= HTML_tete_JS();
 		$lastSSID = $tabGeofence[$user]['lastSSID'];
 
 		// Valeurs reprises du tableau des activités
-		$lgnActivite = getActivites($user, $dateSQL);
+		$codeUser = trim(str_replace('Tel-', '', $user), '_'); //////////////////////////////////////
+		$lgnActivite = getActivites($codeUser, $dateSQL);
 		if (is_countable($lgnActivite)) {
-			$Km_E = $lgnActivite[$user]['km_E'];
-//			if (is_countable($lgnActivite)) $Km_V = $lgnActivite[$user]['km_V']; else $Km_V = 0;///////////////////////
-			$Km_V = $lgnActivite[$user]['km_V'];
-			$IBP = $lgnActivite[$user]['IBP'];
-			$name = htmlentities($lgnActivite[$user]['name']);
-			$vitesseMoyenneTotale = $lgnActivite[$user]['vit_Glob'];
-			$vitesseMoyenneMouvement = $lgnActivite[$user]['vit_Mvmt'];
-			$deniv_P = $lgnActivite[$user]['deniv_P'];
-			$deniv_M = $lgnActivite[$user]['deniv_M'];
-			$km_Effort = $lgnActivite[$user]['km_Effort'];
+			$Km_E = $lgnActivite[$codeUser]['km_E'];
+			$Km_V = $lgnActivite[$codeUser]['km_V'];
+			$IBP = $lgnActivite[$codeUser]['IBP'];
+			$name = htmlentities($lgnActivite[$codeUser]['name']);
+			$vitesseMoyenneTotale = $lgnActivite[$codeUser]['vit_Glob'];
+			$vitesseMoyenneMouvement = $lgnActivite[$codeUser]['vit_Mvmt'];
+			$deniv_P = $lgnActivite[$codeUser]['deniv_P'];
+			$deniv_M = $lgnActivite[$codeUser]['deniv_M'];
+			$km_Effort = $lgnActivite[$codeUser]['km_Effort'];
+
 			$urlIBP = $tabGeofence[$user]['urlIBP'];
-			$duree_Glob = substr($lgnActivite[$user]['duree_Glob'], 0, -3);
-			$duree_Mvmt = substr($lgnActivite[$user]['duree_Mvmt'], 0 ,-3);
-			$duree_Pause = substr($lgnActivite[$user]['duree_Pause'], 0, -3);
+
+			$duree_Glob = substr($lgnActivite[$codeUser]['duree_Glob'], 0, -3);
+			$duree_Mvmt = substr($lgnActivite[$codeUser]['duree_Mvmt'], 0 ,-3);
+			$duree_Pause = substr($lgnActivite[$codeUser]['duree_Pause'], 0, -3);
 		}
 		else {
 		// Valeurs reprises de $tabGeofence (Affichage activité en cours non terminée)
@@ -779,12 +774,11 @@ $geofence .= HTML_tete_JS();
 
 		$polylineAll .= "polyline$user,";
 
-		$imgBouton = "$user.png";
-
-		$colorUser = $tabUser["Tel-$user"]['colorGeofence'];
+		$imgBouton = "$codeUser.png";
+		$colorUser = $tabUser["$user"]['colorGeofence'];
 		$numUser++;
 
-		$geofence .= HTML_userJS($user, $numUser, $latlngs, $complements, $recul, $colorUser, $imgBouton, $debTime, $deniv_P, $deniv_M,$debTimeStr,  $clotureStr, $duree_Glob, $duree_Mvmt, $duree_Pause, $vitesseMoyenneTotale, $vitesseMoyenneMouvement, $Km_E, $Km_V, $km_Effort, $IBP, $name, $urlIBP, $lastTimeStr, $lastPcBatterie, $lastSSID);
+		$geofence .= HTML_userJS($codeUser, $numUser, $latlngs, $complements, $recul, $colorUser, $imgBouton, $debTime, $deniv_P, $deniv_M,$debTimeStr,  $clotureStr, $duree_Glob, $duree_Mvmt, $duree_Pause, $vitesseMoyenneTotale, $vitesseMoyenneMouvement, $Km_E, $Km_V, $km_Effort, $IBP, $name, $urlIBP, $lastTimeStr, $lastPcBatterie, $lastSSID);
 	}
 
 	$geofence .= HTML_Pied($user, $userAppel, $layerDefaut, $pathRef, $polylineAll);
@@ -1129,7 +1123,7 @@ return "
 		var date = new Date(time);
 		annee = date.getFullYear();
 		moi = date.getMonth();
-	   mois = new Array('Janvier', 'F&eacute;vrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Ao&ucirc;t', 'Septembre', 'Octobre', 'Novembre', 'D&eacute;cembre');
+	    mois = new Array('Janvier', 'F&eacute;vrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Ao&ucirc;t', 'Septembre', 'Octobre', 'Novembre', 'D&eacute;cembre');
 		j = date.getDate();
 		jour = date.getDay();
 		jours = new Array('Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi');
@@ -1164,7 +1158,7 @@ return "
 
 		// ******************************************* Marqueur ENTRAINEMENT ******************************************
 		} else if (activite == 'E') {
-			var pente = -0.0;
+			var pente = 0;
 
 			if (i >= $recul) {
 				var deltaAltitude = Math.round((altitude-parseFloat(complements[i-$recul][2]))*10)/10;
@@ -1174,6 +1168,7 @@ return "
 
 			message = '<center> $user : ' + dateString + ' - ' + Km_E + ' km - Alt. ' + Math.round(altitude) + ' m - pente ' + pente + ' %' + '<br>Coordonn&eacute;es : (' + latitude + ' , ' + longitude + ') ' + ' - Bat. ' + pcBatterie + ' %';
 
+			//colorPente = 'grey';
 			if 		(pente > 25) colorPente = 'DarkRed';
 			else if (pente > 14.5) colorPente = 'red';
 			else if (pente > 8.5) colorPente = 'OrangeRed';
@@ -1197,6 +1192,10 @@ return "
 			if (dureePause > $pauseMin) {
 				L.marker( latlngs[i-deltaI_Pause], {icon: iconPauseLongue} ).bindTooltip('$user : ' + dateStringPause + ' - PAUSE de ' + Math.round(dureePause) + ' mn - Alt ' + altitude + ' m').addTo( map );
 			}
+
+			// ******************************************** Marqueur ANOMALIES ********************************************
+			message = '<center> $user : ' + dateString + ' - *** ANOMALIE *** - '+dureePause + ' - ' + deltaI_Pause + '> $pauseMin - Bat. ' + pcBatterie+ ' %.';
+			L.circle(latlngs[i], $sizePoint, { 'color': '$colorVoiture', 'fill': true, 'fillColor': '$colorVoiture', 'fillOpacity': 1}).bindTooltip( message).addTo(map);
 		}
 
 		// ******************************************* BORNES KILOMETRIQUES *******************************************

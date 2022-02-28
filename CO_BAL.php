@@ -10,15 +10,15 @@ Gestion de la boite aux lettres.
 // N° des scénarios :
 
 //Variables :
+	$logTimeLine = mg::getParam('Log', 'timeLine');
 	$nePasDeranger = mg::getVar('nePasDeranger', 0);
-	$destinataire = "Log:/mgDomo, Message, TTS:defaut, SMS:@MG";
+	$destinataire = "$logTimeLine, Message, TTS:defaut, SMS:@MG";
 	$heureReveil = mg::getVar('heureReveil');
 
 	$lastPorteEntree = round(scenarioExpression::lastChangeStateDuration($inPorteEntree, 1) / 60);
 mg::message('', "lastPorteEntree - $lastPorteEntree");
 
 // Paramètres :
-	$logTimeLine = mg::getParam('Log', 'timeLine');
 	$timeVoletsNuit = mg::getParam('Volets', 'timeVoletsNuit');
 
 /*********************************************************************************************************************/

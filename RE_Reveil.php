@@ -41,7 +41,7 @@ deb:
 $reveilOnLine = mg::getVar('_ReveilOnLine', 0);
 
 // Si réveil à Off ou sous Alarme, on sort
-if ( $alarme == 1 || !mg::getCmd($infReveil)) { return; }
+if ( $alarme == 2 || !mg::getCmd($infReveil)) { return; }
 
 // Si réveil OnLine on démarre Sonos et on ouvre les volets de la chambre
 if (!$reveilOnLine) {
@@ -168,7 +168,7 @@ if (!$reveilOnLine) {
 **********************************************************************************************************************/
 function MessagePoids($user, $userLong) {
 	$infPoidsUser = trim(mg::toID("[Sys_Présence][Balance $user]", 'Poids'), '#');
-	$poids = intVal(mg::getCmd($infPoidsUser));
+	$poids = round(mg::getCmd($infPoidsUser), 1);
 
   	$startDate = date('Y-m-d', time()-6*24*3600) . ' 00:00:00';
   	$endDate = date('Y-m-d', time()) . ' 23:59:59';
@@ -179,7 +179,7 @@ function MessagePoids($user, $userLong) {
 
   	$startDate = date('Y-m-d', time()-30*24*3600) . ' 00:00:00';
   	$endDate = date('Y-m-d', time()-24*24*3600) . ' 23:59:59';
-	$avgMois = intval(scenarioExpression::averageBetween(trim($infPoidsUser, '#'), $startDate, $endDate));
+	$avgMois = round(scenarioExpression::averageBetween(trim($infPoidsUser, '#'), $startDate, $endDate), 1);
 	$deltaMois = round($avgMois - $poids, 1);
 	$sensMois = $deltaMois > 0 ? "en baisse" : "en hausse";
 	$deltaMois = abs($deltaMois);

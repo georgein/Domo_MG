@@ -866,6 +866,20 @@ $tabdata = self::getVar($nomVar);
 public static function FONCTIONS_UTILITAIRES(){}
 
 /************************************************************************************************************************
+* UTIL													STATE DAEMON													*
+*************************************************************************************************************************
+* Renvoi 'ok' si le daemon est en route, '' sinon.																		*
+* Si le paramètre 'relance' est à 1, relance du daemon si il n'es pas OK.												*
+************************************************************************************************************************/
+function stateDaemon ($daemonName , $relance=0) {
+	$daemonInfo = $daemonName::deamon_info();
+	$etatDaemon = $daemonInfo['state'];
+	self::messageT('', "$daemonName état : '$etatDaemon' - ". ($$relance && $etatDaemon != 'ok' ? "relance du daemon" : "Pas de relance"));
+	if ($relance && $etatDaemon != 'ok') $daemonName::deamon_start();
+	return $etatDaemon;
+}
+
+/************************************************************************************************************************
 * UTIL												EVALUATE CONDITION													*
 *************************************************************************************************************************
 * Evalue une condition via Jeedom et renvoie true ou false																*
@@ -1924,7 +1938,7 @@ public static function dateIntervalle($depuis, $jusque='now', $nbVal =3, &$diff=
 				self::setCmd($equipTvDomSamsung, 'Sendkey', 'KEY_POWER');
 			// HDMI
 			} elseif ($action == 'hdmi') {
-				self::setCmd($equipSmartThings, 'Changer de source dentrée', 'HDMI1');
+				self::setCmd($equipSmartThings, 'Changer la source dentrée', 'HDMI1');
 			}
 		}
 		self::messageT('', '! '."SP : " . __FUNCTION__ . " : $nom de $zone est à '$action'");

@@ -55,7 +55,7 @@ Envoi des proposition de menu par SMS le soir
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 // Pas de Menu du soir si en cours d'alarme
-if ( $alarme == 1 ) { return; }
+if ( $alarme > 0 ) { return; }
 
 $menu = 'Proposition de repas du soir : ';
 

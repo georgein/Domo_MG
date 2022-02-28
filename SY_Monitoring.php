@@ -47,11 +47,11 @@ Parcours les équipements sur batterie et affiche :
 // ********************************************************************************************************************
 	$values = array();
 
-	$sql = "SELECT * FROM `config` WHERE `key` REGEXP 'battery::danger'";
+	$sql = "SELECT * FROM `config` WHERE `key` REGEXP 'battery::danger'"; // Param battery danger du core
 	$resultSql = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
 	$batteryDangerDefaut = $resultSql['0']['value'];
 
-	$sql = "SELECT * FROM `config` WHERE `key` REGEXP 'battery::warning'";
+	$sql = "SELECT * FROM `config` WHERE `key` REGEXP 'battery::warning'"; // Param battery warning du core
 	$resultSql = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
 	$batteryWarningDefaut = $resultSql['0']['value'];
 
@@ -60,14 +60,6 @@ Parcours les équipements sur batterie et affiche :
 		setAlertes($nomTab, $excludeEquip);
 		goto suite;
 	}
-
-	//=================================================================================================================
-	mg::MessageT('', "! SURVEILLANCE DU SERVEUR JEEDOM");
-	//=================================================================================================================
-mg::setInf($equipMonitoring, 'MonitorLoadAvg', LoadAvg($equipMonitoring, $loadMin, $loadMax, $upTxt, $queueZwaveMin, $queueZwaveMax));
-mg::setInf($equipMonitoring, 'MonitorUp', "$upTxt - ". ConsoCPU($equipMonitoring, $consoCPUMin, $consoCPUMax));
-mg::setInf($equipMonitoring, 'MonitorMem', Mem($equipMonitoring, $memMin, $memMax));
-mg::setInf($equipMonitoring, 'MonitorVol', Volume($equipMonitoring, $volumeMin, $volumeMax));
 
 if ($nomTab == '_tabAlertes' || (mg::getTag('#heure#')*60 + mg::getTag('#minute#')) % $timerCtrlEquip == 0 || mg::getTag('#trigger#') == 'user') {
 	suite:
@@ -193,157 +185,6 @@ if (trim($messageAlerte) == '') { $messageAlerte = "Aucune alerte."; }
 mg::setInf($equipMonitoring, 'MessageAlerte', $messageAlerte);
 mg::message('', $messageAlerte);
 
-// ************************************************************************************************************************
-// ************************************************************************************************************************
-// ************************************************************************************************************************
-/*---------------------------------------------------------------------------------------------------------------------
-												CALCUL DE LA CONSO CPU
----------------------------------------------------------------------------------------------------------------------*/
-function ConsoCPU($equipMonitoring, $consoCPUMin, $consoCPUMax) {
-	$ConsoCPU =	shell_exec("vmstat -n  | grep 0 | awk '{print $15}'");
-
-	$consoCPU_pc = round(100-intval($ConsoCPU), 1);
-	mg::setInf($equipMonitoring, 'ConsoCPU_pc', $consoCPU_pc);
-	$consoCPU_pc = ThreeColor($consoCPU_pc, $consoCPUMin, $consoCPUMax, '', $color);
-
-	return ThreeColor("CPU : ", '', '', '', $color) . " ( $consoCPU_pc % ).";
-}
-
-/*---------------------------------------------------------------------------------------------------------------------
-													CALCUL DU VOLUME DISPO
----------------------------------------------------------------------------------------------------------------------*/
-function Volume($equipMonitoring, $volumeMin, $volumeMax) {
-	$volume =	shell_exec("df -h  | grep '/dev/sda1' | awk '{print $1, $2, $3, $4, $5}'");
-	$volume = str_replace('%', '', $volume);
-	$volume = str_replace('G', '', $volume);
-
-	$volumeDetails = explode(' ', $volume);
-
-	$volumeTotal = $volumeDetails[1];
-	$volumeLibre = $volumeDetails[3];
-
-	$volumeLibre_pc = round(100-intval($volumeDetails[4]));
-	mg::setInf($equipMonitoring, 'VolumeLibre_pc', $volumeLibre_pc);
-	$volumeLibre_pc = ThreeColor($volumeLibre_pc, $volumeMin, $volumeMax, '+', $color);
-
-	$volumeUtilise = $volumeTotal - $volumeLibre;
-	$volumeUtilise_pc = round(intval($volumeDetails[4]));
-	$volumeUtilise_pc = ThreeColor($volumeUtilise_pc, $volumeMin, $volumeMax, '+', $color);
-	return ThreeColor("Vol utilisé : ", '', '', '+', $color) . "$volumeUtilise  G / $volumeTotal  G ($volumeLibre_pc % de libre).";
-}
-
-/*---------------------------------------------------------------------------------------------------------------------
-									CALCUL DE LA DUREE UP - CALCUL DES LOAD AVG 1, 5 et 15
----------------------------------------------------------------------------------------------------------------------*/
-function LoadAvg($equipMonitoring, $loadMin, $loadMax, &$upTxt, $queueZwaveMin, $queueZwaveMax) {
-	$Decalage = 0;
-	$loadAvg =	shell_exec(" w	| grep 'load average:' | awk '{print $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NF}'");
-	$loadAvg = str_replace(', ', ' ', $loadAvg);	// Suppression virgule de séparation
-	$loadAvg = str_replace(',', '.', $loadAvg);		// Point décimal
-	$loadAvgDetails = explode(' ', $loadAvg);
-
-	$Count = count($loadAvgDetails);
-	$Count = intval($loadAvgDetails[$Count-1])-2;
-	//mg::message('', "LoadAvg : $loadAvg - Count : $Count - " . print_r($loadAvgDetails, true));
-
-	// Calcul de la durée de fonctionnement
-	if (strpos($loadAvgDetails[1], ':') !== false) // au démarrage avec heure
-	{
-		$nbHeures = str_replace(':', 'h', $loadAvgDetails[1]);
-		$nbJours = "0 jour et ";
-	} elseif (strpos($loadAvgDetails[2], 'min') !== false)
-	{
-		$nbHeures = "{$loadAvgDetails[1]} mn"; // au démarrage avec minute
-		$nbJours = "0 jour et ";
-	}else
-	{
-		$nbHeures = "{$loadAvgDetails[3]} mn";	// En croisière
-		$nbHeures = str_replace(':', 'h', $nbHeures);
-		$nbJours = "{$loadAvgDetails[1]} jour(s) et ";
-	}
-
-	//	Calcul / affichage de la queue Zwave
-/*	$queueZwave = mg::ZwaveBusy();
-	$queueZwave = ThreeColor($queueZwave, $queueZwaveMin, $queueZwaveMax, '', $color);
-	$queueZwave = ThreeColor("Queue Zwave : ", '', '', '', $color) . $queueZwave;	*/
-
-	$upTxt = "Up $nbJours $nbHeures";// . ' - ' . $queueZwave;
-
-	// Calcul et mise en couleurs des AvgLoad
-	$loadAvg_1 = $loadAvgDetails[$Count-2];
-	mg::setInf($equipMonitoring, 'LoadAvg_1', $loadAvg_1);
-			$loadAvg_1 = ThreeColor($loadAvg_1, $loadMin, $loadMax, '', $Color_1);
-
-	$loadAvg_5 = $loadAvgDetails[$Count-1];
-	mg::setInf($equipMonitoring, 'LoadAvg_5', $loadAvg_5);
-	$loadAvg_5 = ThreeColor($loadAvg_5, $loadMin, $loadMax, '', $color_5);
-
-	$loadAvg_15 = $loadAvgDetails[$Count];
-	mg::setInf($equipMonitoring, 'LoadAvg_15', $loadAvg_15);
-	$loadAvg_15 = ThreeColor($loadAvg_15, $loadMin, $loadMax, '', $color_15);
-
-	return ThreeColor("LoadAvg ", '', '', '', $color_15) . " 1mn $loadAvg_1 - 5mn $loadAvg_5 - 15mn $loadAvg_15";
-}
-
-/*---------------------------------------------------------------------------------------------------------------------
-												CALCUL DE LA MEMOIRE DISPO
----------------------------------------------------------------------------------------------------------------------*/
-function Mem($equipMonitoring, $memMin, $memMax) {
-	$mem =	shell_exec("free | grep 'Mem' | head -1 | awk '{print $1, $2, $3, $4, $5}'");
-	$memDetails = explode(' ', $mem);
-	//echo $mem; print_r($memDetails);
-
-	$memTotale = $memDetails[1];
-	if (($memTotale / 1000) > 1000) {
-		$memTotale = round($memTotale / 1000000, 2); $unitTotale = "Go";
-	}else {
-		$memTotale = round($memTotale / 1000, 0); $unitTotale = "Mo";
-	}
-
-	$memLibre = $memDetails[3];
-	if (($memLibre / 1000) > 1000) {
-		$memLibre = round($memLibre / 1000000, 2); $unitLibre = "Go";
-	}else{
-		$memLibre = round($memLibre / 1000, 0); $unitLibre = "Mo";
-	}
-	$ratio = ( $unitTotale != $unitLibre) ? 1000 : 1;
-
-	$memLibre_pc = round((($memDetails[2] / $memDetails[1] * 100)-1) / $ratio);
-	$memLibre_pc = 100-round(($memLibre / $memTotale) * 100 / $ratio);
-	mg::setInf($equipMonitoring, 'MemLibre_pc', $memLibre_pc);
-
-	$memLibre_pc = ThreeColor($memLibre_pc, $memMin, $memMax, '+', $color);
-	return ThreeColor("Mem utilisée : ", '', '', '-', $color) . "$memLibre  $unitLibre / $memTotale $unitTotale ($memLibre_pc " . "% de libre).";
-	mg::setInf($equipMonitoring, 'MemLibre_pc', $memLibre_pc);
-}
-
-/*---------------------------------------------------------------------------------------------------------------------
-													POSE DE LA COULEUR
----------------------------------------------------------------------------------------------------------------------*/
-function ThreeColor($value, $valueMin = 0, $valueMax = 1, $sens = '+', &$color = '') {
-
-	if ($color == '') {
-		$color = 'LIGHTSALMON';
-		if ($sens == '+') {
-			if ($value >= $valueMax) {
-				$color = 'LIGHTGREEN';
-			}
-			if ($value < $valueMin) {
-				$color = 'RED';
-			}
-		}
-		else
-		{
-			if ($value > $valueMax) {
-				$color = 'RED';
-			}
-			if ($value <= $valueMin) {
-				$color = 'LIGHTGREEN';
-			}
-		}
-	}
-	return "<font color='$color'>$value</font>";
-}
 
 /**********************************************************************************************************************
 															SET ALERTES

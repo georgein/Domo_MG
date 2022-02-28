@@ -5,7 +5,7 @@ Contrôle l'état des daemons du tableau et éventuellement les relance si KO
 *********************************************************************************************************************************/
 
 // Infos, Commandes et Equipements :
-//		$equipDaemon, $infRouteurBroadlink
+//	$infRouteurBroadlink
 
 // N° des scénarios :
 
@@ -24,29 +24,20 @@ Contrôle l'état des daemons du tableau et éventuellement les relance si KO
 /*******************************************************************************************************************************/
 /*******************************************************************************************************************************/
 // Relance de BROADLINK si arrété ou pas sur le réseau
-if (!mg::getCmd($infRouteurBroadlink) || !mg::getCmd($equipDaemon, 'Démon Broadlink')) {
-	mg::setCmd($equipDaemon, 'Démarrer Broadlink');
-	mg::message($logTimeLine, "Plugin - Relance du daemon de BroadLink.");
-}
+//if (!mg::getCmd($infRouteurBroadlink)) {
+if (mg::stateDaemon('broadlink', 1) != 'ok') mg::message($logTimeLine, "Daemon - Relance de broadlink.");
+//}
 
 // ON/OFF GCast si offLine
 if (!mg::getCmd('#[Sys_Comm][Google-Home][Online]#')) {
-	mg::setCmd('#[Sys_Comm][Google-Home][Rafraîchir Config]#');
-
-	sleep(120);
-	if (!mg::getCmd('#[Sys_Comm][Google-Home][Online]#'))	mg::setCmd('#[Sys_Comm][Google-Home][Restart]#');
-	
-	sleep(120);
-/*	mg::setCmd('#[Salon][Multi-prises][Off_2]#');
+	mg::setCmd('#[Salon][Multi-prises][Off_2]#');
 	sleep(60);
 	mg::setCmd('#[Salon][Multi-prises][On_2]#');
-*/	
-	mg::message($logTimeLine, "Plugin - Relance de Gcast.");
-//	mg::setCron('', time() + 15*60);
-//	return;
+	
+	mg::message($logTimeLine, "Daemon - Relance de Gcast.");
 }
 
-//mg::setCron('', time() + 999*60); ////////////////////////////
+
 
 /*
 for ($i = 0; $i < count($tabDaemon); $i++) {

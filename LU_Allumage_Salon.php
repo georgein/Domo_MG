@@ -25,10 +25,9 @@ Le retour état du Stop dans le widget est à régler à TimeOut + 5 au minimum 
 	$memoEtat = mg::getCmd($equipEcl, 'Memo Etat');
 	$newIntensite = mg::getCmd($equipEcl, 'Lampe Générale Etat');
 	$ambiance = mg::getcmd($equipEcl, 'Ambiance');
-//	$boutonEvent = mg::getCmd($infBoutonEvent);
 
 // Paramètres :
-	$seuilNbMvmt = 2; //mg::getParam('Lumieres', 'seuilNbMvmt');		// Nb de mouvement minimum pour provoquer le réallumage de nuit
+	$seuilNbMvmt = 1; //mg::getParam('Lumieres', 'seuilNbMvmt');		// Nb de mouvement minimum pour provoquer le réallumage de nuit
 	$timeOutSalon = mg::getParam('Lumieres', 'timeOutSalon');	// Durée en mn avant extinction des lumières du salon si pas de mouvement
 	$incIntensiteUp = mg::getParam('Lumieres', 'incIntensiteUp');
 	$incIntensiteDown = mg::getParam('Lumieres', 'incIntensiteDown');
@@ -46,7 +45,7 @@ $boutonEvent = mg::declencheur(mg::toHuman($infBoutonEvent)) ? mg::getCmd($infBo
 $nomDeclencheur = mg::declencheur('', 3);
 
 // Extinction lampes
-if ($alarme == 1 || $nuitSalon != 1 || $lastMvmt >= $timeOutSalon || $boutonEvent == 'double' || $newIntensite == 0) {
+if ($alarme == 2 || $nuitSalon != 1 || $lastMvmt >= $timeOutSalon || $boutonEvent == 'double' || $newIntensite == 0) {
 		//=============================================================================================================
 		mg::MessageT('', "! EXTINCTION (MANUELLE OU AUTOMATIQUE)");
 		//=============================================================================================================
@@ -54,19 +53,19 @@ if ($alarme == 1 || $nuitSalon != 1 || $lastMvmt >= $timeOutSalon || $boutonEven
 }
 
 // Allumage manuel ou reprise de mouvement
-if (( $nuitSalon != 0 && $memoEtat < $intensiteMininimum && $nbMvmt >= $seuilNbMvmt) || $boutonEvent == 'single') {
+if (( $nuitSalon != 0 && $memoEtat < $intensiteMininimum && $nbMvmt > $seuilNbMvmt) || $boutonEvent == 'single') {
 	//=================================================================================================================
 	mg::MessageT('', "! ALLUMAGE MANUEL OU AUTOMATIQUE");
 	//=================================================================================================================
-//	$newIntensite = ($nuitSalon == 1 ? $intensiteMininimum : 0);
-	$newIntensite = ($nbMvmt >= $seuilNbMvmt || $nuitSalon == 1) ? $intensiteMininimum : 0;
+//	$newIntensite = ($nbMvmt > $seuilNbMvmt || $nuitSalon == 1) ? $intensiteMininimum : 0;
+	$newIntensite = $intensiteMininimum;
 }
 
 // gestion progressif si ambiance > 0
 if ($memoEtat > 0 && $newIntensite > 0 && $ambiance > 0) {
-	if ($nbMvmt >= $seuilNbMvmt || ($nomDeclencheur == 'schedule' && $lastMvmt < $timerProgressif)) {
+	if ($nbMvmt > $seuilNbMvmt || ($nomDeclencheur == 'schedule' && $lastMvmt < $timerProgressif)) {
 		//=============================================================================================================
-		mg::MessageT('', "! AUGMENTATION AUTO. DE L'INTENSITE nbMvmtSalon ($nbMvmt) >= $seuilNbMvmt ou lastMvmtSalon ($lastMvmt) < $timerProgressif");
+		mg::MessageT('', "! AUGMENTATION AUTO. DE L'INTENSITE nbMvmtSalon ($nbMvmt) > $seuilNbMvmt ou lastMvmtSalon ($lastMvmt) < $timerProgressif");
 		//=============================================================================================================
 		$newIntensite = round(min($memoEtat*(1+$incIntensiteUp), 99), 0);
 

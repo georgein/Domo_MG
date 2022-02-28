@@ -6,12 +6,12 @@ Lance le calcul d'affichage 'Geofence' si plus de $refreshCalcul sec depuis le d
 **********************************************************************************************************************/
 
 // Infos, Commandes et Equipements :
-	//	$equipMapPresence
+	//	$equipMapPresence, $equipPresence
 
 // N° des scénarios :
 
 // N° des scénarios :
-	$scenGeofence = 123;
+	$scenGeofence = 123; 
 
 //Variables :
 	$refreshCalcul = 60;					// Période de rafraichissement MINIMUM du recalcul du HTML
@@ -22,58 +22,50 @@ Lance le calcul d'affichage 'Geofence' si plus de $refreshCalcul sec depuis le d
 	$latitudeHome = round(mg::getConfigJeedom('core', 'info::latitude'), 5);
 	$longitudeHome = round(mg::getConfigJeedom('core', 'info::longitude'), 5);
 	$altitudeHome = round(mg::getConfigJeedom('core', 'info::altitude'), 1);
+	$PositionHome = $latitudeHome.','.$longitudeHome.','.round($altitudeHome);
+	$tabUser = mg::getTabSql('_tabUsers');
+/*********************************************************************************************************************/
+/*********************************************************************************************************************/
+/*********************************************************************************************************************/
+$userAppel = mg::declencheur('', 2);
+if (!mg::declencheur('Tel-')) $userAppel = 'Tel-NR'; // Pour appel manuel 'user'
 
-/*********************************************************************************************************************/
-/*********************************************************************************************************************/
-/*********************************************************************************************************************/
-$userAppel = 'MG';
+// ******************** Calcul SSID ********************
+//$etatWifi = mg::getCmd("#[Sys_Comm][$userAppel][Etat Wifi]#");
+$GeofenceSSID = 'PAS de SSID';
+$GeofenceSSID = mg::getCmd("#[Sys_Comm][$userAppel][Réseau wifi (SSID)]#", $collectDate, $valueDate);
 
-// Si déclencheur JC
-if (mg::declencheur('Position') || mg::declencheur('SSID')) {
-	$userAppel = str_replace('Tel-', '', mg::declencheur('', 2));
+// Relance 'tracking' de JC si changement de connection
+if (/*mg::declencheur('Etat Wifi') ||*/ mg::declencheur('SSID') /*&& $GeofenceSSID == 'PAS de SSID'*/) {
+	$equipJC = "#[Sys_Comm][$userAppel]#";
+	mg::message($logTimeLine, "Chgmt SSID JC - Reactivation tracking JC de $userAppel.");
+	mg::setCmd($equipJC, 'Modifier Préférences Appli', 'OFF', 'tracking'); usleep(0.5 * 1000000);
+	mg::setCmd($equipJC, 'Modifier Préférences Appli', 'ON', 'tracking');
 }
 
-$GeofenceSSID = mg::getCmd("#[Sys_Comm][Tel-$userAppel][Réseau wifi (SSID)]#");
-$etatWifi = mg::getCmd("#[Sys_Comm][Tel-$userAppel][Etat Wifi]#");
-if ($GeofenceSSID == '' || $etatWifi == 0) $GeofenceSSID = 'Pas de SSID';
+// ******************** Calcul positionJC et $dist ********************
+$PositionJeedomConnect = mg::getCmd("#[Sys_Comm][$userAppel][Position]#", '', $collectDate, $valueDate);
+$latlngs = explode(',', $PositionJeedomConnect);
+$distanceMax = floatval($tabUser["$userAppel"]['geo']);
+$dist = round(mg::getDistance($latitudeHome, $longitudeHome, $latlngs[0], $latlngs[1], 'k'), 2);
+if (mg::getVar("dist_$userAppel") != $dist) mg::setVar("dist_$userAppel", $dist);
+$latlngs[2] = round(mg::getAltitude($latlngs[0], $latlngs[1]), 0);	
+$PositionJeedomConnect = $latlngs[0].','.$latlngs[1].','.$latlngs[2];
 
-if ($userAppel != '') {
-// ******************************** GESTION DES DECLENCHEURS ET ENREGISTREMENT EN BDD *********************************
-
-	$PositionJeedomConnect = mg::getCmd("#[Sys_Comm][Tel-$userAppel][Position]#", '', $collectDate, $valueDate);
-	$tmp = explode(',', $PositionJeedomConnect);
-	$PositionJeedomConnect =  $tmp[0].','. $tmp[1].','. $tmp[2];
-	$ActiviteJeedomConnect =  $tmp[3];
-	$GeofencepcBat = $tmp[4];
-
-	// DECLENCHEUR SSID
-	if (mg::declencheur('SSID')) {
-		$valueDate = time();
-		//  SI at HOME
-		if (strpos(" $GeofenceSSID", $homeSSID) !== false) {
-			$latLng_Home = $latitudeHome.','.$longitudeHome.','.round($altitudeHome);
-			$PositionJeedomConnect = $latLng_Home;
-//			$ActiviteJeedomConnect = 'still';
-			mg::setVar("dist_Tel-$userAppel", -1);
-			mg::unsetVar("_OldDist_$userAppel");
-		
-		// En WIFI mais pas at home et au repos
-		} else if ($ActiviteJeedomConnect ==  'still') {
-			$ActiviteJeedomConnect = "$ActiviteJeedomConnect, org_SSID";
-		}
-	} 
-
-//	if ($GeofenceSSID == '' || $etatWifi == 0 /*|| $ActiviteJeedomConnect != 'still'*/) $GeofenceSSID = 'Pas de SSID'; /////////////////////////////////
-
-	// **************************************** ENREGISTREMENT DU NOUVEAU POINT ***************************************
-	if (mg::declencheur('Position') || mg::declencheur('SSID')) {
-		SetPoint($tabGeofence, $userAppel, $valueDate, $PositionJeedomConnect, $GeofencepcBat, $GeofenceSSID, $homeSSID, $ActiviteJeedomConnect, $equipMapPresence);
+	//  ******************** SI at HOME ********************
+	if (strpos(" $GeofenceSSID", $homeSSID) !== false) {
+		$latlngs = explode(',', $PositionHome);
+		mg::setVar("dist_$userAppel", -1);
+		mg::unsetVar("_OldDist_$userAppel");
 	}
-}
+//}
 
-// ******************* ON appelle Geofence si plus de $refreshCalcul secondes depuis dernier point ********************
+// *********************************************** ENREGISTREMENT EN BDD **********************************************
+	SetPoint($tabGeofence, $userAppel, $valueDate, $GeofenceSSID, $homeSSID, $latlngs, $dist, $equipMapPresence);
+
+// **** ON appelle Geofence si plus de $refreshCalcul secondes depuis dernier point  ou changement de connection ******
 $lastCalcul = mg::getVar("_GeoLastRun_$userAppel");
-if ((time() - $lastCalcul) > $refreshCalcul || mg::declencheur('SSID')) {
+if ((time() - $lastCalcul) > $refreshCalcul || mg::declencheur('SSID') || mg::declencheur('Etat Wifi')) {
 	mg::setScenario($scenGeofence, 'start', "userAppel=$userAppel");
 	mg::setVar("_GeoLastRun_$userAppel", time());
 }
@@ -81,23 +73,23 @@ if ((time() - $lastCalcul) > $refreshCalcul || mg::declencheur('SSID')) {
 // ********************************************************************************************************************
 // ******************************************* ENREGISTREMENT DU NOUVEAU POINT DANS LA COMMANDE ***********************
 // ********************************************************************************************************************
-function setPoint($tabGeofence, $userAppel, $valueDate, $PositionJeedomConnect, $GeofencepcBat, $GeofenceSSID, $homeSSID, $ActiviteJeedomConnect, $equipMapPresence) {
+function setPoint($tabGeofence, $userAppel, $valueDate, $GeofenceSSID, $homeSSID, $latlngs, $dist, $equipMapPresence) {
 	$values = array();
 	$formatDate = 'Y-m-d H:i:s';
+	$batteryJC = mg::getCmd("#[Sys_Comm][$userAppel][Batterie]#"); 
+	$ActiviteJC =  mg::getCmd("#[Sys_Comm][$userAppel][Activité]#");
+	$PositionJeedomConnect =  $latlngs[0].','. $latlngs[1].','. $latlngs[2];
+	$altitude = $latlngs[2];
+	
+	//  ******************** SI at HOME ********************
+	if (strpos(" $GeofenceSSID", $homeSSID) !== false) $ActiviteJC = 'still';
 
-	// Calibrage de l'altitude avec Geoservice si pas AT HOME
-//	if (strpos(" $GeofenceSSID", $homeSSID) === false) {
-		$latlngs = explode(',', $PositionJeedomConnect);
-//		$position = $latlngs[0].','.$latlngs[1];
-		$altitude = round(mg::getAltitude($latlngs[0], $latlngs[1]),1);	
-		$PositionJeedomConnect = $latlngs[0].','.$latlngs[1].','.$altitude;
-//	}
-
-	$newValue = "$PositionJeedomConnect,$GeofencepcBat,$GeofenceSSID,$ActiviteJeedomConnect";
+	// Calcul de la chaine finale 'newValue' à mémoriser
+	$newValue = "$PositionJeedomConnect,$batteryJC,$GeofenceSSID,$ActiviteJC,$dist";
 	$idUser = trim(mg::toID($equipMapPresence, $userAppel), '#');
 	$valueDateTxt = date($formatDate, $valueDate);
 
-	mg::messageT('', "! User : $userAppel => Enregistrement d'un point ".mg::declencheur('', 2)." au $valueDateTxt - SSID : '$GeofenceSSID' - altitude : $altitude");
+	mg::messageT('', "! User : $userAppel => Enreg. d'un point au $valueDateTxt - SSID : '$GeofenceSSID' - Dist. : $dist km -  alt. : $altitude m - Activité : $ActiviteJC");
 
 	// Enregistrement position courante
 	$sql = "INSERT INTO `history` (cmd_id, datetime, value) VALUES ('$idUser', '$valueDateTxt', '$newValue') ON DUPLICATE KEY UPDATE value='$newValue'";

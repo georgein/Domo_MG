@@ -13,7 +13,7 @@ Alerte_Froid_EDF - 102
 
 // Infos, Commandes et Equipements :
 //	$infTempCongeloSS, $infTempFrigoSalon, $infTempCongeloSalon
-//	$infPuissanceCongelo, $infStatutEDF, $infSecondaire
+//	$infPuissanceCongelo, $infTensionCompteur
 
 // N° des scénarios :
 
@@ -24,8 +24,8 @@ Alerte_Froid_EDF - 102
 	$destinataires = mg::getParam('EDF', 'destinataires');
 	$destinatairesSousAlarme = mg::getParam('EDF', 'destinatairesSousAlarme');	// Destinataires supplémentaires
 	$periodicite =	mg::getParam('EDF', 'periodiciteAlerte'); 		// ; Intervalle en mn entre les alertes
-	$logTimeLine = mg::getParam('Log', 'timeLine');
-	$statutEDF = mg::getCmd($infStatutEDF);
+	mg::getCmd($infTensionCompteur, '',  $collectDate, $lastValueDate);
+	$tempoAlerteEDF = 240; // Temps max en seconde de rafraichissement tension du compteur EDF avant alerte
 
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
@@ -33,13 +33,13 @@ Alerte_Froid_EDF - 102
 mg::setCron('', "*/$periodicite * * * *");
 
 // Si en alarme (donc personne sur le site) on ajoute CB à la liste des destinataires
-if ($alarme == 1) { $destinataires .= $destinatairesSousAlarme; }
+if ($alarme == 2) { $destinataires .= $destinatairesSousAlarme; }
 
-if (mg::declencheur('EDF') || $statutEDF = 2) alerteEDF($infStatutEDF, $destinataires, $infSecondaire, $periodicite);
+alerteEDF($lastValueDate, $tempoAlerteEDF, $destinataires, $periodicite);
 
 // Contrôle température des frigos et congélo
 mg::setInf($infAffAlerte, 'AlerteFroid', '');
-SuiviTempFrigo($infTempFrigoSalon	, '12.0', $destinataires, $infAffAlerte, $periodicite);
+SuiviTempFrigo($infTempFrigoSalon	, '10.0', $destinataires, $infAffAlerte, $periodicite);
 SuiviTempFrigo($infTempCongeloSalon	,'-12', $destinataires, $infAffAlerte, $periodicite);
 SuiviTempFrigo($infTempCongeloSS	,'-14', $destinataires, $infAffAlerte, $periodicite);
 
@@ -54,50 +54,56 @@ function SuiviTempFrigo($infCmd, $tempMax, $destinataires, $infAffAlerte, $perio
 	$tempMoyen = mg::getExp("average($infCmd, 30 min)");
 	// ALERTE FROID
 	if ($temp > $tempMax && $tempMoyen > $tempMax) {
-	mg::MessageT('',"! ********ALERTE FROID : $nom ==> Temp : $temp/$tempMoyen - TempMax : $tempMax - NomAlerte : $nom  **********");
+		mg::MessageT('',"! ********ALERTE FROID : $nom ==> Temp : $temp/$tempMoyen - TempMax : $tempMax - NomAlerte : $nom  **********");
 		$message = "ALERTE : $nom, ($temp ° au lieu de $tempMax °)";
 		mg::Alerte($nom, $periodicite, 1440, $destinataires, $message);
+		mg::setCron('', "*/$periodicite * * * *");
 		mg::setInf($infAffAlerte, 'AlerteFroid', $message);
-
+		return;
+		
 	// FIN D'ALERTE
 	} else {
 		if (mg::getVar("_Alerte$nom")) {
 			mg::Alerte($nom, -1);
 			mg::setInf($infAffAlerte, 'AlerteFroid', '');
-		} else if (strpos(mg::getCmd($infAffAlerte, 'AlerteFroid'), "ALERTE") === false) {
+		} else if (strpos(mg::getCmd($infAffAlerte, 'AlerteFroid'), "ALERTE") === false) { 
 			// Affiche températures
 			mg::setInf($infAffAlerte, 'AlerteFroid', trim(trim(mg::getCmd($infAffAlerte, 'AlerteFroid'), '|')) . " | " . round($temp) . "°");
 		}
 	}
 }
 
-// ***************************************************************************************************************** //
-// ***************************************************************************************************************** //
-// ***************************************************************************************************************** //
-function alerteEDF($infStatutEDF, $destinataires, $infSecondaire, $periodicite) {
-	$statutEDF = mg::getCmd($infStatutEDF);
+// ********************************************************************************************************************
+// **************************************************** ALERTE EDF ****************************************************
+// ********************************************************************************************************************
+function alerteEDF($lastValueDate, $tempoAlerteEDF, $destinataires, $periodicite) {
 	$nomAlerte = 'Coupure_EDF';
-	$message =	"ALERTE : COUPURE EDF EN COURS";
-mg::messageT('', "CONTROLE EDF");
+	$AlerteEDF = (time() - $lastValueDate) > $tempoAlerteEDF ? 1 : 0;
 
-	// COUPURE EDF
-	if ($statutEDF == 2) {
-//		mg::message($destinataires, $message);
+$daemon = 'jMQTT';
+$daemonInfo = $daemon::deamon_info();
+$etatJMQTT = $daemonInfo['state'];
+	mg::messageT('', "CONTROLE EDF - AlerteEDF : ($AlerteEDF) ".(time() - $lastValueDate)." sec / $tempoAlerteEDF - etatJMQTT : $etatJMQTT");
+
+
+	// SI COUPURE EDF, MISE EN SECURITE PC-MG
+	if ($AlerteEDF && $etatJMQTT == 'ok' && mg::getVar('_AlerteEDF', 0) == 0) {
+		$message =	"ALERTE : COUPURE EDF EN COURS";
+		mg::message($destinataires, $message);
 		mg::Alerte($nomAlerte, $periodicite, 1440, $destinataires, $message);
-
-	//	mg::eventGhost('Veille', 'PC-MG');
-	//	sleep(10);
-	//	mg::setCmd($infSecondaire, 'Off');
+		mg::setVar('_AlerteEDF', 1);
+		mg::setCron('', "*/$periodicite * * * *");
+		return;
 
 	// EDF OK
-	} elseif (mg::declencheur('EDF') && $statutEDF == 3) {
-		mg::setCmd($infSecondaire, 'On');
-		sleep(2);
-		mg::WakeOnLan('PC-MG');
-
-		mg::message($destinataires, "FIN DE LA COUPURE EDF.");
+	} elseif (!$AlerteEDF && mg::getVar('_AlerteEDF', 0) == 1) {
 		mg::Alerte($nomAlerte, -1);
+		mg::message($destinataires, "FIN DE LA COUPURE EDF.");
+		mg::unsetVar('_AlerteEDF');
+		mg::WakeOnLan('PC-MG');
 	}
-
+	
+	mg::setCron('', "*/15 * * * *");
 }
+
 ?>

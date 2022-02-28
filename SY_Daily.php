@@ -103,7 +103,6 @@ if (mg::declencheur('end_backup')) {
 		//=============================================================================================================
 		SnapShot($vmWareJeedom, $snapshotspNbJours, $logTimeLine);
 		SnapShot($vmWareMQTT, $snapshotspNbJours, $logTimeLine);
-//		SnapShot($vmWareAntenne, $snapshotspNbJours, $logTimeLine);
 	}
 
 	if ($savGdrive) {
