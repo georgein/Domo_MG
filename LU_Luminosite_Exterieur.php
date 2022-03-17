@@ -20,7 +20,7 @@ L'état 'Aurore' démarre 0:30 AVANT l'aurore civile et se termine 1:00 AVANT le
 	$SeuilLumExterieureNuit = mg::getParam('Lumieres', 'seuilLumExterieureNuit');
 	$SeuilLumExterieureJour = mg::getParam('Lumieres', 'seuilLumExterieureJour');
 	$logTimeLine = mg::getParam('Log', 'timeLine');
-	$timeVoletsNuit = mg::getParam('Volets', 'timeVoletsNuit');
+//	$timeVoletsNuit = mg::getParam('Volets', 'timeVoletsNuit');
 	$latitude = mg::getParam('Volets', 'latitude');
 	$longitude = mg::getParam('Volets', 'longitude');
 
@@ -53,6 +53,14 @@ elseif ( $nuitExt == 1 && $cdAurore ) {
 // Si changement
 if ( $oldNuitExt != $nuitExt) {
 	mg::setVar('NuitExt', $nuitExt);
+	
+	// Au passage à la nuit //////////////////////////////////////////////////////////////////////////////////
+	if ($oldNuitExt == 0 && $nuitExt == 1) {
+		$timeVoletsNuit = min(date('H:i', time() + 60*60), '23:00');
+		$message .= " - timeVoletsNuit = $timeVoletsNuit";
+		mg::getParam('Volets', 'timeVoletsNuit', $timeVoletsNuit, 1);
+	}
+	
 	mg::Message($logTimeLine, $message);
 }
 

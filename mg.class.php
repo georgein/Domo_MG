@@ -68,6 +68,7 @@ class mg {
 			$scenario->setlog($message);
 			self::debug(self::$__debug, $mode);
 		}
+		else $scenario = scenario::byId(self::$__scenarioLeurre);
 	}
 
 /************************************************************************************************************************
@@ -404,7 +405,7 @@ self::message('', $requete);
 *		$message : Message TTS																							*
 *		$volume																											*
 ************************************************************************************************************************/
-	public static function GCast($cmd='', $message = '', $volume=0) { 
+	public static function GCast($cmd='', $message = '', $volume=0) {
 		$equipGCast = self::getParam('Media', 'equipGCast');
 		if ($volume == 0) $volume = self::getParam('Media', 'GCast_TTS_Vol');
 		$message = trim($message, '@');
@@ -574,20 +575,21 @@ log::add('thermostat', 'info',  "----- $equipGCast - $message - $volume");
 		// Création de l'alerte
 		if (!array_key_exists($nom, $alertes) && $periodicite > 0) {
 			// --------------------------------------------------------------------------------------------------------
-			self::messageT('', "CREATION ALERTE : Nom : $nom - Périodicité : $periodicite, - Durée totale : $timeOut -  Destinataire : $destinataires - Message : '$message'");
+			self::messageT('', "CREATION ALERTE : Nom : $nom - Périodicité : $periodicite mn - Durée totale : $timeOut -  Destinataire : $destinataires - Message : '$message'");
 			// --------------------------------------------------------------------------------------------------------
 			$alertes[$nom]['nom'] = $nom;
 			$alertes[$nom]['timeOut'] = $timeOut;
-			$alertes[$nom]['debut'] = 0;
-			$alertes[$nom]['last'] = 0;
+			$alertes[$nom]['debut'] = time();
+			$alertes[$nom]['last'] = time() - $periodicite*60 - 15;
+			$alertes[$nom]['fin'] = time() + $timeOut*60;
 		}
 
 		// RAPPEL de l'alerte
-		elseif ((time() - $periodicite*60) >= $alertes[$nom]['last'] && $periodicite > 0) {
-			if ($alertes[$nom]['debut'] == 0 ) {
+		/*else*/if ((time() - $periodicite*60) >= $alertes[$nom]['last'] && $periodicite > 0) {
+/*			if ($alertes[$nom]['debut'] == 0 ) {
 				$alertes[$nom]['debut'] = time();
 				$alertes[$nom]['fin'] = time() + $timeOut*60;
-			}
+			}*/
 			// --------------------------------------------------------------------------------------------------------
 			self::messageT('', "! Rappel alerte : $nom - periodicite : $periodicite mn - last rappel à " . date('H\h\ i\m\n\:s', $alertes[$nom]['last']) . " - Debut à " . date('H\h\ i\m\n', $alertes[$nom]['debut']) . " - fin à " . date('H\h\ i\m\n', $alertes[$nom]['fin']));
 			// --------------------------------------------------------------------------------------------------------
@@ -599,13 +601,13 @@ log::add('thermostat', 'info',  "----- $equipGCast - $message - $volume");
 		}
 
 		// Fin alerte sur Annulation ou TimeOut
-		elseif (time() > $alertes[$nom]['fin'] || $periodicite < 0) {
+		/*else*/if (time() > $alertes[$nom]['fin'] || $periodicite < 0) {
 				// --------------------------------------------------------------------------------------------------------
 				self::messageT('', "! ANNULATION de l'alerte : $nom");
 				// --------------------------------------------------------------------------------------------------------
 				unset($alertes[$nom]);
 		}
-		
+
 		self::setVar('tabAlertes', $alertes);
 		self::setCron('', time() + $periodicite*60);
 	}
@@ -901,14 +903,16 @@ function stateDaemon ($daemonName , $relance=0) {
 * UTIL													GET PARAM														*
 *************************************************************************************************************************
 * Renvoi le paramètrage du tableau 'tabParams' si il existe sinon la valeur par defaut si passé en paramètre.			*
+*	Met à jour ou cré le paramètre si $val defaut renseigné ET force > = 1.												*
 *	Paramètres :																										*
 *		Section : Nom de la section																						*
 *		name : Nom de la valeur demandée																				*
-*		Defaut : Valeur par defaut du paramètre																			*
+*		$valDefaut : Valeur par defaut du paramètre																		*
 ************************************************************************************************************************/
-	public static function getParam($section, $name, $valDefaut=null, $remDefaut=null) {
+	public static function getParam($section, $name, $valDefaut=null, $force=0) {
 //		global $tabParams;
 
+		$value = null;
 		$values = array();
 		$section = strtolower($section);
 
@@ -921,11 +925,20 @@ function stateDaemon ($daemonName , $relance=0) {
 			return;
 		}
 
+		// Création ou MàJ paramètre si $force >=1
+		if ($force && $valDefaut) {
+			$sql = "INSERT INTO `".self::$__tabParams."` (section, name, value)	VALUES 	('$section', '$name', '$valDefaut')	ON DUPLICATE KEY UPDATE value='$valDefaut'";
+			$result = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
+			self::message('', "INF2 : " . __FUNCTION__ . " : Paramètre CREE / MIS A JOUR : ('tabParams' / $section / $name) => '$valDefaut'");
+			return trim($valDefaut);
+		}
+
+	// SINON Lecture du paramètre
 	$sql = "SELECT value FROM `".self::$__tabParams."` WHERE `section` = '$section' AND `name` = '$name' LIMIT 1";
 	$result = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
-
+	
 	// Pas de param
-	if (count($result) == 0) {
+	if (count($result) == 0 && $value == null) {
 		if ($valDefaut != null) {
 			$value = $valDefaut;
 			self::message('', "WARNING : " . __FUNCTION__ . " : Le paramètre ($section - $name) n'existe pas => valeur par defaut '$valDefaut' !!!");
@@ -972,8 +985,7 @@ mg::minuterie($equipEcl, $infNbMvmt, $timer, $cdExtinction, $cdAllumage);						 
 *-----------------------------------------------------------------------------------------------------------------------*
 ************************************************************************************************************************/
 public static function minuterie($equipEcl, $infNbMvmt, $timer=2, $cdExtinction, $cdAllumage, $actionEtat='Etat') {
-	self::setCron('', time() + $timer*60);
-
+	self::setCron('', "*/5 * * * *");
 	$lastMvmt = round(self::lastMvmt($infNbMvmt, $nbMvmt)/60);
 	self::message('', "cdExtinction : $cdExtinction - nbMvmt - $nbMvmt - lastMvmt : $lastMvmt");
 
@@ -984,16 +996,15 @@ public static function minuterie($equipEcl, $infNbMvmt, $timer=2, $cdExtinction,
 		// ------------------------------------------------------------------------------------------------------------
 			$action = str_replace('Etat', 'On', $actionEtat);
 			self::setCmd($equipEcl, $action);
+			self::setCron('', time() + $timer*60);
 
 	// On éteint si appelé par le cron ou cdExtinction
 	} elseif ($cdExtinction || $lastMvmt*60 > ($timer)) {
 		// ------------------------------------------------------------------------------------------------------------
 		self::messageT('', "EXTINCTION");
 		// ------------------------------------------------------------------------------------------------------------
-//		if (self::getCmd($equipEcl, $actionEtat) || (self::existCmd($equipEcl, 'Puissance') && self::getCmd($equipEcl, 'Puissance') > 2)) {
 			$action = str_replace('Etat', 'Off', $actionEtat);
 			self::setCmd($equipEcl, $action);
-//		}
 	}
 }
 
@@ -1734,7 +1745,7 @@ public static function dateIntervalle($depuis, $jusque='now', $nbVal =3, &$diff=
 
 							// ----------------------------------- APPEL TTS sur SONOS, JPI, GCast, GOOGLECAST ou FULLYKIOSK ------------------------------
 						} elseif ($destination == 'TTS') {
-					
+
 							if (strtolower($destinataire) == 'defaut') $destinataire = self::getParam('Media','TTS_Defaut');
 							$message = $contenu;
 							// Taille finale du message
@@ -2262,7 +2273,7 @@ function FONCTIONS_SCENARIOS(){}
 ************************************************************************************************************************/
 	public static function delLog($del='') {
 	global $scenario;
-	$scenarioID = $scenarioID = $scenario->getID();
+	$scenarioID =  $scenario->getID();
 	$fileLog = "/var/www/html/log/scenarioLog/scenario$scenarioID.log";
 		$error = @shell_exec("sudo grep -rn -o -i 'error' $fileLog --files-with-matches");
 		if (!$error && !$del) {
@@ -2293,6 +2304,7 @@ function FONCTIONS_JEEDOM(){}
 		// Calcul du ScenarioID par defaut = celui de l'appelant
 		if ( $scenarioID == '' ) { $scenarioID = $scenario->getID(); }
 		$scenarioClock = scenario::byId($scenarioID);
+
 		if ( is_object($scenarioClock) ) {
 			if (is_numeric($cron)) {
 				// Pose du cron
@@ -2503,7 +2515,7 @@ function FONCTIONS_COMMANDES(){}
 * Si vous utilisez l'id, vous pouvez l'entrer indifféremment avec ou sans les tag '*#*'									*
 * Exemple :																												*
 * $cmd_On = '#[Salon][Lumière][On]#'; // Commande On de la lampe														*
-* $cmd_Etat = $sc->getInfoCmd($cmd_On); // Trouve la commande d'état associée											*
+* $cmd_Etat = mg::getInfoCmd($cmd_On); // Trouve la commande d'état associée											*
 ************************************************************************************************************************/
 	public static function getInfoCmd($cmd) {
 		$cmd = self::_tag($cmd);
@@ -2553,7 +2565,7 @@ function FONCTIONS_COMMANDES(){}
 			return null;
 		}
 		$cmd_obj = self::_cmdbyString($cmd);
-		if ($cmd_obj) {
+		if ($cmd_obj || true) {
 			$cmd = (self::_isId($cmd)) ? self::_tag($cmd_obj->getHumanName()) : $cmd;
 			$eqLogic_obj = $cmd_obj -> getEqLogic();
 			if (!is_object($eqLogic_obj)) {
@@ -2780,17 +2792,17 @@ function FONCTIONS_COMMANDES(){}
 				return false;
 			}
 
-			//self::message('', self::$__log_INF . __FUNCTION__ . " : Commande de sous-type $type $logOptions");
+			self::message('', "INF : " . __FUNCTION__ . " : Commande de sous-type $type $logOptions");
 			if (!self::_getCmdWait()) {
 				$options['speedAndNoErrorReport'] = true;
 			}
 			try {
 				$cmd_obj->execCmd($options);
 			}
-			catch (Exception $e) {
+/*			catch (Exception $e) {
 				self::message('', "ERROR : " . __FUNCTION__ . " : ".$e->getMessage());
 				return false;
-			}
+			}*/
 			catch (Error $e) {
 				self::message('', "ERROR : " . __FUNCTION__ . " : ".$e->getMessage());
 				return false;
@@ -3515,7 +3527,7 @@ function FONCTIONS_DIVERSES(){}
 	private static function __trigger() {
 		global $scenario;
 		// Pour éviter des erreurs si appelé (même indirectement) par un plugin
-		if (!is_object($scenario)) { $scenario = scenario::byId(self::$__scenarioLeurre); } 
+		if (!is_object($scenario)) { $scenario = scenario::byId(self::$__scenarioLeurre); }
 
 		$trigger = $scenario->getRealTrigger();
 		$cmd_obj = cmd::byId(str_replace('#', '', $trigger));

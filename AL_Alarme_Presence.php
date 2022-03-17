@@ -32,7 +32,7 @@ global $debug;
 
 // Variables :
 	$tempoBLEA = 2*60;				// Durée max en sec	 depuis dernier signal BLEA (multiple du cron de base)
-	$tempoNOK = 2*60;				// Tempo avant de passer les user réseau en NOK (multiple du cron de base)
+	$tempoNOK = 0.5*60;				// Tempo avant de passer les user réseau en NOK (multiple du cron de base) /////////////////////////////////////////////////
 
 	$pluginRouteur = 'asuswrt';		// Nom du plugin du routeur actif (Vide si inutilisé (mais il faut obligatoirement les équipements user dans '$equipVirtuel)' )
 	$equipVirtuel = 'Sys_Routeur';			// Nom de l'objet auquel sont affectés les équipements (obligatoire si pas de plugin routeur)
@@ -54,7 +54,6 @@ global $debug;
 /***********************************************************************************************************************/
 /***********************************************************************************************************************/
 $declencheurShedule = mg::declencheur('schedule');
-$declencheurUser = mg::declencheur('user');
 $nbTentatives = 0;
 $nbPresences = 0;
 
@@ -93,71 +92,45 @@ foreach ($tabUser as $user => $detailsUser) {
 
 	$equipUser = "[$equipVirtuel][$user]";
 	$cmd_id = trim(mg::toID($equipUser, 'Présence'), '#');
-	$OK = null;
+	$OK = 0;
 
 	// ******** On saute si pas 'schedule' et pas user ********
-	if (!$declencheurShedule && !$declencheurUser && $type != 'user') continue;
-	
+	if (!$declencheurShedule && !mg::declencheur('user') && $type != 'user') continue;
+
 	// Scan du réseau sinon
 	elseif(!$pluginRouteur) ScanReseau($interfaceReseau, $scanReseau);
 	// ------------------------------------------------------------------------------------------------------------------
 	// ------------------------------------------------------------------------------------------------------------------
 
-	// Test de distance Home
-	$distUser = mg::getVar("dist_$user", -1);
-	if ($geofence > 0 && $distUser >= 0) {
-		mg::getCmd("#[Sys_Comm][$user][Position]#", '', $collectDate, $valueDate);
-		// PRESENT
-		if ($distUser < $geofence) {
-			if ($valueDate > $lastValueDate) {
-				$lastValueDate = $valueDate;
-				$OK .= " Position_JC";
-			}
-		}
-		// ABSENT DIRECT si distance > $geofence
+	// TEST JC
+	if ($JC == 1) {
+
+		// Test de présence JC
+		if (!$OK && mg::getCmd("#[Sys_Comm][$user][Ensues]#", '', $collectDate, $valueDate) == 1) $OK .= " ENSUES_JC";
+		else goto finUser;
+		
+		// Test WIFI home JC
+		if (!$OK && strpos(mg::getCmd("#[Sys_Comm][$user][Réseau wifi (SSID)]#", '', $collectDate, $valueDate), 'Livebox-MG') !== false) $OK .= " WIFI_JC";
 		else goto finUser;
 	}
 
-	// TEST JC
-	if (!$OK && $JC == 1) {
-		// ------------- Test de présence JC
-		// PRESENT
-		$ensuesJC = mg::getCmd("#[Sys_Comm][$user][Ensues]#", '', $collectDate, $valueDate);
-		if ($ensuesJC == 1) {
-			if ($valueDate > $lastValueDate) {
-				$lastValueDate = $valueDate;
-				$OK .= " ENSUES_JC";
-			}
-		}
-		else goto finUser; // ABSENT DIRECT si pas 'ensues'
-
-		// ----------------- Test WIFI home JC
-		// PRESENT
-		if (!$OK && strpos(mg::getCmd("#[Sys_Comm][$user][Réseau wifi (SSID)]#", '', $collectDate, $valueDate), 'Livebox-MG') !== false) {
-			if ($valueDate > $lastValueDate) {
-				$lastValueDate = $valueDate;
-				$OK .= " WIFI_JC";
-			}
-		}
-		else goto finUser; // ABSENT DIRECT si bad SSID
+	// Test de distance Home
+	if (!$OK && $geofence > 0) {
+		$distUser = mg::getVar("dist_$user", -1);
+		mg::getCmd("#[Sys_Comm][$user][Position]#", '', $collectDate, $valueDate);
+		if ($distUser <= $geofence && $distUser >= 0) $OK .= " Position_JC";
+		else goto finUser;
 	}
 
 	// Test Bluetooth BLEA
-/*	if ($nomBLEA && !$OK) {
-		if (getBLEA("#[Sys_Présence][$nomBLEA][Rssi]#", $tempoBLEA, $valueDate)) {
-			if ($valueDate > $lastValueDate) {
-				$lastValueDate = $valueDate;
-				$OK .= ' - BLEA ';
-			}
-		} else {
-			$OK = '';
-		}
-	}*/
+/*	if (!$OK && $nomBLEA) && getBLEA("#[Sys_Présence][$nomBLEA][Rssi]#", $tempoBLEA, $collectDate, $valueDate)) $OK .= ' - BLEA '; 
+	else $OK = ''; */
 
 	// Test via routeur
-	if ($pluginRouteur && !$OK) {
+	if (!$OK && $pluginRouteur) {
 		$eqLogics = eqLogic::all();
 		foreach($eqLogics as $eqLogic) {
+			if(!$eqLogic->getIsEnable()) continue;
 			$name = $eqLogic->getName();
 			$typeName = $eqLogic->getEqType_name();
 			if ($typeName == $pluginRouteur && strpos($name, $user) !== false) {
@@ -167,12 +140,8 @@ foreach ($tabUser as $user => $detailsUser) {
 					mg::setValSql('_tabUsers', $user, '', 'IP', $IP);
 					$MAC = strtolower($eqLogic->getLogicalId());
 					mg::setValSql('_tabUsers', $user, '', 'MAC', $MAC);
-
-					if ($valueDate > $lastValueDate) {
-						$lastValueDate = $valueDate;
-					}
 					$OK .= " - ROUTEUR";
-					continue;
+					break;//continue;
 				}
 			}
 		}
@@ -188,6 +157,7 @@ foreach ($tabUser as $user => $detailsUser) {
 	// Test Ping direct de l'adresse IP si lancement shedule ET PAS DE PLUGIN ROUTEUR //////////////////////////////
 	if (!$pluginRouteur && $declencheurShedule && $IP && !$OK) {
 		if (mg::getPingIP($IP, $user)) {
+			$valueDate = time();
 			$OK .= " - PING";
 		}
 	}
@@ -199,6 +169,8 @@ foreach ($tabUser as $user => $detailsUser) {
 
  //************************************* CALCUL DE LA POSITION GLOBALE DU USER ****************************************
 finUser:
+	if ($valueDate > $lastValueDate) { $lastValueDate = $valueDate; }
+	
 	// RECALCUL DU USER OK D'AFFICHAGE
 	if ($OK) {
 		$tabUserTmp[$user]['OK'] = $lastValueDate;
@@ -216,33 +188,42 @@ finUser:
 	// MàJ user et Compteur de présence user
 	if ($type == 'user') {
 		if ($OK) $nbPresences++;
+		$equipJC = "#[Sys_Comm][$user]#";
 
-		// Changement de statut présence du $user
-		if (abs(time() - $lastValueDate) > 120 && ($userPresent != ($OK ? 1 : 0) || mg::declencheur('Porte Entrée'))) {
+		// Départ USER
+		if ($userPresent == 1 && !$OK) {
+			mg::setInf($equipPresence, $codeUser, 0);
+			mg::Message($logTimeLine, "Présence - Départ de $codeUser (" . mg::declencheur() . ").");
+			if ($JC == 1) { mg::setCmd($equipJC, 'Modifier Préférences Appli', 'ON', 'Service JC'); }
+		} 
+		
+		// Arrivée USER
+		if ($userPresent == 0 && $OK) {
+			mg::setInf($equipPresence, $codeUser, 1);
+			mg::Message($logTimeLine, "Présence - Arrivée de $codeUser ($OK).");
+			if ($JC == 1) { mg::setCmd($equipJC, 'Modifier Préférences Appli', 'ON', 'Service JC'); }
+		}
 
-			if (($userPresent && !$OK)) {
-				mg::setInf($equipPresence, $codeUser, 0);
-				mg::Message($logTimeLine, "Présence - Départ de $codeUser (" . mg::declencheur() . ").");
-
-			} elseif (!$userPresent && $OK) {
-				mg::setInf($equipPresence, $codeUser, 1);
-				mg::Message($logTimeLine, "Présence - Arrivée de $codeUser ($OK).");
+		// Réactivation de 'jcservice' et/ou 'tracking' si absent ET si pas de nouvelle depuis plus 90 sec
+		if (!$OK && $JC == 1) {
+			// service
+			$eqLogicJC = eqLogic::byId(trim(str_replace('eqLogic', '', mg::toID($equipJC)), '#'));
+			$lastCommunication = strtotime($eqLogicJC->getStatus('lastCommunication', date('Y-m-d H:i:s')));
+			if (abs(time() - $lastCommunication) > 90) {
+				mg::message($logTimeLine, "Présence - Refresh service JC de $user (" . (time() - $lastCommunication)." sec) > 90)");
+				mg::setCmd($equipJC, 'Modifier Préférences Appli', 'ON', 'Service JC'); usleep(0.5 * 1000000);
 			}
-
-			// Réactivation de 'jcservice' et 'tracking' au départ de Home du user
-			if ($JC == 1 && $userPresent && $OK && mg::declencheur('Porte Entrée')) {
-			//	mg::message($logTimeLine, "Présence - Reactivation JC de $codeUser.");
-				$equipJC = "#[Sys_Comm][$user]#";
-//				mg::setCmd($equipJC, 'Modifier Préférences Appli', 'OFF', 'tracking'); usleep(0.5 * 1000000);
-				mg::setCmd($equipJC, 'Modifier Préférences Appli', 'ON', 'tracking'); usleep(60.5 * 1000000);
-				mg::setCmd($equipJC, 'Modifier Préférences Appli', 'ON', 'tracking'); //usleep(0.5 * 1000000);
+			// tracking
+			mg::getCmd($equipJC, 'Position', $collectDate, $valueDate);
+			if (abs(time() - $collectDate) > 90) {
+				mg::message($logTimeLine, "Présence - Refresh position JC de $user (".(time() - $collectDate)." sec) > 90");
+				mg::setCmd($equipJC, 'Modifier Préférences Appli', 'ON', 'tracking');
 			}
-
 		}
 	}
 
 	// ================================================================================================================
-	mg::messageT('', "$user - $IP " . ($OK ? mg::_debCo_ . "*** PRESENT ***" : mg::_debCr_ . "*** ABSENT ***") . " $user - $IP Depuis le " . date('d\/m \à H\hi\m\n', $lastValueDate) . mg::_finC_ . " ($OK) - ($IP / $MAC)");
+	mg::messageT('',  "!" . mg::declencheur() . " " . ($OK ? mg::_debCo_ . "*** $user PRESENT ***" : mg::_debCr_ . "*** $user ABSENT ***") . " Depuis le " . date('d\/m \à H\hi\m\n', $lastValueDate) . mg::_finC_ . " - ($IP / $MAC)");
 	// ================================================================================================================
 
 	$tabUserTmp[$user]['equipStat'] = $cmd_id;

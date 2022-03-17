@@ -38,7 +38,7 @@ Le retour état du Stop dans le widget est à régler à TimeOut + 5 au minimum 
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-mg::setCron('', '*/3 * * * *');
+mg::setCron('', "*/3 * * * *");
 
 $boutonEvent = mg::declencheur(mg::toHuman($infBoutonEvent)) ? mg::getCmd($infBoutonEvent) : '';
  
@@ -46,10 +46,10 @@ $nomDeclencheur = mg::declencheur('', 3);
 
 // Extinction lampes
 if ($alarme == 2 || $nuitSalon != 1 || $lastMvmt >= $timeOutSalon || $boutonEvent == 'double' || $newIntensite == 0) {
-		//=============================================================================================================
-		mg::MessageT('', "! EXTINCTION (MANUELLE OU AUTOMATIQUE)");
-		//=============================================================================================================
-		$newIntensite = 0;
+	//=================================================================================================================
+	mg::MessageT('', "! EXTINCTION (MANUELLE OU AUTOMATIQUE)");
+	//=================================================================================================================
+	$newIntensite = 0;
 }
 
 // Allumage manuel ou reprise de mouvement
@@ -57,8 +57,8 @@ if (( $nuitSalon != 0 && $memoEtat < $intensiteMininimum && $nbMvmt > $seuilNbMv
 	//=================================================================================================================
 	mg::MessageT('', "! ALLUMAGE MANUEL OU AUTOMATIQUE");
 	//=================================================================================================================
-//	$newIntensite = ($nbMvmt > $seuilNbMvmt || $nuitSalon == 1) ? $intensiteMininimum : 0;
-	$newIntensite = $intensiteMininimum;
+	$newIntensite = ($nbMvmt > $seuilNbMvmt || $nuitSalon == 1) ? $intensiteMininimum : 0;
+//	$newIntensite = $intensiteMininimum;
 }
 
 // gestion progressif si ambiance > 0

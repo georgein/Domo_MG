@@ -35,10 +35,10 @@ if (mg::getCmd($infCinemaEtat)) {
 	mg::message($logTimeLine, "Cinéma - Mise en route.");
 
 	 // Allumage TV si nécessaire
-	if (!mg::getCmd($equipFrameTV_OnOff, 'Etat')) mg::setCmd($equipFrameTV_OnOff, 'On');
-
-	// Volume de Sonos
-	mg::setCmd($equipSonos, 'Volume', 90);
+	if (!mg::getCmd($equipFrameTV_OnOff, 'Etat')) {
+		mg::setCmd($equipFrameTV_OnOff, 'On');
+		sleep(10);
+	}
 
 	// Ambiance lumière à 'Cinéma'
 	mg::wait("scenario($scenAllumageSalon) == 0", 180);	
@@ -54,6 +54,9 @@ if (mg::getCmd($infCinemaEtat)) {
 	mg::setVar('_disableVoletJourNuit', 1);
 	mg::setCmd($equipVoletsSalon, 'Down');
 	
+	// Volume de Sonos
+	mg::setCmd($equipSonos, 'Volume', 90);
+
 	// Bascule en deuxième mode, normalement (HDMI)
 	mg::setCmd($equipTvDomSamsung, 'off');
 
@@ -75,7 +78,8 @@ if (mg::getCmd($infCinemaEtat)) {
 
 	// Réactivation et Ouverture volets
 	mg::unsetVar('_disableVoletJourNuit');
-	if ($nuitExt == 0) mg::setCmd($equipVoletsSalon, 'up');
+//	sleep(5);
+//	if ($nuitExt == 0) mg::setCmd($equipVoletsSalon, 'up');
 	
 	sleep(60);
 	mg::setScenario($scenLuminositeSalon, 'activate');

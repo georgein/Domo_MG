@@ -94,9 +94,7 @@ foreach ($tabUser as $user => $detailsUser) {
 	}
 }
 
-mg::message('', "xxxxxxxxxxx $userAppel - $user");
 if ($userAppel == '') $userAppel = $user;
-mg::message('', "xxxxxxxxxxx $userAppel - $user");
 // ********************************************************************************************************************
 mg::setVar('tabGeofence', $tabGeofence);
 $latLng_ = explode(',', mg::getCmd("#[Sys_Comm][$userAppel][Position]#"));
@@ -250,7 +248,8 @@ ORDER BY `datetime` ASC
 
 		$pcBatterie = get('pcBatterie', $result, $i);
 		$SSID = get('SSID', $result, $i);
-		if ($SSID == '') $SSID = 'Pas de SSID';
+		if ($SSID == 'Pas de SSID') $SSID = '';
+		if ($SSID == 'PAS DE SSID') $SSID = '';
 
 		$activite = get('activite', $result, $i);
 		$activiteOrg = $activite;
@@ -265,14 +264,14 @@ ORDER BY `datetime` ASC
 
 			// ******************************************* GESTION ANOMALIES ******************************************
 			// ***** FORCE A 'I' SI SOUS WIFI *****
-			if (get('SSID', $result, $i-1) != 'Pas de SSID' && $SSID != 'Pas de SSID' && get('SSID', $result, $i+1) != 'Pas de SSID') $activite = 'I';
+			//if (get('SSID', $result, $i-1) != '' && $SSID != '' && get('SSID', $result, $i+1) != '') $activite = 'I';
 
 			// ANOMALIES ------------------------------ ANOMALIES HORS ENTRAINEMENTS ------------------------------
 			if (($vitesseEcart > 6 && get('vitesseEcart', $result, $i-1) > 6 )) $activite = 'V';
 
 			// ANOMALIES ------------------------------ ANOMALIES ENTRAINEMENTS EN COURS ------------------------------
 			if ($tabGeofence[$user]['debTime'] > 0 && $tabGeofence[$user]['cloture'] == 0) {
-				if ($vitesseEcart > 1 && $vitesseEcart <= 6) $activite = 'E'; // Elimination des 'in vehicul' indues
+				if ($vitesseEcart > 1 && $vitesseEcart <= 10) $activite = 'E'; // Elimination des 'in vehicul' indues
 				if ($vitesseEcart < 1) $activite = 'I'; // Forçage des pauses
 			}
 
@@ -315,7 +314,7 @@ ORDER BY `datetime` ASC
 			// *************************************** ACTIVITE 'E' ENTRAINEMENT **************************************
 			if ($activite == 'E') {
 				// ********** DEMARRAGE ENTRAINEMENT
-				if ($SSID == 'Pas de SSID' && countActivites($i, $result, 'V', 30) < 3 && ($tabGeofence[$user]['debTime'] <= 0 || $tabGeofence[$user]['cloture'] > 0)) {
+				if ($SSID == '' && countActivites($i, $result, 'V', 30) < 3 && ($tabGeofence[$user]['debTime'] <= 0 || $tabGeofence[$user]['cloture'] > 0)) {
 					mg::message('', "************* DEMARRAGE entrainement");
 					$tabGeofence[$user]['debTime'] = $datetime;
 					$tabGeofence[$user]['cloture'] = 0;
@@ -330,7 +329,7 @@ ORDER BY `datetime` ASC
 					$gpx = "<?xml version='1.0' encoding='UTF-8'?> <gpx creator='Geofence MG'>\n<metadata> <name>\"".(isset($lgnActivite[$user]['name']) ? $lgnActivite[$user]['name'] : '*** en cours ***')."\"</name> <date>$dateSQL</date></metadata>\n<trk>\n<trkseg>";
 					$gpx .= "\n<trkpt lat='$latitude' lon='$longitude'><ele>$altitude</ele><time>$timeGPX</time></trkpt>";
 
-					if ($SSID != 'Pas de SSID' && $tabGeofence[$user]['debTime'] <= 0) { $tabGeofence[$user]['SSID_Org'] = $SSID; }
+					if ($SSID != '' && $tabGeofence[$user]['debTime'] <= 0) { $tabGeofence[$user]['SSID_Org'] = $SSID; }
 				}
 			}
 
@@ -347,13 +346,13 @@ ORDER BY `datetime` ASC
 				$nbLignesGPX++;
 
 				// ********** CLOTURE ENTRAINEMENT
-				if (		$SSID != 'Pas de SSID'
-						 || ($i >= count($result)-1 && file_exists($fileGPX))
-						 || strpos($tabGeofence[$user]['SSID_Org'], $SSID) !== false
-						 || strpos($SSID, $tabGeofence[$user]['SSID_Org']) !== false
-						 || countActivites($i, $result, 'V', 5) > 2
-					)
-					{
+				if ( $SSID != '' 
+					|| ($i >= count($result)-1 && file_exists($fileGPX))
+					|| strpos($tabGeofence[$user]['SSID_Org'], $SSID) !== false
+					|| strpos($SSID, $tabGeofence[$user]['SSID_Org']) !== false
+					|| countActivites($i, $result, 'V', 5) > 2 
+					) 
+				{
 					$tabGeofence[$user]['cloture'] = $datetime;
 					$tabGeofence[$user]['alerteEnCours'] = 0;
 					$tabGeofence[$user]['SSID_Org'] = 'yyy';
@@ -448,7 +447,7 @@ function get($value, $table, $index) {
 
 	// valeurs lues
 	if ($value == 'activite') return transpoActivite(@$tables[5]);
-	elseif ($value == 'SSID') return trim($tables[4]) != '' ? trim($tables[4]) : 'Pas de SSID';
+	elseif ($value == 'SSID') return trim($tables[4]) != '' ? trim($tables[4]) : '';
 	elseif ($value == 'pcBatterie') return intval($tables[3]);
 
 	elseif ($value == 'altitude') return round($tables[2], 0);
@@ -586,7 +585,7 @@ function getGPX($user, $fileGPX) {
  	foreach($obj->trk->trkseg->trkpt as $trkpt) {
 		$datetime = $trkpt->time;
 		$result[$index]['datetime'] = $datetime;
-		$result[$index]['value'] = round($trkpt['lat'], 7).','.round($trkpt['lon'], 7).','.round($trkpt->ele, 1).',99,Pas de SSID,walking';
+		$result[$index]['value'] = round($trkpt['lat'], 7).','.round($trkpt['lon'], 7).','.round($trkpt->ele, 1).',99, ,walking';
 
 		$index++;
 
@@ -1194,7 +1193,7 @@ return "
 			}
 
 			// ******************************************** Marqueur ANOMALIES ********************************************
-			message = '<center> $user : ' + dateString + ' - *** ANOMALIE *** - '+dureePause + ' - ' + deltaI_Pause + '> $pauseMin - Bat. ' + pcBatterie+ ' %.';
+			message = '<center> $user : ' + dateString + ' - *** ANOMALIE *** - '+dureePause + ' - ' + deltaI_Pause + '< $pauseMin - Bat. ' + pcBatterie+ ' %.';
 			L.circle(latlngs[i], $sizePoint, { 'color': '$colorVoiture', 'fill': true, 'fillColor': '$colorVoiture', 'fillOpacity': 1}).bindTooltip( message).addTo(map);
 		}
 

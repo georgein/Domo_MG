@@ -35,36 +35,37 @@ Hors du mode horaire :
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 	$tempPiscine = mg::getCmd($infTempPiscine);
-	$ph = mg::getCmd($equipOndilo, 'Ph');
-	$redox = mg::getCmd($equipOndilo, 'Redox');
-	$batterie = mg::getCmd($equipOndilo, 'Niveau de la batterie');
-	mg::setCmd($equipOndilo, 'Rafraichir');
 
 /*---------------------------------------------------------------------------------------------------------------------
 										SURVEILLANCE PH et REDOX via ICO ONDILO
 ---------------------------------------------------------------------------------------------------------------------*/
-$notif_ICO = 'Info Piscine Ensuèse : ';
+	$notif_ICO = 'Info Piscine Ensuèse : ';
+	$eqLogic = eqLogic::byId(str_replace(array('#eqLogic', '#'), '', $equipOndilo));
+	if ($eqLogic->getIsEnable()) {
+		$ph = mg::getCmd($equipOndilo, 'Ph');
+		$redox = mg::getCmd($equipOndilo, 'Redox');
+		$batterie = mg::getCmd($equipOndilo, 'Niveau de la batterie');
 
-if ($ph < $phMin) {
-	$notif_ICO .= "Le Phi est trop bas, veuillez ajouter du Phi pluse ! ";
-} else if ($ph > $phMax) {
-$notif_ICO .= "Le Le Phi est trop haut ! ";
-}
+		if ($ph < $phMin) {
+			$notif_ICO .= "Le Phi est trop bas, veuillez ajouter du Phi pluse ! ";
+		} else if ($ph > $phMax) {
+		$notif_ICO .= "Le Le Phi est trop haut ! ";
+		}
 
-$notif_ICO .= ", ";
-if ($redox < $redoxMin) {
-	$notif_ICO .= "Le Redox est trop bas, veuillez rajouter du chlore ! ";
-} else if ($redox> $redoxMax) {
-	$notif_ICO .= "Le Redox est trop haut ! ";
-}
+		$notif_ICO .= ", ";
+		if ($redox < $redoxMin) {
+			$notif_ICO .= "Le Redox est trop bas, veuillez rajouter du chlore ! ";
+		} else if ($redox> $redoxMax) {
+			$notif_ICO .= "Le Redox est trop haut ! ";
+		}
 
-if ($batterie < $batterieMin) {
-	$notif_ICO .= ", La batterie de l'Ondilo est à $batterie %, veuillez le recharger !";
-}
+		if ($batterie < $batterieMin) {
+			$notif_ICO .= ", La batterie de l'Ondilo est à $batterie %, veuillez le recharger !";
+		}
+	}
 
-$notif_ICO .= " La température de l'eau est de $tempPiscine °C.";
-
-mg::setVar('_Notif_ICO', $notif_ICO);
+	$notif_ICO .= " La température de l'eau est de $tempPiscine °C !";
+	mg::setVar('_Notif_ICO', $notif_ICO);
 
 /*---------------------------------------------------------------------------------------------------------------------
 										Gestion marche forcée de la piscine
