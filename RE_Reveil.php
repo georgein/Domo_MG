@@ -37,6 +37,7 @@ Si le réveil démarre avec nuitSalon != 2 (levé prématuré) on ouvre la chamb
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
+
 deb:
 $reveilOnLine = mg::getVar('_ReveilOnLine', 0);
 
@@ -167,7 +168,7 @@ if (!$reveilOnLine) {
 											Fabrique le message de suivi des poids
 **********************************************************************************************************************/
 function MessagePoids($user, $userLong) {
-	$infPoidsUser = trim(mg::toID("[Sys_Présence][Balance $user]", 'Poids'), '#');
+	$infPoidsUser = trim(mg::toID("[Maison][Balance $user]", 'Poids'), '#');
 	$poids = round(mg::getCmd($infPoidsUser), 1);
 
   	$startDate = date('Y-m-d', time()-6*24*3600) . ' 00:00:00';

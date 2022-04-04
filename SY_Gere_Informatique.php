@@ -13,11 +13,9 @@ Veille PC_MG - 126
 // N° des scénarios :
 
 //Variables :
+	$alarme = mg::getVar('Alarme');
 	$nuitSalon = mg::getCmd($infNuitSalon, '', $valueDate, $collectDate);
 	$lastNuitSalon = round((time() - $valueDate) / 60, 1);
-	
-	$etatCinema = mg::getCmd($infCinemaEtat, 0);
-	$puissancePcMg = mg::getCmd($equipPcMg, 'Puissance');
 
 // Paramètres :
 	$logTimeLine = mg::getParam('Log', 'timeLine');
@@ -26,14 +24,14 @@ Veille PC_MG - 126
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-mg::setCron('', "*/$timingExtinctionPC * * * *");
+//mg::setCron('', "*/$timingExtinctionPC * * * *");
 
-if ($puissancePcMg > 5 && $nuitSalon == 2 && !$etatCinema && $lastNuitSalon >= $timingExtinctionPC ) {
+if (mg::getCmd($equipPcMg, 'Puissance') > 5 && !mg::getCmd($infCinemaEtat, 0) && (($nuitSalon == 2 && $lastNuitSalon >= $timingExtinctionPC) || $alarme) ) {
 	// ------------------------------------------------------------------------------------------------------------
 	mg::messageT('', "! Mise en veille du PC-MG");
 	mg::Message($logTimeLine, "Informatique - Mise en veille du PC-MG.");
 	// ------------------------------------------------------------------------------------------------------------
-	mg::setCmd($Ctrl_PCMg, 'Suspend'); // Suspend, Hibernate
+	mg::setCmd($Ctrl_PCMg, 'Hibernate'); // Suspend, Hibernate
 }
 
 ?>

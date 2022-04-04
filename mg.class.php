@@ -774,9 +774,9 @@ public static function setValSql($nomTab, $key0='', $key1='', $name='', $value='
 		$clefTxt = "'$nomTab'/'$key0'";
 	} else {
 		$sql = "
-			INSERT INTO $nomTab ($key[0], $key[1], $name)
+			INSERT INTO `$nomTab` (`$key[0]`, `$key[1]`, `$name`)
 			VALUES ('$key0', '$key1', '$value')
-			ON DUPLICATE KEY UPDATE $key[0]='$key0', $key[1]='$key1', $name='$value'
+			ON DUPLICATE KEY UPDATE `$key[0]`='$key0', `$key[1]`='$key1', `$name`='$value'
 		";
 		$clefTxt = "'$nomTab'/'$key0'/'$key1'";
 	}
@@ -936,7 +936,7 @@ function stateDaemon ($daemonName , $relance=0) {
 	// SINON Lecture du paramètre
 	$sql = "SELECT value FROM `".self::$__tabParams."` WHERE `section` = '$section' AND `name` = '$name' LIMIT 1";
 	$result = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
-	
+
 	// Pas de param
 	if (count($result) == 0 && $value == null) {
 		if ($valDefaut != null) {
@@ -1181,12 +1181,11 @@ public static function dateIntervalle($depuis, $jusque='now', $nbVal =3, &$diff=
 		$meter = ($earth_radius * $d);
 
 		$azimut = (rad2deg(atan2(sin(deg2rad($lng1) - deg2rad($lng2)) * cos(deg2rad($lat1)), cos(deg2rad($lat2)) * sin(deg2rad($lat1)) - sin(deg2rad($lat2)) * cos(deg2rad($lat1)) * cos(deg2rad($lng1) - deg2rad($lng2)))) + 360) % 360;
-
 		if ($unit == 'k') {
-//			self::message('', "SP : " . __FUNCTION__ . " : ($lat1, $lng1, $lat2, $lng2) => Distance calculée $meter m.");
 			return floatval($meter / 1000);
 		}
-
+		
+		//self::message('', "SP : " . __FUNCTION__ . " : ($lat1, $lng1, $lat2, $lng2) => Distance calculée $meter m.");
 		return $meter;
 	}
 
@@ -3301,9 +3300,9 @@ function FONCTIONS_CONDITIONNELLES(){}
 		$return = evaluate(scenarioExpression::setTags(self::_expressionToId($exp), $scenario));
 
 		if ($return === $exp) {
-			self::message('', "WARNING : " . __FUNCTION__ . " : L'évaluation de l'expression est égale à l'expression ( '$exp' => '$return' )");
+	//		self::message('', "WARNING : " . __FUNCTION__ . " : L'évaluation de l'expression est égale à l'expression ( '$exp' => '$return' )");
 		} else {
-			//self::message('', "SP : " . __FUNCTION__ . " : Résultat => '$return'");
+			self::message('', "SP : " . __FUNCTION__ . " : Résultat => '$return'");
 		}
 		return $return;
 	}

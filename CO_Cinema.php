@@ -37,8 +37,10 @@ if (mg::getCmd($infCinemaEtat)) {
 	 // Allumage TV si nécessaire
 	if (!mg::getCmd($equipFrameTV_OnOff, 'Etat')) {
 		mg::setCmd($equipFrameTV_OnOff, 'On');
-		sleep(10);
+		sleep(20);
 	}
+	// Bascule en deuxième mode, normalement (HDMI)
+	mg::setCmd($equipTvDomSamsung, 'off');
 
 	// Ambiance lumière à 'Cinéma'
 	mg::wait("scenario($scenAllumageSalon) == 0", 180);	
@@ -56,9 +58,6 @@ if (mg::getCmd($infCinemaEtat)) {
 	
 	// Volume de Sonos
 	mg::setCmd($equipSonos, 'Volume', 90);
-
-	// Bascule en deuxième mode, normalement (HDMI)
-	mg::setCmd($equipTvDomSamsung, 'off');
 
 // ************************************************** ARRET DU CINEMA *************************************************
 } else {

@@ -1,123 +1,147 @@
 <?php
 /**********************************************************************************************************************
 Geo_Daemon - 203
-Enregistre le flux des nouveaux points de géolocalisation (METTRE multi taches à 'OUI')
-Lance le calcul d'affichage 'Geofence' si plus de $refreshCalcul sec depuis le dernier refresh
+Enregistre le flux des nouveaux points de géolocalisation
+Ne traite pas :
+-	Si doublon de position.
+-	Les points trop fréquent (< $timingEntrePoint sec).
+-	Relance le tracking JC si pas de point depuis plus de $timingRelanceJC sec.
+-	Lance le calcul d'affichage 'Geofence' si plus de $refreshCalcul sec depuis le dernier refresh.
 **********************************************************************************************************************/
 
 // Infos, Commandes et Equipements :
-	//	$equipMapPresence, $equipPresence
+	//	$equipPresence, $equipJC
 
 // N° des scénarios :
-
-// N° des scénarios :
-	$scenGeofence = 123; 
+	$scenGeofence = 123;
 
 //Variables :
-	$refreshCalcul = 60;					// Période de rafraichissement MINIMUM du recalcul du HTML
-	$homeSSID = ' Livebox-MG';				// Valeur contenue dans le SSID deS 'HOME'
+	$tabGeoDaemon = mg::getVar('tabGeoDaemon');
+
+	$timingRelanceJC = 90;			// Durée avant relance service/tracking de JC si pas de nouvelle
+	$timingEntrePoint = 9;			// Intervalle de temps minimum (en sec) entre chaque point
+
+	$refreshCalcul = 60;			// Période de rafraichissement MINIMUM du recalcul du HTML
+	$homeSSID = ' Livebox-MG';		// Valeur contenue dans le SSID deS 'HOME'
+	$formatDate = 'Y-m-d H:i:s';
 
 // Paramètres :
-	$tabGeofence = mg::getVar('tabGeofence');
 	$latitudeHome = round(mg::getConfigJeedom('core', 'info::latitude'), 5);
 	$longitudeHome = round(mg::getConfigJeedom('core', 'info::longitude'), 5);
 	$altitudeHome = round(mg::getConfigJeedom('core', 'info::altitude'), 1);
-	$PositionHome = $latitudeHome.','.$longitudeHome.','.round($altitudeHome);
-	$tabUser = mg::getTabSql('_tabUsers');
-	
-	$logTimeLine = mg::getParam('Log', 'timeLine');
+
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
-$userAppel = mg::declencheur('', 2);
-if (!mg::declencheur('Tel-')) $userAppel = 'Tel-NR'; // Pour appel manuel 'user'
+// INIT
+if (mg::declencheur('Tel-')) $user = mg::declencheur('', 2);
+else $user = 'Tel-NR'; // Pour appel manuel 'user'
+$equipJC = "#[Sys_Comm][$user]#";
 
-// ******************** Calcul SSID ********************
-	if (mg::declencheur('Etat Wifi') && mg::getCmd(mg::declencheur()) == 0) {
-	$GeofenceSSID = '';
-	$valueDateSSID = time();
-}
-else $GeofenceSSID = mg::getCmd("#[Sys_Comm][$userAppel][Réseau wifi (SSID)]#", '', $collectDate, $valueDateSSID);
+$cpt = 0;
+$distEcart = 0;
+$values = array();
 
-// ******************** Calcul positionJC et $dist ********************
-$positionJC = mg::getCmd("#[Sys_Comm][$userAppel][Position]#", '', $collectDate, $valueDatePosition);
-$latlngs = explode(',', $positionJC);
+// Init des 'old' de l'appel précédent
+$oldDatePosition = $tabGeoDaemon[$user]['oldDatePosition'];
+$oldLatitude = $tabGeoDaemon[$user]['oldLatitude'];
+$oldLongitude = $tabGeoDaemon[$user]['oldLongitude'];
+$oldSSID = $tabGeoDaemon[$user]['oldSSID'];
 
-// Sortie sur intervalle trop court
-if (mg::declencheur('position')) {
-	$oldPositionJC = mg::getCmd($equipMapPresence, $userAppel);
-	$oldLatlngs = explode(',', $oldPositionJC);
-	$intervalle = round(mg::getDistance($oldLatlngs[0], $oldLatlngs[1], $latlngs[0], $latlngs[1], ''));
-	if ($intervalle < 5) {
-		mg::messageT('', "! User : $userAppel => intervalle : $intervalle mètre");
-		return;
+$idUserJC = trim(mg::toID($equipJC, "Position"), '#');
+$idEtatWIFI = trim(mg::toID($equipJC, 'Etat Wifi'), '#');
+$idSSID = trim(mg::toID($equipJC, 'Réseau wifi (SSID)'), '#');
+
+// Lecture des dernières position depuis $oldDatePosition
+$sql = "SELECT * FROM `history` WHERE (`cmd_id` = '$idUserJC' AND `datetime` > '$oldDatePosition') ORDER BY `datetime` ASC";
+mg::message('', $sql);
+$result = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
+
+// Parcours et lecture des dernières positions
+foreach ($result as $userEach => $detailsUser) {
+	$datetime = $detailsUser['datetime'];
+	$value = $detailsUser['value'];
+	$newLatlngs = explode(',', $value);
+
+	$latitude = round($newLatlngs[0], 5);
+	$longitude = round($newLatlngs[1], 5);
+	$altitude = round($newLatlngs[2], 1);
+	$activite = $newLatlngs[3];
+	$batterie = $newLatlngs[4];
+
+	// ************************************** ON PASSE si écart temps trop court **************************************
+if (!$oldDatePosition) $oldDatePosition = $datetime;
+	$intervalleTemps = abs(strtotime($oldDatePosition) - strtotime($datetime));
+	if ($intervalleTemps < $timingEntrePoint) continue;
+
+	// *************************************** ON PASSE si doublon de position ****************************************
+	$distHome = round(mg::getDistance($latitudeHome, $longitudeHome, $latitude, $longitude, 'k'), 1);
+	if ($oldLatitude == $latitude && $oldLongitude == $longitude) continue;
+
+	// ********************************************** Lecture Etat WIFI	***********************************************
+	$sql = "SELECT * FROM `history` WHERE (`cmd_id` = '$idEtatWIFI' AND `datetime`>= '$datetime') ORDER BY `datetime` ASC LIMIT 1";
+	$result = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
+	$etatWIFI = $result[0]['value'];
+
+	// ************************************************* Lecture SSID *************************************************
+	if ($etatWIFI) {
+		$sql = "SELECT * FROM `history` WHERE (`cmd_id` = '$idSSID' AND `datetime`>= '$datetime') ORDER BY `datetime` ASC LIMIT 1";
+		$result = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
+		$SSID = $result[0]['value'];
+	} else {
+		$SSID = '';
 	}
-}
 
-// Calcul distance
-$distanceMax = floatval($tabUser["$userAppel"]['geo']);
-$dist = round(mg::getDistance($latitudeHome, $longitudeHome, $latlngs[0], $latlngs[1], 'k'), 2);
-if (mg::getVar("dist_$userAppel") != $dist) mg::setVar("dist_$userAppel", $dist);
-$latlngs[2] = round(mg::getAltitude($latlngs[0], $latlngs[1]), 0);	
-$positionJC = $latlngs[0].','.$latlngs[1].','.$latlngs[2];
+	// *************************************** ON PASSE si doublon de SSID ****************************************
+	if ($SSID != '' && $SSID == $oldSSID) continue;
 
-//  ******************** SI at HOME ********************
-if (strpos(" $GeofenceSSID", $homeSSID) !== false) {
-	$latlngs = explode(',', $PositionHome);
-	mg::setVar("dist_$userAppel", -1);
-	mg::unsetVar("_OldDist_$userAppel");
-}
+	// **************************************************** SI AT HOME ****************************************************
+	if ($distHome < 0.15 || strpos(" $SSID", $homeSSID) !== false) {
+		$latitude = $latitudeHome;
+		$longitude = $longitudeHome;
+		$altitude = $altitudeHome;
+		$activite = 'still';
+		$distHome = 0.0;
+		mg::unsetVar("_OldDist_$user");
+	}
 
-// *********************************************** ENREGISTREMENT EN BDD **********************************************
-	SetPoint($tabGeofence, $userAppel, max($valueDateSSID, $valueDatePosition), $GeofenceSSID, $homeSSID, $latlngs, $intervalle, $dist, $equipMapPresence);
+	++$cpt;
+	// *********************************************** ENREGISTREMENT EN BDD **********************************************
 
-// **** ON appelle Geofence si plus de $refreshCalcul secondes depuis dernier point  ou changement de connection ******
-$lastCalcul = mg::getVar("_GeoLastRun_$userAppel");
-if ((time() - $lastCalcul) > $refreshCalcul || mg::declencheur('SSID') || mg::declencheur('Etat Wifi')) {
-	mg::setScenario($scenGeofence, 'start', "userAppel=$userAppel");
-	mg::setVar("_GeoLastRun_$userAppel", time());
-}
+	if ($distHome > 0) $altitude = round(mg::getAltitude($latitude, $longitude), 1);
+	if ($oldLatitude > 0) $distEcart = round(mg::getDistance($oldLatitude, $oldLongitude, $latitude, $longitude, ''), 1);
 
-// ********************************************************************************************************************
-// ******************************************* ENREGISTREMENT DU NOUVEAU POINT DANS LA COMMANDE ***********************
-// ********************************************************************************************************************
-function setPoint($tabGeofence, $userAppel, $valueDate, $GeofenceSSID, $homeSSID, $latlngs, $intervalle, $dist, $equipMapPresence) {
-	$values = array();
-	$formatDate = 'Y-m-d H:i:s';
-	$batteryJC = mg::getCmd("#[Sys_Comm][$userAppel][Batterie]#"); 
-	$ActiviteJC =  mg::getCmd("#[Sys_Comm][$userAppel][Activité]#");
-	$positionJC =  $latlngs[0].','. $latlngs[1].','. $latlngs[2];
-	$altitude = $latlngs[2];
-	
-	//  ******************** SI at HOME ********************
-	if (strpos(" $GeofenceSSID", $homeSSID) !== false) $ActiviteJC = 'still';
-
-	// Calcul de la chaine finale 'newValue' à mémoriser
-	$newValue = "$positionJC,$batteryJC,$GeofenceSSID,$ActiviteJC,$dist";
-	
-	$idUser = trim(mg::toID($equipMapPresence, $userAppel), '#');
-	$valueDateTxt = date($formatDate, $valueDate);
-
-	mg::messageT('', "! User : $userAppel => Enreg. d'un point au $valueDateTxt - SSID : '$GeofenceSSID' - Dist. : $intervalle m/$dist km -  alt. : $altitude m - Activité : $ActiviteJC");
-
-	// Enregistrement position courante
-	mg::setInf($equipMapPresence, $userAppel, $newValue);
-//	$sql = "INSERT INTO `history` (cmd_id, datetime, value) VALUES ('$idUser', '$valueDateTxt', '$newValue') ON DUPLICATE KEY UPDATE value='$newValue'";
-	//mg::message('', $sql);
-//	$result = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Suppression doublon position courante
-	if ($tabGeofence[$userAppel]['cloture'] > 0) { $dateMin = $tabGeofence[$userAppel]['cloture']; }
-	else { $dateMin = $tabGeofence[$userAppel]['debTime']; }
-	$DateMinTxt = date($formatDate, $dateMin);
-
-	$sql = "DELETE from `history` WHERE `cmd_id` = '$idUser' AND `value` REGEXP '$positionJC' and `datetime` < '$valueDateTxt' and `datetime` > '$DateMinTxt'   ORDER BY `datetime` DESC limit 1";
+	$idUser = trim(mg::toID($equipPresence, "Position_$user"), '#');
+	$newValue = "$latitude,$longitude,$altitude,$batterie,$SSID,$activite,$distHome,$distEcart";
+	$sql = "INSERT INTO `history` (cmd_id, datetime, value) VALUES ('$idUser', '$datetime', '$newValue') ON DUPLICATE KEY UPDATE value='$newValue'";
 	mg::message('', $sql);
 	$result = DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL);
 
-	if (count($result) > 0 ) 	mg::message($logTimeLine, "$userAppel - ".count($result)." suppression de doublon : $sql");
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	mg::messageT('', "! ($cpt) $user => Enreg. du " . substr(date($datetime), - 8) . " - SSID : '$SSID' - EcartDist. : $distEcart m / dist: $distHome km -  alt. : $altitude m - activité : $activite");
+
+	// Mémo des 'old' pour la boucle suivante
+	$oldDatePosition = $datetime;
+	$oldLatitude = $latitude;
+	$oldLongitude = $longitude;
+	$oldSSID = $SSID;
 }
 
+if ($latitude > 0) {
+	// *********************************************** REFRESH TRACKING JC ************************************************
+	if (time() - strtotime($datetime) > $timingRelanceJC && !$SSID) {
+		mg::setCmd($equipJC, 'Modifier Préférences Appli', 'ON', 'tracking');
+	}
+	// Mémo des 'old' pour l'appel suivant
+	$tabGeoDaemon[$user]['oldDatePosition'] = $datetime;
+	$tabGeoDaemon[$user]['oldLatitude'] = $latitude;
+	$tabGeoDaemon[$user]['oldLongitude'] = $longitude;
+	$tabGeoDaemon[$user]['oldSSID'] = $SSID;
+	mg::setVar('tabGeoDaemon', $tabGeoDaemon);
+}
+
+// ************************************************* APPEL GEOFENCE ***************************************************
+if ($cpt > 0) {
+	mg::setScenario($scenGeofence, 'start', "userAppel=$user");
+	if (mg::getVar("dist_$user") != $distHome) mg::setVar("dist_$user", $distHome); // Mémo distance Home pour Alarme_Présence
+}
 ?>

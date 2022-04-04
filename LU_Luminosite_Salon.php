@@ -68,6 +68,7 @@ elseif ($lumSalon < $seuilNuitSalon && $nuitExt && $lastMvmt > 5) {
 // ******************************************** ON SORT SI PAS DE CHANGEMENT ******************************************
 mg::messageT('', "nuitSalon : $nuitSalon - nbMvmt : $nbMvmt - lastMvmt : $lastMvmt lumSalon : $lumSalon seuilLum : $seuilNuitSalon/$seuilLumSalon - $message");
 if ($nuitSalon == $oldNuitSalon) return;
+//mg::setVar('NuitSalon', 2); //sleep(2);
 
 mg::setVar('NuitSalon', $nuitSalon);
 if ($nuitSalon == 2 || $oldNuitSalon == 2) mg::message($logTimeLine, $message);

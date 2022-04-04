@@ -46,7 +46,8 @@ $jour = ($jour > 6) ? 0 : $jour;
 $detailsTabExceptions = explode(';', $tab_ReveilExceptions[$jour]);
 
 // Lecture des agendas, WE et tableau d'exceptions
-if (!mg::declencheur('heureReveil')) {
+//if (!mg::declencheur('heureReveil')) {
+if (!mg::declencheur('Heure') && !mg::declencheur('Minute')) {
 mg::Message('', "-------------------------------------- LECTURE AGENDAS --------------------------------------------");
 	$alarmTime = $reveilHeureNormale;
 
@@ -79,13 +80,17 @@ mg::Message('', "-------------------------------------- LECTURE AGENDAS --------
 	}
 	
 	$myDate = strtotime($alarmTime);
+	mg::setCmd($equipReveil, 'Minute_', date('i', $myDate));
+	mg::setCmd($equipReveil, 'Heure_', date('h', $myDate));
 
 // Si mise à jour manuelle des sets on lis les set
 } else {
-mg::Message('', "------------------------------------- LECTURE DU SLIDER -------------------------------------------");
-	$myDate = mg::getCmd($equipReveil, 'heureReveil')/1000;
+mg::Message('', "----------------------------------- LECTURE HEURE MANUELLE ----------------------------------------");
+	$minute = mg::getCmd($equipReveil, 'Minute');
+	$heure = mg::getCmd($equipReveil, 'Heure');
+	$myDate = strtotime("$heure:$minute:00");
 }
-
+	
 // Gestion du mode On/Off
 if (mg::getCmd($equipReveil, 'Stop_Réveil') == 'off') { 
 	mg::setScenario($ScenarioReveil, 'deactivate'); 
@@ -97,7 +102,7 @@ mg::Message('', "------------------------------------- ACTIVATION REVEIL -------
 	if ($myDate < time()) { $myDate = $myDate + (24*3600); }
 	
 	mg::setVar('heureReveil', $myDate);
-	if (!mg::declencheur('heureReveil')) { mg::setCmd($equipReveil, 'Reveil_Slider', $myDate*1000); }
+	/*if (!mg::declencheur('Heure') && !mg::declencheur('Minute'))*/ mg::setCmd($equipReveil, 'Reveil_Slider', $myDate*1000);
 	mg::unsetVar('_ReveilOnLine');
 	
 	mg::setScenario($ScenarioReveil, 'activate');

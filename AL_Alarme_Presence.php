@@ -31,8 +31,9 @@ global $debug;
 	$scen_LancementAlarme = 57;		// N° du scénario du digicode déclenchant l'alarme
 
 // Variables :
+	$timingRelanceJC = 90;			// Durée avant relance service/tracking de JC si pas de nouvelle
 	$tempoBLEA = 2*60;				// Durée max en sec	 depuis dernier signal BLEA (multiple du cron de base)
-	$tempoNOK = 0.5*60;				// Tempo avant de passer les user réseau en NOK (multiple du cron de base) /////////////////////////////////////////////////
+	$tempoNOK = 1*60;				// Tempo avant de passer les user réseau en NOK (multiple du cron de base) /////////////////////////////////////////////////
 
 	$pluginRouteur = 'asuswrt';		// Nom du plugin du routeur actif (Vide si inutilisé (mais il faut obligatoirement les équipements user dans '$equipVirtuel)' )
 	$equipVirtuel = 'Sys_Routeur';			// Nom de l'objet auquel sont affectés les équipements (obligatoire si pas de plugin routeur)
@@ -43,10 +44,11 @@ global $debug;
 	$fileExportHTML = getRootPath() . "$pathRef/util/tab_Reseau.html";
 
 	$tabUser = mg::getTabSql('_tabUsers');
-	$tabUserTmp = mg::getVar('tabUsersTmp'); // Table des valeurs volatiles
+	$tabUserTmp = mg::getVar('tabUsersTmp'); // Table des valeurs volatiles utilisé par l'html des users présents
 	$timingAlarmeEntree = mg::getParam('Alarme', 'timingEntree');	// Temps maximum (en mn depuis le dernier mouvement de la porte d"entrée pour autoriser le lancement de l"alarme si AutoPrésence.
 
 	$logTimeLine = mg::getParam('Log', 'timeLine');
+	$logTest = mg::getParam('Log', 'test');
 
 	$timingAlarmeLastMvmt = mg::getParam('Alarme', 'timingLastMvmt'); // Temps minimum (en mn depuis LastMvmtAll pour autoriser le lancement de l'alarme si AutoPrésence.
 
@@ -89,10 +91,11 @@ foreach ($tabUser as $user => $detailsUser) {
 	$type = isset($tabUser[$user]['type']) ? trim($tabUser[$user]['type']) : ''; // Type 'user' ou ''
 
 	if ($type == 'user') $userPresent = mg::getCmd($equipPresence, $codeUser, $collectDate, $lastValueDate);
+	else $lastValueDate = max($tabUserTmp[$user]['OK'], $tabUserTmp[$user]['lastNOK']);
 
 	$equipUser = "[$equipVirtuel][$user]";
 	$cmd_id = trim(mg::toID($equipUser, 'Présence'), '#');
-	$OK = 0;
+	$OK = '';
 
 	// ******** On saute si pas 'schedule' et pas user ********
 	if (!$declencheurShedule && !mg::declencheur('user') && $type != 'user') continue;
@@ -102,28 +105,28 @@ foreach ($tabUser as $user => $detailsUser) {
 	// ------------------------------------------------------------------------------------------------------------------
 	// ------------------------------------------------------------------------------------------------------------------
 
+	// Test de distance Home
+	$distUser = mg::getVar("dist_$user", 0);
+	if (!$OK && $geofence > 0) {
+		mg::getCmd("#[Sys_Comm][$user][Position]#", '', $collectDate, $valueDate);
+		if ($distUser <= $geofence && $distUser >= 0) $OK .= " Position_JC $distUser Km";
+		else goto finUser;
+	}
+
 	// TEST JC
-	if ($JC == 1) {
+	if (!$OK && $JC == 1) {
 
 		// Test de présence JC
 		if (!$OK && mg::getCmd("#[Sys_Comm][$user][Ensues]#", '', $collectDate, $valueDate) == 1) $OK .= " ENSUES_JC";
 		else goto finUser;
-		
+
 		// Test WIFI home JC
 		if (!$OK && strpos(mg::getCmd("#[Sys_Comm][$user][Réseau wifi (SSID)]#", '', $collectDate, $valueDate), 'Livebox-MG') !== false) $OK .= " WIFI_JC";
 		else goto finUser;
 	}
 
-	// Test de distance Home
-	if (!$OK && $geofence > 0) {
-		$distUser = mg::getVar("dist_$user", -1);
-		mg::getCmd("#[Sys_Comm][$user][Position]#", '', $collectDate, $valueDate);
-		if ($distUser <= $geofence && $distUser >= 0) $OK .= " Position_JC";
-		else goto finUser;
-	}
-
 	// Test Bluetooth BLEA
-/*	if (!$OK && $nomBLEA) && getBLEA("#[Sys_Présence][$nomBLEA][Rssi]#", $tempoBLEA, $collectDate, $valueDate)) $OK .= ' - BLEA '; 
+/*	if (!$OK && $nomBLEA) && getBLEA("#[Sys_Présence][$nomBLEA][Rssi]#", $tempoBLEA, $collectDate, $valueDate)) $OK .= ' - BLEA ';
 	else $OK = ''; */
 
 	// Test via routeur
@@ -141,7 +144,7 @@ foreach ($tabUser as $user => $detailsUser) {
 					$MAC = strtolower($eqLogic->getLogicalId());
 					mg::setValSql('_tabUsers', $user, '', 'MAC', $MAC);
 					$OK .= " - ROUTEUR";
-					break;//continue;
+					break;
 				}
 			}
 		}
@@ -150,6 +153,7 @@ foreach ($tabUser as $user => $detailsUser) {
 	// Test ARP-SCAN de l'IP/MAC
 	if (!$pluginRouteur && $MAC && !$OK) {
 		if (getUser($user, $IP, $MAC, $interfaceReseau, $scanReseau)) {
+			$valueDate = time();
 			$OK .= ' - ARP-SCAN ';
 		}
 	}
@@ -167,9 +171,10 @@ foreach ($tabUser as $user => $detailsUser) {
 		mg::ConfigEquiLogic($class, $user, $config, $IP);
 	}*/ // ??????????????????????????????????????????
 
- //************************************* CALCUL DE LA POSITION GLOBALE DU USER ****************************************
 finUser:
-	if ($valueDate > $lastValueDate) { $lastValueDate = $valueDate; }
+ //************************************* CALCUL DE LA POSITION GLOBALE DU USER ****************************************
+	if (/*$OK &&*/ $valueDate > $lastValueDate) $lastValueDate = $valueDate; 
+	else goto fin;//continue;
 	
 	// RECALCUL DU USER OK D'AFFICHAGE
 	if ($OK) {
@@ -187,43 +192,34 @@ finUser:
 	//************************************************* BILAN USER ****************************************************
 	// MàJ user et Compteur de présence user
 	if ($type == 'user') {
-		if ($OK) $nbPresences++;
-		$equipJC = "#[Sys_Comm][$user]#";
-
-		// Départ USER
-		if ($userPresent == 1 && !$OK) {
-			mg::setInf($equipPresence, $codeUser, 0);
-			mg::Message($logTimeLine, "Présence - Départ de $codeUser (" . mg::declencheur() . ").");
-			if ($JC == 1) { mg::setCmd($equipJC, 'Modifier Préférences Appli', 'ON', 'Service JC'); }
-		} 
-		
-		// Arrivée USER
-		if ($userPresent == 0 && $OK) {
+		if ($OK) {
+			$nbPresences++;
 			mg::setInf($equipPresence, $codeUser, 1);
-			mg::Message($logTimeLine, "Présence - Arrivée de $codeUser ($OK).");
-			if ($JC == 1) { mg::setCmd($equipJC, 'Modifier Préférences Appli', 'ON', 'Service JC'); }
-		}
+		} else mg::setInf($equipPresence, $codeUser, 0);
 
-		// Réactivation de 'jcservice' et/ou 'tracking' si absent ET si pas de nouvelle depuis plus 90 sec
-		if (!$OK && $JC == 1) {
-			// service
-			$eqLogicJC = eqLogic::byId(trim(str_replace('eqLogic', '', mg::toID($equipJC)), '#'));
-			$lastCommunication = strtotime($eqLogicJC->getStatus('lastCommunication', date('Y-m-d H:i:s')));
-			if (abs(time() - $lastCommunication) > 90) {
-				mg::message($logTimeLine, "Présence - Refresh service JC de $user (" . (time() - $lastCommunication)." sec) > 90)");
-				mg::setCmd($equipJC, 'Modifier Préférences Appli', 'ON', 'Service JC'); usleep(0.5 * 1000000);
-			}
-			// tracking
-			mg::getCmd($equipJC, 'Position', $collectDate, $valueDate);
-			if (abs(time() - $collectDate) > 90) {
-				mg::message($logTimeLine, "Présence - Refresh position JC de $user (".(time() - $collectDate)." sec) > 90");
+
+		$equipJC = "#[Sys_Comm][$user]#";
+		// Départ USER
+		if ($userPresent && !$OK) {
+			// Relance JC
+			if ($JC) {
+				mg::setCmd($equipJC, 'Modifier Préférences Appli', 'ON', 'Service JC'); 
+				sleep(2);
 				mg::setCmd($equipJC, 'Modifier Préférences Appli', 'ON', 'tracking');
 			}
+			mg::Message($logTimeLine, "Présence - Départ de $codeUser (Décl : " . mg::declencheur() . " - '$distUser' Km Km).");
+		}
+
+		// Arrivée USER
+		if (!$userPresent && $OK ) {
+			mg::Message($logTimeLine, "Présence - Arrivée de $codeUser (OK : '$OK' - '$distUser' Km).");
+//			mg::setInf($equipPresence, $codeUser, 1);
 		}
 	}
 
+	fin:
 	// ================================================================================================================
-	mg::messageT('',  "!" . mg::declencheur() . " " . ($OK ? mg::_debCo_ . "*** $user PRESENT ***" : mg::_debCr_ . "*** $user ABSENT ***") . " Depuis le " . date('d\/m \à H\hi\m\n', $lastValueDate) . mg::_finC_ . " - ($IP / $MAC)");
+	mg::messageT('',  "!" . mg::declencheur() . " " . ($OK ? mg::_debCo_ . "*** $user ($tmp) PRESENT ***" : mg::_debCr_ . "*** $user ABSENT ***") . " Depuis le " . date('d\/m \à H\hi\m\n', $lastValueDate) . mg::_finC_ . " - ($IP / $MAC)");
 	// ================================================================================================================
 
 	$tabUserTmp[$user]['equipStat'] = $cmd_id;
@@ -232,8 +228,8 @@ finUser:
 
 // Gestion serrure NUKI si changement de $nbPresences
 if ($nbPresences != mg::getCmd($equipPresence, 'nbUser')) {
-	if ($nbPresences > 0) mg::setCmd ($equipNuki, 'Déverrouiller');
-	else mg::setCmd ($equipNuki, 'Verrouiller');
+	if ($nbPresences > 0 && mg::getCmd ($equipNuki, 'Nom etat') == 'Verrouillée') mg::setCmd ($equipNuki, 'Déverrouiller');
+	if ($nbPresences == 0 && mg::getCmd ($equipNuki, 'Nom etat') == 'Déverrouillée') mg::setCmd ($equipNuki, 'Verrouiller');
 	mg::setInf($equipPresence, 'nbUser', $nbPresences);
 }
 

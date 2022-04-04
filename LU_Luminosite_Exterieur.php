@@ -28,10 +28,13 @@ L'état 'Aurore' démarre 0:30 AVANT l'aurore civile et se termine 1:00 AVANT le
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 $tmp = mg::Soleil(time(), $latitude, $longitude); 
-$aurore = $tmp['lever']-30*60;
+$aurore = $tmp['lever'];
+$coucher = $tmp['coucher'];
+
 $cdAurore = mg::TimeBetween($aurore-60*60, time(), $aurore);
-$message = "Aurore à " . date('H\hi\m\n', $aurore);
+$message = "Aurore à " . date('H\hi\m\n', $aurore)." - Crépuscule à " . date('H\hi\m\n', $coucher);
 mg::message('', $message);
+mg::getParam('Volets', 'timeVoletsNuit', date('H:i', $coucher+900), 1);
 
 $oldNuitExt = $nuitExt;
 
@@ -53,13 +56,14 @@ elseif ( $nuitExt == 1 && $cdAurore ) {
 // Si changement
 if ( $oldNuitExt != $nuitExt) {
 	mg::setVar('NuitExt', $nuitExt);
+	mg::getParam('Volets', 'timeVoletsNuit', date('H:i', $coucher), 1);
 	
-	// Au passage à la nuit //////////////////////////////////////////////////////////////////////////////////
+/*	// Au passage à la nuit //////////////////////////////////////////////////////////////////////////////////
 	if ($oldNuitExt == 0 && $nuitExt == 1) {
 		$timeVoletsNuit = min(date('H:i', time() + 60*60), '23:00');
 		$message .= " - timeVoletsNuit = $timeVoletsNuit";
 		mg::getParam('Volets', 'timeVoletsNuit', $timeVoletsNuit, 1);
-	}
+	}*/
 	
 	mg::Message($logTimeLine, $message);
 }

@@ -33,7 +33,7 @@ global $tableau, $tableau0, $color, $cptLgn, $idUser, $dateOrg, $dateOrgTxt, $IP
 	// Calcul de la date minimum entre les Activité et le poids
 	$result_E = getActivites($user, 0, time(), 1);
 
-	$idUser = trim(mg::toID("[Sys_Présence][Balance $user]", 'Poids'), '#');
+	$idUser = trim(mg::toID("[Maison][Balance $user]", 'Poids'), '#');
 	$result_P = getPoids($idUser, 0, time(), 1);
 
 	$dateOrg = strtotime(min($result_E[0]['datetime'], $result_P[0]['datetime']));
